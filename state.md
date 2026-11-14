@@ -9,7 +9,7 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Four scenes work in both looks: Dot Tunnel, Rings, Interference, and Techno Bars. (Rings and Interference were one
+- Five scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, and Bouncing Dots. (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
@@ -19,7 +19,7 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
@@ -97,7 +97,36 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 - Left out: the original's lead-in (white flash, then four columns dropping to black on four beats), stale
   video memory showing briefly at the start of `doit1`, and the picture that scrolls in after the slide-off.
 
+## Bouncing Dots notes
+- Source: DOTS/MAIN.C and DOTS/ASM.ASM (`drawdots`). 512 dots; each step one dot (in a shuffled order) is
+  re-dropped by a rule that changes through the scene: wandering figure (frames 1-499), ring (500-899),
+  fountain (900-1699), random cloud with gravity fading out and the view spinning up (1700-2359).
+- Classic look: `BouncingDotsModel` replays `drawdots` on the processor with the original's 16-bit arithmetic,
+  erase-by-restoring-background, Microsoft C `rand()` (so the random cloud matches), and quirks: a dot off the
+  side of the screen does not fall that step; the depth uses two separately truncated products; a leftover
+  register value is stored as the old shadow position on the off-screen path. Shown through `IndexedCanvas`
+  (which now takes palettes of up to 256 colours). As with Techno Bars, the port was checked by reading only.
+- Modern look: smooth floor gradient, then every shadow and dot drawn as a soft round sprite, sorted far to
+  near, bigger when nearer (the original's dots were all 4x3 pixels), gliding between steps except on the step
+  a dot is re-dropped.
+- Deliberate departures: the original ended with a flash to white and then a fade to black; this fades straight
+  to black (frames 2360-2424) and loops, starting again with the original's 130-step floor fade-in. The
+  original's uninitialised re-drop counter starts at 0 here. The unused "face" data is not used.
+
+## Planned scenes (user's list, 2026-11-14), easiest first
+Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
+stills are out of scope.
+1. Bouncing dots - DONE
+2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM)
+3. Hidden starfield (DDSTARS)
+4. 3D sine landscape (COMAN) - a voxel landscape; has a background picture
+5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
+6. Glenz vectors (GLENZ)
+7. Ships fly-by (VISU engine + U2A data)
+8. 3D city (VISU engine + U2E data)
+Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
+
 ## Next steps
-- User to pick the next scene.
+- Next scene: Plasma (rank 2 above).
 - Build the sidebar scene picker when asked.
 - Later: music.

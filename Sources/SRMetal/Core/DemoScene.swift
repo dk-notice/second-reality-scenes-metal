@@ -93,6 +93,14 @@ enum SceneCatalog {
             canvasSize: SIMD2(320, 200),
             checkpoints: [1, 100, 419, 430, 800, 1259, 1262, 1300, 1700, 1920],
             make: { device, format in try TechnoBarsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "bouncing-dots",
+            title: "Bouncing Dots",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
+            make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
         )
     ]
 }

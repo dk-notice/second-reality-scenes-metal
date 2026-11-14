@@ -13,6 +13,7 @@ final class IndexedCanvas {
     private let pipeline: MTLRenderPipelineState
     /// A few textures used in turn, so a new frame is never written into one still being displayed.
     private var textures: [MTLTexture] = []
+    private var paletteBuffers: [MTLBuffer] = []
     private var next = 0
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat, width: Int, height: Int) throws {
@@ -33,22 +34,32 @@ final class IndexedCanvas {
                 throw SceneError.textureFailed
             }
             textures.append(texture)
+            // Room for the largest palette a VGA card had: 256 colours.
+            guard let buffer = device.makeBuffer(length: MemoryLayout<SIMD4<Float>>.stride * 256,
+                                                 options: .storageModeShared) else {
+                throw SceneError.textureFailed
+            }
+            paletteBuffers.append(buffer)
         }
     }
 
     /// `indices`: one byte per pixel, row by row. `palette`: the colour for each index, 0...1 per channel.
     func draw(into encoder: MTLRenderCommandEncoder, indices: [UInt8], palette: [SIMD4<Float>]) {
         precondition(indices.count == width * height, "IndexedCanvas: wrong picture size")
+        precondition(palette.count <= 256, "IndexedCanvas: a palette has at most 256 colours")
         let texture = textures[next]
+        let paletteBuffer = paletteBuffers[next]
         next = (next + 1) % textures.count
         indices.withUnsafeBytes { buffer in
             texture.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0,
                             withBytes: buffer.baseAddress!, bytesPerRow: width)
         }
 
-        var colours = palette
+        palette.withUnsafeBytes { bytes in
+            paletteBuffer.contents().copyMemory(from: bytes.baseAddress!, byteCount: bytes.count)
+        }
         encoder.setRenderPipelineState(pipeline)
-        encoder.setFragmentBytes(&colours, length: MemoryLayout<SIMD4<Float>>.stride * colours.count, index: 0)
+        encoder.setFragmentBuffer(paletteBuffer, offset: 0, index: 0)
         encoder.setFragmentTexture(texture, index: 0)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
     }
