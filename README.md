@@ -133,3 +133,8 @@ anniversary. Everything here was worked out from that release:
 
 No code from the original or from those ports is included here. The scenes were re-implemented from the
 original's logic, and tables the original shipped as data files are calculated instead.
+
+## Licence
+
+This project is released into the public domain under the [Unlicense](UNLICENSE), the same terms Future Crew
+chose for the original. You may copy, change and use it for any purpose, with no conditions and no warranty.

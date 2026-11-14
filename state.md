@@ -46,6 +46,8 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 
 ## Decisions
 - Swift + Metal + SwiftUI, built with Swift Package Manager from the command line.
+- Licence: the Unlicense (public domain), matching the original (user, 2026-11-14).
+- The GitHub repository is private for now; the user has not yet decided whether to make it public.
 - Scenes are re-implemented from the original source's logic, not copied from the existing port.
 - Every scene is stepped at 70 per second; the Modern look blends between steps.
 - Every canvas is shown at 4:3, like a VGA monitor (320x200 pixels were not square).
