@@ -36,6 +36,15 @@ protocol DemoScene: AnyObject {
     func tick()
     /// Draw the current state. The viewport is already set; (0,0) is the canvas's top-left corner.
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo)
+    /// The classic-look picture for the current state, worked out on the processor by the 1993 rules:
+    /// red, green, blue bytes (0...255) for each canvas pixel, row by row. The self-test compares
+    /// what the graphics chip draws against this.
+    func classicReferenceFrame() -> [UInt8]
+}
+
+/// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.
+func byteFromVGA(_ value: Int) -> UInt8 {
+    UInt8((Double(value) * 255 / 63).rounded())
 }
 
 /// One row in the list of scenes.
@@ -46,6 +55,8 @@ struct SceneEntry: Identifiable {
     let credit: String
     /// The scene's coordinate system. It is always shown at 4:3, as on a VGA monitor.
     let canvasSize: SIMD2<Float>
+    /// Moments (in steps from the start) at which the self-test checks the classic look.
+    let checkpoints: [Int]
     let make: (MTLDevice, MTLPixelFormat) throws -> DemoScene
 }
 
@@ -56,7 +67,16 @@ enum SceneCatalog {
             title: "Dot Tunnel",
             credit: "Trug",
             canvasSize: SIMD2(320, 200),
+            checkpoints: [1, 60, 250, 500, 777, 1000],
             make: { device, format in try DotTunnelScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "interference",
+            title: "Interference",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 40, 130, 200, 256, 300, 700, 900, 1100, 1235],
+            make: { device, format in try InterferenceScene(device: device, pixelFormat: format) }
         )
     ]
 }

@@ -46,6 +46,14 @@ final class DotTunnelScene: DemoScene {
     func reset() { model.reset() }
     func tick() { model.tick() }
 
+    func classicReferenceFrame() -> [UInt8] {
+        // The tunnel is grey, so red, green and blue are all the same value.
+        model.classicReferenceFrame().flatMap { value -> [UInt8] in
+            let byte = byteFromVGA(Int(value))
+            return [byte, byte, byte]
+        }
+    }
+
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
         var rings = frame.look == .classic ? classicRings() : modernRings(alpha: frame.alpha)
         guard !rings.isEmpty else { return }

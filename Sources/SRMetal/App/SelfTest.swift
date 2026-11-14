@@ -3,8 +3,8 @@ import Metal
 
 /// Checks run with `SRMetal --selftest`. No window is opened.
 ///
-/// The main check: draw the classic look on the graphics chip, read the picture back, and compare it
-/// pixel by pixel with the same frame worked out on the processor using the 1993 rules.
+/// The main check, for every scene: draw the classic look on the graphics chip, read the picture back,
+/// and compare it pixel by pixel with the same frame worked out on the processor using the 1993 rules.
 enum SelfTest {
     static func run() -> Bool {
         var ok = true
@@ -13,13 +13,20 @@ enum SelfTest {
             if !passed { ok = false }
         }
 
-        // Spot values taken from the original SINIT.DAT file.
+        // Tables and pictures that replace the original's data files. The expected values were taken
+        // from those files (SINIT.DAT, SIN1024.INC, _CIRCLE.OBK, _CIRCLE2.OBK).
         let sinT = DotTunnelModel.sinTable
         let cosT = DotTunnelModel.cosTable
-        check("sine table matches original spot values",
+        check("tunnel sine table matches original spot values",
               Array(sinT[1000...1003]) == [-13, -12, -12, -11] && Array(sinT[4090...4096]) == [-14, -12, -9, -7, -5, -2, 0])
-        check("cosine table matches original spot values",
+        check("tunnel cosine table matches original spot values",
               Array(cosT[1000...1003]) == [52, 52, 53, 54] && cosT[2048] == 128)
+        check("shared sine table matches original spot values",
+              Array(SinTable.sin1024[0...5]) == [0, 1, 3, 4, 6, 7] && SinTable.sin1024[256] == 256 && SinTable.sin1024[768] == -256)
+        check("interference ring picture matches original file",
+              crc32(quarter(of: InterferenceModel.ringPicture)) == 3_479_151_390)
+        check("interference stripe picture matches original file",
+              crc32(quarter(of: InterferenceModel.stripePicture)) == 990_890_590)
 
         guard let device = MTLCreateSystemDefaultDevice(),
               let queue = device.makeCommandQueue() else {
@@ -27,53 +34,80 @@ enum SelfTest {
             return false
         }
 
-        do {
-            let scene = try DotTunnelScene(device: device, pixelFormat: Renderer.pixelFormat)
-            let canvas = SIMD2<Float>(320, 200)
-            guard let texture = Renderer.makeClassicTexture(device: device, canvasSize: canvas) else {
-                check("classic texture created", false)
-                return false
-            }
-
-            var tick = 0
-            for target in [1, 60, 250, 500, 777, 1000] {
-                while tick < target {
-                    scene.tick()
-                    tick += 1
+        for entry in SceneCatalog.all {
+            do {
+                let scene = try entry.make(device, Renderer.pixelFormat)
+                let width = Int(entry.canvasSize.x)
+                let height = Int(entry.canvasSize.y)
+                guard let texture = Renderer.makeClassicTexture(device: device, canvasSize: entry.canvasSize) else {
+                    check("\(entry.title): classic texture created", false)
+                    continue
                 }
-                guard let commands = queue.makeCommandBuffer() else { continue }
-                Renderer.drawClassic(scene: scene, canvasSize: canvas, into: texture, commands: commands)
-                commands.commit()
-                commands.waitUntilCompleted()
 
-                var pixels = [UInt8](repeating: 0, count: 320 * 200 * 4)
-                texture.getBytes(&pixels, bytesPerRow: 320 * 4,
-                                 from: MTLRegionMake2D(0, 0, 320, 200), mipmapLevel: 0)
+                var tick = 0
+                for target in entry.checkpoints {
+                    while tick < target {
+                        scene.tick()
+                        tick += 1
+                    }
+                    guard let commands = queue.makeCommandBuffer() else { continue }
+                    Renderer.drawClassic(scene: scene, canvasSize: entry.canvasSize, into: texture, commands: commands)
+                    commands.commit()
+                    commands.waitUntilCompleted()
 
-                let reference = scene.model.classicReferenceFrame()
-                var lit = 0
-                var wrong = 0
-                for i in 0..<(320 * 200) {
-                    let expected = Int((Double(reference[i]) * 255 / 63).rounded())
-                    if expected > 0 { lit += 1 }
-                    // Allow 1 level of difference for rounding 0...63 up to 0...255.
-                    if abs(Int(pixels[i * 4]) - expected) > 1 { wrong += 1 }
+                    // The picture comes back as blue, green, red, alpha for each pixel.
+                    var pixels = [UInt8](repeating: 0, count: width * height * 4)
+                    texture.getBytes(&pixels, bytesPerRow: width * 4,
+                                     from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
+
+                    let reference = scene.classicReferenceFrame()
+                    var lit = 0
+                    var wrong = 0
+                    for i in 0..<(width * height) {
+                        let expected = (Int(reference[i * 3]), Int(reference[i * 3 + 1]), Int(reference[i * 3 + 2]))
+                        let drawn = (Int(pixels[i * 4 + 2]), Int(pixels[i * 4 + 1]), Int(pixels[i * 4]))
+                        if expected != (0, 0, 0) { lit += 1 }
+                        // Allow 1 level of difference for rounding 0...63 up to 0...255.
+                        if abs(drawn.0 - expected.0) > 1 || abs(drawn.1 - expected.1) > 1 || abs(drawn.2 - expected.2) > 1 {
+                            wrong += 1
+                        }
+                    }
+                    check("\(entry.title), step \(target): graphics chip matches 1993 reference", wrong == 0,
+                          "\(lit) lit pixels, \(wrong) wrong")
                 }
-                check("step \(target): graphics chip matches 1993 reference", wrong == 0,
-                      "\(lit) lit pixels, \(wrong) wrong")
+            } catch {
+                check("\(entry.title) starts", false, "\(error)")
             }
-
-            // After the full run the scene should have looped back to an empty tunnel.
-            while tick < DotTunnelModel.lengthInTicks {
-                scene.tick()
-                tick += 1
-            }
-            check("scene loops after \(DotTunnelModel.lengthInTicks) steps", scene.model.tickCount == 0)
-        } catch {
-            check("dot tunnel scene starts", false, "\(error)")
         }
+
+        // The tunnel should loop back to an empty tunnel after its full run.
+        var tunnel = DotTunnelModel()
+        for _ in 0..<DotTunnelModel.lengthInTicks { tunnel.tick() }
+        check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0)
 
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok
+    }
+
+    /// The top-left quarter (320x200) of a 640x400 picture: the part the original stored on disk.
+    private static func quarter(of picture: [UInt8]) -> [UInt8] {
+        var result = [UInt8]()
+        result.reserveCapacity(320 * 200)
+        for y in 0..<200 {
+            result.append(contentsOf: picture[(y * 640)..<(y * 640 + 320)])
+        }
+        return result
+    }
+
+    /// A standard checksum (CRC-32): a single number that changes if any byte of the data changes.
+    private static func crc32(_ bytes: [UInt8]) -> UInt32 {
+        var crc: UInt32 = 0xFFFF_FFFF
+        for byte in bytes {
+            crc ^= UInt32(byte)
+            for _ in 0..<8 {
+                crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB8_8320 : crc >> 1
+            }
+        }
+        return ~crc
     }
 }

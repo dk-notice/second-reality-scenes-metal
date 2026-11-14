@@ -15,7 +15,7 @@ enum Shaders {
     /// Compiling at start-up means the project builds with Apple's command-line tools alone; no Xcode needed.
     static func library(device: MTLDevice, source: String) throws -> MTLLibrary {
         let options = MTLCompileOptions()
-        // Exact maths, so the classic look rounds dot positions the same way the original did.
+        // Exact maths, so the classic look rounds the same way the original did.
         options.mathMode = .safe
         return try device.makeLibrary(source: source, options: options)
     }
@@ -27,26 +27,31 @@ enum Shaders {
         return function
     }
 
-    /// Copies the small classic-look picture onto the screen, scaled up.
-    static let blitSource = """
+    /// Shared start of any shader that paints the whole canvas (as opposed to drawing separate shapes).
+    /// It covers the viewport with one oversized triangle; `uv` runs from (0,0) at the top-left
+    /// to (1,1) at the bottom-right. Draw it with 3 vertices.
+    static let canvasVertexSource = """
     #include <metal_stdlib>
     using namespace metal;
 
-    struct BlitOut {
+    struct CanvasOut {
         float4 position [[position]];
         float2 uv;
     };
 
-    vertex BlitOut blit_vertex(uint vid [[vertex_id]]) {
-        // One oversized triangle that covers the whole viewport.
+    vertex CanvasOut canvas_vertex(uint vid [[vertex_id]]) {
         float2 p = float2((vid << 1) & 2, vid & 2);
-        BlitOut out;
+        CanvasOut out;
         out.position = float4(p * 2.0 - 1.0, 0.0, 1.0);
         out.uv = float2(p.x, 1.0 - p.y);
         return out;
     }
 
-    fragment float4 blit_fragment(BlitOut in [[stage_in]],
+    """
+
+    /// Copies the small classic-look picture onto the screen, scaled up.
+    static let blitSource = canvasVertexSource + """
+    fragment float4 blit_fragment(CanvasOut in [[stage_in]],
                                   texture2d<float> tex [[texture(0)]],
                                   sampler smp [[sampler(0)]]) {
         return tex.sample(smp, in.uv);

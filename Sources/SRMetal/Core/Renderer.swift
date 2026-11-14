@@ -34,7 +34,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
         let library = try Shaders.library(device: device, source: Shaders.blitSource)
         let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.vertexFunction = try Shaders.function("blit_vertex", in: library)
+        descriptor.vertexFunction = try Shaders.function("canvas_vertex", in: library)
         descriptor.fragmentFunction = try Shaders.function("blit_fragment", in: library)
         descriptor.colorAttachments[0].pixelFormat = Self.pixelFormat
         self.blitPipeline = try device.makeRenderPipelineState(descriptor: descriptor)

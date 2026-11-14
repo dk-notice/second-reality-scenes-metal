@@ -18,11 +18,17 @@ final class AppModel: ObservableObject {
     @Published var sceneIndex = 0
 
     init() {
-        // Optional start-up choice: `--look classic` or `--look modern`.
+        // Optional start-up choices: `--look classic|modern` and `--scene <id>` (e.g. `--scene interference`).
         let arguments = CommandLine.arguments
-        if let flag = arguments.firstIndex(of: "--look"), flag + 1 < arguments.count,
-           let chosen = Look(rawValue: arguments[flag + 1]) {
+        func value(after flag: String) -> String? {
+            guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else { return nil }
+            return arguments[index + 1]
+        }
+        if let chosen = value(after: "--look").flatMap(Look.init(rawValue:)) {
             look = chosen
+        }
+        if let id = value(after: "--scene"), let index = SceneCatalog.all.firstIndex(where: { $0.id == id }) {
+            sceneIndex = index
         }
     }
 
