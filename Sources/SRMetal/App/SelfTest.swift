@@ -94,6 +94,30 @@ enum SelfTest {
         for _ in 0..<DotTunnelModel.lengthInTicks { tunnel.tick() }
         check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0)
 
+        // Interference should loop seamlessly: after one full run it is back at its first frame, and the
+        // last step before the loop differs from the first frame no more than any two neighbouring steps do.
+        func changed(_ a: [UInt8], _ b: [UInt8]) -> Int {
+            var count = 0
+            for i in stride(from: 0, to: a.count, by: 3) where a[i] != b[i] || a[i + 1] != b[i + 1] || a[i + 2] != b[i + 2] {
+                count += 1
+            }
+            return count
+        }
+        var interference = InterferenceModel(part: .interference)
+        let firstFrame = interference.classicReferenceFrame()
+        interference.tick()
+        let secondFrame = interference.classicReferenceFrame()
+        for _ in 1..<(InterferenceModel.interferenceTicks - 1) { interference.tick() }
+        let lastFrame = interference.classicReferenceFrame()
+        interference.tick()
+        check("Interference returns to its first frame after \(InterferenceModel.interferenceTicks) steps",
+              interference.classicReferenceFrame() == firstFrame)
+        let ordinaryStep = changed(firstFrame, secondFrame)
+        let loopStep = changed(lastFrame, firstFrame)
+        check("Interference loop point is no bigger a jump than an ordinary step",
+              loopStep <= ordinaryStep * 11 / 10,
+              "\(loopStep) pixels change across the loop, \(ordinaryStep) across an ordinary step")
+
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok
     }

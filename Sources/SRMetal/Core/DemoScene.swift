@@ -83,7 +83,7 @@ enum SceneCatalog {
             title: "Interference",
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 44, 300, 500, 700, 979],
+            checkpoints: [0, 44, 300, 500, 700, 900, 1023, 1024],
             make: { device, format in try InterferenceScene(part: .interference, device: device, pixelFormat: format) }
         ),
         SceneEntry(

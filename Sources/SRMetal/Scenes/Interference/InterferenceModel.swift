@@ -27,12 +27,15 @@ struct InterferenceModel {
 
     /// The Rings scene takes this many steps to fade in from black.
     static let ringsFadeTicks = 128
-    /// Length of the Interference scene before it loops. The original ended it on a music cue;
-    /// 980 steps is that cue converted to steps, so it is approximate.
-    static let interferenceTicks = 980
+    /// Length of the Interference scene before it loops. The original ran about 980 steps and then cut
+    /// away on a music cue. We use 1024 so the loop is seamless: the two pictures' circular paths (which
+    /// advance 5 and 7 table places per step, in a 1024-place table), the row wave and the colour rotation
+    /// all arrive back exactly where they started.
+    static let interferenceTicks = 1024
     /// In Interference, each row starts being pushed sideways by a wave after this many steps...
     static let wobbleStartTick = 350
-    /// ...and the wave grows one notch (of 15) every this many steps.
+    /// ...and the wave grows one notch (of 15) every this many steps. It shrinks again at the same
+    /// rate at the end, so it is back to nothing when the scene loops. (The shrinking is our addition.)
     static let wobbleGrowTicks = 16
 
     static let pictureWidth = 640
@@ -168,7 +171,9 @@ struct InterferenceModel {
 
     /// Strength of the row wobble, 0...15, at a given Interference frame.
     static func wobblePower(frame: Int) -> Int {
-        min(15, max(0, (frame - wobbleStartTick) / wobbleGrowTicks))
+        let growing = (frame - wobbleStartTick) / wobbleGrowTicks
+        let shrinking = (interferenceTicks - frame) / wobbleGrowTicks
+        return min(15, max(0, min(growing, shrinking)))
     }
 
     func classicLayout() -> ClassicLayout {
@@ -257,7 +262,9 @@ struct InterferenceModel {
             let frame = Double(whole) + alpha
             let ringTurn = 5 * frame
             let stripeTurn = 211 + 7 * frame
-            let power = min(15, max(0, (frame - Double(Self.wobbleStartTick)) / Double(Self.wobbleGrowTicks)))
+            let growing = (frame - Double(Self.wobbleStartTick)) / Double(Self.wobbleGrowTicks)
+            let shrinking = (Double(Self.interferenceTicks) - frame) / Double(Self.wobbleGrowTicks)
+            let power = min(15, max(0, min(growing, shrinking)))
             return ModernParameters(
                 ramps: unit(Self.lowerRamp.map { SIMD3<Double>($0) } + Self.upperRamp.map { SIMD3<Double>($0) }),
                 cycle: rotation(frame),

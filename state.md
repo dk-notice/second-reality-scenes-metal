@@ -42,6 +42,8 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 - Scenes are re-implemented from the original source's logic, not copied from the existing port.
 - Every scene is stepped at 70 per second; the Modern look blends between steps.
 - Every canvas is shown at 4:3, like a VGA monitor (320x200 pixels were not square).
+- Straying from the original is acceptable where it makes a better standalone scene (user, 2026-11-14):
+  e.g. no white-out in Rings, seamless loop in Interference. Record each such change in the scene's notes.
 - Tables the original loaded from data files are calculated from the original's generator formulas where
   those reproduce the files exactly (true for the tunnel: verified against TUNNEL.DAT and SINIT.DAT).
 - Recommended scene picker (not built yet): a standard Mac sidebar listing scenes, hidden in fullscreen,
@@ -67,7 +69,10 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   in the self-test).
 - The original's bit-plane copy with pre-shifted pictures reduces to: stripe pixel = picture(x + overx + wobble
   - 7, y + overy). Verified against a byte-level emulation of the assembly.
-- Interference's length (980 steps, then it loops) is approximate: the original ended it on a music cue (music frame 925).
+- Interference deliberately differs from the original so it loops seamlessly (user request, 2026-11-14):
+  it runs 1024 steps (the original ran about 980 and cut away on a music cue), and the row wobble shrinks
+  back to nothing over the last 240 steps. At 1024 steps both scroll paths, the wobble wave and the colour
+  rotation are back at their start. The self-test checks this.
 - The original started the colour rotation on a music beat; this version starts it immediately.
 - Modern look: rings calculated per screen pixel with soft edges; colours, scrolling and the row wobble glide
   between steps. Ring shades stay as 8 distinct bands, as in the original.
