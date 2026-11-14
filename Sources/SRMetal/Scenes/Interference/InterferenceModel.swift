@@ -1,7 +1,9 @@
 import Foundation
 import simd
 
-/// The state and rules of the interference circles, with no drawing code.
+/// The state and rules of two scenes that share the same ring pictures, with no drawing code:
+/// "Rings" (one set of teal rings) and "Interference" (two sets sliding over each other).
+/// In the original these ran back to back as the opening of the techno part.
 ///
 /// Based on Psi's original (TECHNO/KOEA.ASM and KOEB.ASM in the Second Reality source). The 1993 version
 /// used two pictures of concentric rings, each 640x400, twice the size of the screen:
@@ -15,12 +17,20 @@ import simd
 /// bit was set, the video card used colours 8-15 instead of 0-7. Rotating the colour table made the
 /// rings flow. So the whole effect was: slide two pictures, rotate 16 colours.
 struct InterferenceModel {
-    /// Part 1: a single set of rings fades in from black, then up to white.
-    static let ringsTicks = 256
-    /// Part 2: the two sets of rings interfere. The original ended this on a music cue;
+    /// Which of the two scenes this is.
+    enum Part {
+        /// A single set of rings fades in from black and keeps flowing.
+        case rings
+        /// Two sets of rings interfere.
+        case interference
+    }
+
+    /// The Rings scene takes this many steps to fade in from black.
+    static let ringsFadeTicks = 128
+    /// Length of the Interference scene before it loops. The original ended it on a music cue;
     /// 980 steps is that cue converted to steps, so it is approximate.
     static let interferenceTicks = 980
-    /// In part 2, each row starts being pushed sideways by a wave after this many steps...
+    /// In Interference, each row starts being pushed sideways by a wave after this many steps...
     static let wobbleStartTick = 350
     /// ...and the wave grows one notch (of 15) every this many steps.
     static let wobbleGrowTicks = 16
@@ -33,18 +43,28 @@ struct InterferenceModel {
         case interference(frame: Int)
     }
 
+    let part: Part
     private(set) var ticks = 0
 
+    init(part: Part) {
+        self.part = part
+    }
+
     var phase: Phase {
-        ticks < Self.ringsTicks ? .rings(frame: ticks) : .interference(frame: ticks - Self.ringsTicks)
+        part == .rings ? .rings(frame: ticks) : .interference(frame: ticks)
     }
 
     mutating func reset() { ticks = 0 }
 
     mutating func tick() {
         ticks += 1
-        if ticks == Self.ringsTicks + Self.interferenceTicks {
-            ticks = 0
+        switch part {
+        case .rings:
+            // Rings never ends. Once faded in, only the colour rotation matters, and that repeats
+            // every 8 steps, so step back 8 to keep the counter small.
+            if ticks >= 2 * Self.ringsFadeTicks { ticks -= 8 }
+        case .interference:
+            if ticks == Self.interferenceTicks { ticks = 0 }
         }
     }
 
@@ -95,23 +115,24 @@ struct InterferenceModel {
 
     typealias Colour = SIMD3<Int>
 
-    /// Part 1: one ring in eight is teal, the rest are black.
+    /// Rings scene: one ring in eight is teal, the rest are black.
     static let ringsRamp: [Colour] = [Colour(0, 30, 40)] + [Colour](repeating: Colour(0, 0, 0), count: 7)
 
-    /// Part 2, where the stripe picture's bit is off: a purple-grey ramp.
+    /// Interference scene, where the stripe picture's bit is off: a purple-grey ramp.
     static let lowerRamp: [Colour] = [30, 60, 50, 40, 30, 20, 10, 0].map { Colour($0, $0 * 8 / 9, $0) }
 
-    /// Part 2, where the stripe picture's bit is on: a different ramp, slightly more purple.
+    /// Interference scene, where the stripe picture's bit is on: a different ramp, slightly more purple.
     static let upperRamp: [Colour] = [0, 10, 20, 30, 40, 50, 60, 30].map { Colour($0, $0 * 7 / 9, $0) }
 
-    /// Part 1's brightness control. Up to 256 it scales colours up from black; beyond that it adds
-    /// white on top, so the picture fades in and then burns out to white.
+    /// The Rings scene's brightness control, 0...256: scales colours up from black.
+    /// (The original carried on past 256, adding white until the whole screen burned out. We stop at full.)
     static func faded(_ colour: Colour, fader: Int) -> Colour {
-        if fader <= 256 {
-            return (colour &* fader) &>> 8
-        }
-        let lifted = colour &+ (fader - 256)
-        return Colour(min(lifted.x, 63), min(lifted.y, 63), min(lifted.z, 63))
+        (colour &* fader) &>> 8
+    }
+
+    /// Brightness control value at a given Rings frame.
+    static func fader(frame: Int) -> Int {
+        min(2 * (frame + 1), 256)
     }
 
     /// How far the colour table has rotated at a given frame: one place per frame.
@@ -124,7 +145,7 @@ struct InterferenceModel {
         switch phase {
         case .rings(let frame):
             let rotation = Self.cycle(frame: frame)
-            let fader = min(2 * (frame + 1), 512)
+            let fader = Self.fader(frame: frame)
             let eight = (0..<8).map { Self.faded(Self.ringsRamp[(rotation + $0) & 7], fader: fader) }
             return eight + eight
         case .interference(let frame):
@@ -139,13 +160,13 @@ struct InterferenceModel {
     struct ClassicLayout {
         /// Top-left corner of the screen window on the 8-colour picture.
         var ringScroll: SIMD2<Int>
-        /// Top-left corner of the screen window on the 1-bit picture, before the wobble. nil in part 1.
+        /// Top-left corner of the screen window on the 1-bit picture, before the wobble. nil in the Rings scene.
         var stripeScroll: SIMD2<Int>?
         /// Extra sideways shift of the 1-bit picture for each of the 200 screen rows.
         var wobble: [Int]
     }
 
-    /// Strength of the row wobble, 0...15, at a given part-2 frame.
+    /// Strength of the row wobble, 0...15, at a given Interference frame.
     static func wobblePower(frame: Int) -> Int {
         min(15, max(0, (frame - wobbleStartTick) / wobbleGrowTicks))
     }
@@ -153,7 +174,7 @@ struct InterferenceModel {
     func classicLayout() -> ClassicLayout {
         switch phase {
         case .rings:
-            // Part 1 holds the window still, centred on the picture.
+            // The Rings scene holds the window still, centred on the picture.
             return ClassicLayout(ringScroll: SIMD2(160, 100), stripeScroll: nil,
                                  wobble: [Int](repeating: 0, count: 200))
         case .interference(let frame):
@@ -225,12 +246,8 @@ struct InterferenceModel {
         switch phase {
         case .rings(let whole):
             let frame = Double(whole) + alpha
-            let fader = min(2 * (frame + 1), 512)
-            let faded = Self.ringsRamp.map { colour -> SIMD3<Double> in
-                let c = SIMD3<Double>(colour)
-                if fader <= 256 { return c * fader / 256 }
-                return simd.min(c + (fader - 256), SIMD3<Double>(repeating: 63))
-            }
+            let fader = min(2 * (frame + 1), 256)
+            let faded = Self.ringsRamp.map { SIMD3<Double>($0) * fader / 256 }
             return ModernParameters(
                 ramps: unit(faded + faded), cycle: rotation(frame),
                 ringScroll: SIMD2(160, 100), stripeScroll: SIMD2(0, 0), stripesOn: false,

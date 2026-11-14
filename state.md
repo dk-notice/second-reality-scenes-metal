@@ -9,7 +9,8 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Two scenes work in both looks: Dot Tunnel, and Interference (the circles that open the techno part).
+- Three scenes work in both looks: Dot Tunnel, Rings, and Interference. (Rings and Interference were one
+  back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
 - No scene-picker UI yet. Menu "Scene" has Switch Look (L) and Next/Previous Scene (right/left arrow keys).
@@ -18,7 +19,7 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|interference`.
+  `--scene dot-tunnel|rings|interference`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
@@ -52,15 +53,19 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   screen while the tunnel emptied at the end. This version clears the screen every frame.
 - The scene loops after 1060 steps (about 15 seconds), the original's length.
 
-## Interference notes
-- Source: TECHNO/KOEB.ASM (part 1, rings fade in then burn to white, 256 steps) and KOEA.ASM (part 2, two ring
-  pictures interfering). The techno bars (KOE.C `doit1/2/3`) are the rest of that original program; not built yet.
+## Rings and Interference notes
+- Both scenes live in `Scenes/Interference/` and share one model, one shader and the ring pictures; a `part`
+  value says which scene an instance is.
+- Source: TECHNO/KOEB.ASM (Rings: teal rings fade in) and KOEA.ASM (Interference: two ring pictures interfering).
+- Rings deliberately differs from the original: the original burned out to full white after fading in and
+  ended after 256 steps. The user asked for the white removed (2026-11-14), so Rings fades in over 128 steps
+  and then flows indefinitely. Its self-test reference follows this rule, not the original's white-out. The techno bars (KOE.C `doit1/2/3`) are the rest of that original program; not built yet.
 - The two 640x400 ring pictures are calculated: ring number = floor(distance^1.4 / 16) for the 8-colour one,
   floor(distance / 12) & 1 for the 1-bit one. Both reproduce the original files exactly (checked by checksum
   in the self-test).
 - The original's bit-plane copy with pre-shifted pictures reduces to: stripe pixel = picture(x + overx + wobble
   - 7, y + overy). Verified against a byte-level emulation of the assembly.
-- Part 2's length (980 steps) is approximate: the original ended it on a music cue (music frame 925).
+- Interference's length (980 steps, then it loops) is approximate: the original ended it on a music cue (music frame 925).
 - The original started the colour rotation on a music beat; this version starts it immediately.
 - Modern look: rings calculated per screen pixel with soft edges; colours, scrolling and the row wobble glide
   between steps. Ring shades stay as 8 distinct bands, as in the original.

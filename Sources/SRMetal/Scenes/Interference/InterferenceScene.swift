@@ -1,7 +1,8 @@
 import Metal
 import simd
 
-/// Draws the interference circles on the graphics chip.
+/// Draws the Rings and Interference scenes on the graphics chip. They share ring pictures and a shader;
+/// `part` says which one this is.
 ///
 /// Unlike the dot tunnel, this scene paints every pixel of the canvas. The shader runs once per pixel
 /// and decides its colour.
@@ -11,7 +12,7 @@ import simd
 ///    centre, at full screen resolution, with soft edges. The 1993 code could never afford that maths
 ///    per pixel; a graphics chip does it without effort.
 final class InterferenceScene: DemoScene {
-    private(set) var model = InterferenceModel()
+    private(set) var model: InterferenceModel
     private let pipeline: MTLRenderPipelineState
     private let ringTexture: MTLTexture
     private let stripeTexture: MTLTexture
@@ -29,7 +30,8 @@ final class InterferenceScene: DemoScene {
         var padding: UInt32 = 0
     }
 
-    init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
+    init(part: InterferenceModel.Part, device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
+        model = InterferenceModel(part: part)
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + Self.fragmentSource)
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = try Shaders.function("canvas_vertex", in: library)

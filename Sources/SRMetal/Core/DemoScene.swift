@@ -71,12 +71,20 @@ enum SceneCatalog {
             make: { device, format in try DotTunnelScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "rings",
+            title: "Rings",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 40, 100, 127, 300, 1000],
+            make: { device, format in try InterferenceScene(part: .rings, device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "interference",
             title: "Interference",
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 40, 130, 200, 256, 300, 700, 900, 1100, 1235],
-            make: { device, format in try InterferenceScene(device: device, pixelFormat: format) }
+            checkpoints: [0, 44, 300, 500, 700, 979],
+            make: { device, format in try InterferenceScene(part: .interference, device: device, pixelFormat: format) }
         )
     ]
 }
