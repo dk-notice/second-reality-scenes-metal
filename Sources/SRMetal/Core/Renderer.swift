@@ -141,7 +141,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         return classicTexture
     }
 
-    private static func clearPass(into texture: MTLTexture) -> MTLRenderPassDescriptor {
+    static func clearPass(into texture: MTLTexture) -> MTLRenderPassDescriptor {
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = texture
         pass.colorAttachments[0].loadAction = .clear

@@ -13,6 +13,8 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
+- Documentation is in `README.md` and `docs/` (how the app works, how the original demo was built, and one
+  page per scene comparing the original with this version). Keep it up to date: every new scene gets a page.
 - No scene-picker UI yet. Menu "Scene" has Switch Look (L) and Next/Previous Scene (right/left arrow keys).
 - No music.
 
@@ -21,6 +23,9 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
   `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
+- `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
+  960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
+  dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300).
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
@@ -34,7 +39,9 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## Adding a scene
 1. Create `Sources/SRMetal/Scenes/<Name>/` with a class that conforms to `DemoScene` (`reset`, `tick`, `draw`).
 2. Add one `SceneEntry` to `SceneCatalog.all` in `Core/DemoScene.swift`.
-3. Implement `classicReferenceFrame()` (the 1993 picture worked out on the processor) and list some
+3. Write `docs/scenes/<name>.md`, add the scene to the tables in `README.md`, and make its two pictures with
+   `--snapshot`.
+4. Implement `classicReferenceFrame()` (the 1993 picture worked out on the processor) and list some
    `checkpoints` in the entry. The self-test then compares the graphics chip against it automatically.
 
 ## Decisions

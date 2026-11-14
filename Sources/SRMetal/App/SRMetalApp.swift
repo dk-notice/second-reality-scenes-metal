@@ -1,12 +1,16 @@
 import MetalKit
 import SwiftUI
 
-/// Entry point. `--selftest` runs the checks and exits; otherwise the app starts.
+/// Entry point. `--selftest` runs the checks and exits; `--snapshot` saves a picture and exits;
+/// otherwise the app starts.
 @main
 enum Main {
     static func main() {
         if CommandLine.arguments.contains("--selftest") {
             exit(SelfTest.run() ? 0 : 1)
+        }
+        if CommandLine.arguments.contains("--snapshot") {
+            exit(Snapshot.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
         SRMetalApp.main()
     }
