@@ -85,6 +85,14 @@ enum SceneCatalog {
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 44, 300, 500, 700, 979],
             make: { device, format in try InterferenceScene(part: .interference, device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "techno-bars",
+            title: "Techno Bars",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [1, 100, 419, 430, 800, 1259, 1262, 1300, 1700, 1920],
+            make: { device, format in try TechnoBarsScene(device: device, pixelFormat: format) }
         )
     ]
 }

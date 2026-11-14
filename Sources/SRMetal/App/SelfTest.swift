@@ -28,6 +28,15 @@ enum SelfTest {
         check("interference stripe picture matches original file",
               crc32(quarter(of: InterferenceModel.stripePicture)) == 990_890_590)
 
+        // The bar-filling routine: a plain 40x20 rectangle must fill exactly 800 pixels,
+        // left and top edges included, right and bottom edges not (the original's rule).
+        var raster = BarRasteriser()
+        raster.add([.init(x: 10, y: 10), .init(x: 50, y: 10), .init(x: 50, y: 30), .init(x: 10, y: 30)])
+        let filled = raster.filled()
+        check("bar fill: rectangle fills the expected pixels",
+              filled.reduce(0) { $0 + Int($1) } == 800 && filled[10 * 320 + 10] == 1 && filled[29 * 320 + 49] == 1
+                  && filled[10 * 320 + 50] == 0 && filled[30 * 320 + 10] == 0)
+
         guard let device = MTLCreateSystemDefaultDevice(),
               let queue = device.makeCommandQueue() else {
             check("Metal device available", false)

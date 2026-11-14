@@ -9,7 +9,7 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Three scenes work in both looks: Dot Tunnel, Rings, and Interference. (Rings and Interference were one
+- Four scenes work in both looks: Dot Tunnel, Rings, Interference, and Techno Bars. (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
@@ -19,13 +19,15 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference`.
+  `--scene dot-tunnel|rings|interference|techno-bars`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
 - `Sources/SRMetal/Core/` shared by all scenes: `DemoScene.swift` (the scene contract and the scene list),
   `Renderer.swift` (clock and the two looks), `Shaders.swift`.
+- `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
+  the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
 - `Sources/SRMetal/App/` window, menu, self-test.
 
@@ -71,12 +73,26 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   between steps. Ring shades stay as 8 distinct bands, as in the original.
 - Circles are round in pixels, so on the 4:3 display they are slightly tall ovals, as on a real VGA monitor.
 
-## Techno bars: what the original does (for when we build it)
-- Each frame draws 11 rotating bars as a 1-bit picture and writes it into ONE of the 4 bit planes of one of
-  8 video pages, cycling. Older frames stay in the other planes, so bars leave trails; the palette colours a
-  pixel by how many planes have it set. A beat flash comes from the music row.
+## Techno Bars notes
+- Source: TECHNO/KOE.C `doit1` (420 steps), `doit2` (840), `doit3` (up to 980, sliding off right near the end),
+  plus KOEA.ASM `asmbox`/`drawline`/`blit16` and POLYCLIP.ASM. The scene loops after the slide-off.
+- How the original made trails: each frame's bars are a 1-bit picture written into ONE of the 4 bit planes of
+  one of 8 video pages (4 pages in `doit3`), then that page is shown. The other planes still hold the frames
+  from 8/16/24 steps earlier (4/8/12 in `doit3`). The palette colours a pixel by how many planes are set.
+- Classic look: `TechnoBarsModel` replays those steps on the processor (pages, planes, the XOR edge-fill
+  rasteriser and the clipper ported step for step) and `IndexedCanvas` displays the result. So the self-test
+  for this scene only proves the display path; the port of the rasteriser was checked by reading, plus one
+  rectangle fill test. It has NOT been compared with a running original.
+- Modern look: per screen pixel, the shader tests the current bars and three ghosts analytically and shades by
+  the count, with soft edges, gliding between steps (one step of delay so there is always a next state).
+- Beat flash: the original flashed on every 8th music row. Without music this is recreated from the song's
+  header (speed 3, tempo 130: a flash about every 32 steps). Approximate, and not aligned to anything.
+- Kept quirks: the bottom screen row is never drawn; `doit3`'s second frame puts the bars off-screen (one
+  blank frame); section one's last frames linger as ghosts at the start of section two.
+- Left out: the original's lead-in (white flash, then four columns dropping to black on four beats), stale
+  video memory showing briefly at the start of `doit1`, and the picture that scrolls in after the slide-off.
 
 ## Next steps
-- Techno bars (same original program as Interference) is the natural next scene; user to confirm.
+- User to pick the next scene.
 - Build the sidebar scene picker when asked.
 - Later: music.
