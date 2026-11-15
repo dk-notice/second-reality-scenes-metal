@@ -547,7 +547,7 @@ enum SelfTest {
                 }
             }
             check("City pictures match the original assembly's at \(expected.count) animation frames (over colour 255)",
-                  expected.count == 31 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
+                  expected.count == 45 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
             check("City palette is the original file's with U2E.C's four changes; the screen starts black",
                   crc32(city.palette) == 2_445_111_768, "checksum \(crc32(city.palette))")
             check("City draws ground plates first always, and the ship last in frames 901...1099",
