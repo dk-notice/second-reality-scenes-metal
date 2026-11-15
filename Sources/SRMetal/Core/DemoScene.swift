@@ -101,6 +101,14 @@ enum SceneCatalog {
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "starfield",
+            title: "Hidden Starfield",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
+            make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
         )
     ]
 }

@@ -21,7 +21,7 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|starfield`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
@@ -122,12 +122,30 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   to black (frames 2360-2424) and loops, starting again with the original's 130-step floor fade-in. The
   original's uninitialised re-drop counter starts at 0 here. The unused "face" data is not used.
 
+## Hidden Starfield notes
+- Source: DDSTARS/STARS.ASM (live; its constants are in K.EXE) wrapped by KOE.ASM. POLYEGA.ASM and SIN1024.INC
+  are included but unused; STARS.OK/STARS.PRE are older versions; DOIT1-3.C, KR.C, TEST/ are unrelated leftovers.
+- Canvas is 320x400 (EGA mode 0Dh with line-doubling off), the first scene that is not 320x200. The classic
+  texture, self-test and `--snapshot` coped without changes to `Core/`.
+- How the original worked: 64 off-screen 320x100 pictures in a ring, one shown per step; each step the stars'
+  dots are OR-ed into the current picture and pictures are never cleared, so a seamless 64-step film loop
+  gets denser for ever. Bottom half of the screen = the picture 32 places round the ring, upside down.
+  512 stars to step 900, nothing 901-1200, then 1024 stars each also drawn 17 pictures ahead.
+- Classic look: `StarfieldModel` replays that on the processor (own random generator: Microsoft's constants
+  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Checked by reading
+  the assembly plus an independent Python re-run with matching checksums; NOT compared with a running original.
+- Modern look: the model also records each star's "flight"; the shader works out which dots of each flight are
+  in the picture now showing and draws soft round stars, bigger and brighter when nearer, gliding between steps.
+- Deliberate departures: the two text panels (a picture) are left out; the original never ended, this stops
+  adding stars at step 1984, fades out over the last 33 of 2048 steps and loops from black.
+- Docs picture step: starfield 1700.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
 1. Bouncing dots - DONE
 2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM)
-3. Hidden starfield (DDSTARS)
+3. Hidden starfield (DDSTARS) - DONE
 4. 3D sine landscape (COMAN) - a voxel landscape; has a background picture
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
 6. Glenz vectors (GLENZ)

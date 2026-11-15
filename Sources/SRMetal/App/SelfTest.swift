@@ -118,6 +118,28 @@ enum SelfTest {
               loopStep <= ordinaryStep * 11 / 10,
               "\(loopStep) pixels change across the loop, \(ordinaryStep) across an ordinary step")
 
+        // Hidden Starfield. The original worked its tables out when it started, so there is no data file
+        // to compare with; the expected numbers here come from a separate re-run of the assembly's rules
+        // (written independently in Python while studying STARS.ASM).
+        check("Starfield scale tables match the assembly's formula",
+              Array(StarfieldModel.scaleY[0...2]) == [23592, 22980, 22398] && StarfieldModel.scaleY[255] == 3024
+                  && Array(StarfieldModel.scaleX[0...2]) == [31457, 30640, 29864] && StarfieldModel.scaleX[255] == 4032)
+        var starfield = StarfieldModel()
+        check("Starfield random numbers give the expected first stars (after the 100 warm-up steps)",
+              starfield.stars[0...3].map { [Int($0.depth), $0.x, $0.y] }
+                  == [[55, -512, -386], [54, 120, -278], [53, 278, 244], [52, 125, 182]])
+        let starfieldStart = starfield.classicIndices()
+        var starfieldSums: [UInt32] = []
+        for step in 1...StarfieldModel.lengthInTicks {
+            starfield.tick()
+            if [1, 900, 1200, 1500].contains(step) { starfieldSums.append(crc32(starfield.currentPicture)) }
+        }
+        check("Starfield pictures match the independent re-run at steps 1, 900, 1200, 1500",
+              starfieldSums == [2_529_779_785, 1_705_863_020, 2_791_989_969, 907_008_394])
+        check("Starfield loops after \(StarfieldModel.lengthInTicks) steps",
+              starfield.ticks == 0 && starfield.classicIndices() == starfieldStart
+                  && StarfieldModel.fadeLevel(tick: StarfieldModel.lengthInTicks - 1) == 1)
+
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok
     }

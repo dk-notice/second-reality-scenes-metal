@@ -15,6 +15,7 @@ Every scene can be shown two ways, switchable at any time:
 | Interference | ![](docs/images/interference-modern.png) | ![](docs/images/interference-classic.png) |
 | Techno Bars | ![](docs/images/techno-bars-modern.png) | ![](docs/images/techno-bars-classic.png) |
 | Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
+| Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 
 ## What this is, and is not
 
@@ -37,6 +38,7 @@ There is no music yet.
 | Rings, Interference | Psi | [docs/scenes/rings-and-interference.md](docs/scenes/rings-and-interference.md) |
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
+| Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
 Planned, roughly easiest first: plasma, hidden starfield, 3D sine landscape, plasma cube, glenz vectors,
 ships fly-by, 3D city. Picture-based scenes, scrollers and stills are out of scope.
@@ -71,7 +73,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `starfield` |
 | `--look modern` or `--look classic` | Start in that look |
 
 Two more are run directly on the program inside the app, and open no window:
