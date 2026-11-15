@@ -39,9 +39,11 @@ final class VisuWorld {
         return count
     }()
 
-    init(name: String) throws {
+    /// `load` reads one of the scene's files by name. It is the app's data folder unless something
+    /// else is handed in (the self-test hands in deliberately damaged files).
+    init(name: String, load: (String) throws -> [UInt8] = VisuData.load) throws {
         self.name = name
-        let materials = try VisuData.load("\(name).00M")
+        let materials = try load("\(name).00M")
         guard materials.count >= 16 + 768 else { throw VisuError.badFile("\(name).00M", "too short") }
         let m = VisuBytes(bytes: materials)
         palette = Array(materials[16..<16 + 768])
@@ -49,25 +51,36 @@ final class VisuWorld {
 
         // The object list: a count (which includes the camera), then one file number per object.
         // A number seen before means "another copy of that object".
+        // Both numbers come from the file; they are checked before anything is read by them.
+        // (U2A.C / U2E.C have room for 256 objects, `MAXOBJ`.)
         let list = m.u32(4)
+        guard list + 2 <= materials.count else {
+            throw VisuError.badFile("\(name).00M", "the object list is placed outside the file (\(list))")
+        }
         let count = m.u16(list)
+        guard count >= 1, count <= 256, list + count * 2 <= materials.count else {
+            throw VisuError.badFile("\(name).00M", "the object list cannot hold \(count) objects")
+        }
         var objects: [VisuObject?] = [nil]
         var meshes: [Int: VisuMesh] = [:]
         for c in 1..<count {
             let number = m.u16(list + c * 2)
             if meshes[number] == nil {
                 let file = String(format: "%@.%03d", name, number)
-                meshes[number] = try VisuMesh(file: file, bytes: try VisuData.load(file))
+                meshes[number] = try VisuMesh(file: file, bytes: try load(file))
             }
             objects.append(VisuObject(mesh: meshes[number]!, fileNumber: number))
         }
         self.objects = objects
 
         // The list of animations: pairs of words, ended by -1. Both scenes have exactly one.
-        let animations = VisuBytes(bytes: try VisuData.load("\(name).0AA"))
+        let animations = VisuBytes(bytes: try load("\(name).0AA"))
+        guard animations.bytes.count >= 2 else { throw VisuError.badFile("\(name).0AA", "too short") }
         let first = animations.u16(0)
+        // The number becomes two letters, A...Z each (U2A.C: `a/10+'A'`, `a%10+'A'`).
+        guard first < 260 else { throw VisuError.badFile("\(name).0AA", "animation number \(first)") }
         let letters = String(UnicodeScalar(UInt8(65 + first / 10))) + String(UnicodeScalar(UInt8(65 + first % 10)))
-        stream = try VisuData.load("\(name).0\(letters)")
+        stream = try load("\(name).0\(letters)")
     }
 
     /// The camera's turn and position in every frame of the animation: element 0 is before the
@@ -119,11 +132,14 @@ final class VisuWorld {
     func advance() -> Bool {
         if ended { return false }
         var number = 0
+        // The stream is followed byte by byte with nothing to say how long a frame is, so every
+        // read checks that it is still inside the file. A stream that stops early (a damaged
+        // file) simply ends the animation there.
         while true {
-            guard position < stream.count else { ended = true; return false }
-            var a = Int(stream[position]); position += 1
+            guard var a = nextByte() else { ended = true; return false }
             if a == 0xFF {
-                a = Int(stream[position]); position += 1
+                guard let b = nextByte() else { ended = true; return false }
+                a = b
                 if a <= 0x7F {
                     fieldOfView = UInt16(a) << 8
                     break
@@ -134,7 +150,8 @@ final class VisuWorld {
             }
             if a & 0xC0 == 0xC0 {
                 number = (a & 0x3F) << 4
-                a = Int(stream[position]); position += 1
+                guard let b = nextByte() else { ended = true; return false }
+                a = b
             }
             number = (number & 0xFF0) | (a & 0xF)
             guard number < objects.count else { ended = true; return false }
@@ -147,12 +164,19 @@ final class VisuWorld {
             var r = number == 0 ? camera : objects[number]!.placement
             var changed = 0
             for i in 0..<((a & 0x30) >> 4) {
-                changed |= Int(stream[position]) << (8 * i); position += 1
+                guard let b = nextByte() else { ended = true; return false }
+                changed |= b << (8 * i)
             }
+            // How many bytes the changes themselves take, to check them all at once.
+            let size = changed & 0x40 != 0 ? 2 : 1
+            var bytes = 0
+            for shift in [0, 2, 4] { bytes += [0, 1, 2, 4][(changed >> shift) & 3] }
+            for b in 0..<9 where changed & (0x80 << b) != 0 { bytes += size }
+            guard position + bytes <= stream.count else { ended = true; return false }
+
             r.x = r.x &+ signed(bytes: changed & 3)
             r.y = r.y &+ signed(bytes: (changed >> 2) & 3)
             r.z = r.z &+ signed(bytes: (changed >> 4) & 3)
-            let size = changed & 0x40 != 0 ? 2 : 1
             for b in 0..<9 where changed & (0x80 << b) != 0 {
                 r.m[b] = r.m[b] &+ signed(bytes: size)
             }
@@ -162,7 +186,15 @@ final class VisuWorld {
         return true
     }
 
-    /// `lsget`: a signed number stored in 0, 1, 2 or 4 bytes (`code` 0, 1, 2, 3).
+    /// The stream's next byte, or nil at its end.
+    private func nextByte() -> Int? {
+        guard position < stream.count else { return nil }
+        defer { position += 1 }
+        return Int(stream[position])
+    }
+
+    /// `lsget`: a signed number stored in 0, 1, 2 or 4 bytes (`code` 0, 1, 2, 3). The caller has
+    /// checked that the bytes are there.
     private func signed(bytes code: Int) -> Int32 {
         switch code {
         case 1:

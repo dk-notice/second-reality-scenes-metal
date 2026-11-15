@@ -391,7 +391,11 @@ final class VisuModernRenderer {
         // The original's light: brightness 0...255 = 128 + 128 * cos(angle to the light), then
         // divided down to the polygon's colour range and held to 1...30 (or the range's end).
         // The 1993 code dropped the fraction; taking half off here keeps the same average.
-        float brightness = clamp(128.0 + 128.0 * dot(normalize(turn * float3(v.lightNormal)), u.light.xyz), 0.0, 255.0);
+        // The turned normal is NOT brought back to length 1, because the original did not: the
+        // recordings scale some objects (the big ship shrinks to a fifth as it leaves; one city
+        // building is stretched to twice its depth), and the original's light on them weakens or
+        // strengthens with the scale. Normalising here made the big ship lighter than in 1993.
+        float brightness = clamp(128.0 + 128.0 * dot(turn * float3(v.lightNormal), u.light.xyz), 0.0, 255.0);
         float shade = v.divisor > 0.0 ? clamp(brightness / v.divisor - 0.5, 1.0, v.maxShade) : 1.0;
         out.colour = v.baseColour + shade;
         return out;

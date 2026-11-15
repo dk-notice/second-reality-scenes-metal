@@ -283,7 +283,7 @@ final class VisuEngine {
             }
 
             if flags & VisuFlags.gouraud != 0 {
-                for i in 0..<sides {
+                for i in 0..<min(sides, 16) {
                     let v = Int(r16(p1 + Self.polyVertex + i * 4))
                     let n = v < vertexNormal.count ? vertexNormal[v] : 0
                     let c = UInt8(shade(flags: flags, normal: n)) &+ poly[p1 + Self.polyColour]
@@ -356,6 +356,19 @@ final class VisuEngine {
         return si
     }
 
+    /// The most corners a clipped polygon is allowed to grow to here. The original had room for
+    /// 16 and no check: more would have run on into the memory after the record. The two scenes'
+    /// polygons stay convex and never get near that (the most seen is 16), but a damaged file
+    /// can hold a zig-zag that gains a corner at every crossing, so the growth is stopped (and
+    /// counted as a fault) before it leaves this replay's copy of the two records.
+    private static let mostClippedCorners = 32
+
+    private func roomForCorner(_ di: Int, in dest: Int) -> Bool {
+        if (di - dest) >> 2 < Self.mostClippedCorners { return true }
+        faults += 1
+        return false
+    }
+
     private func depth(_ vertex: Int) -> Int32 {
         guard vertex < rz.count else { faults += 1; return 0 }
         return rz[vertex]
@@ -398,7 +411,7 @@ final class VisuEngine {
             let y = divide(Int64(ry[b] &- ry[a]) * Int64(part), whole) &+ ry[a]
             let p = perspective(x, y, limit)
             clipVisibility |= p.flags
-            if !(s16(di + Self.polyX - 4) == p.x && s16(di + Self.polyY - 4) == p.y) {
+            if !(s16(di + Self.polyX - 4) == p.x && s16(di + Self.polyY - 4) == p.y), roomForCorner(di, in: dest) {
                 w16(di + Self.polyX, p.x)
                 w16(di + Self.polyY, p.y)
                 w16(di + Self.polyShade, r16(di - 4 + Self.polyShade))
@@ -417,7 +430,7 @@ final class VisuEngine {
                 repeat {
                     // ZCLIPADDVISVX: copy a corner that is in front of the plane
                     let (x, y) = (r16(si + Self.polyX), r16(si + Self.polyY))
-                    if !(r16(di + Self.polyX - 4) == x && r16(di + Self.polyY - 4) == y) {
+                    if !(r16(di + Self.polyX - 4) == x && r16(di + Self.polyY - 4) == y), roomForCorner(di, in: dest) {
                         w16(di + Self.polyX, x)
                         w16(di + Self.polyY, y)
                         w16(di + Self.polyShade, r16(si + Self.polyShade))
@@ -474,6 +487,7 @@ final class VisuEngine {
             let multiplier = divide16(Int32(run) << 14, c2 &- c1)
             let cutOther = Int16(truncatingIfNeeded: (Int32(rise) * Int32(multiplier)) >> 14) &+ o1
             if s16(di + o - 4) == cutOther && s16(di + c - 4) == limit { return }
+            guard roomForCorner(di, in: dest) else { return }
             w16(di + o, cutOther)
             w16(di + c, limit)
             if clipGouraud {
@@ -499,7 +513,7 @@ final class VisuEngine {
                 repeat {
                     // NEWCLIPCOPY
                     let xy = r32(si + Self.polyX)
-                    if r32(di + Self.polyX - 4) != xy {
+                    if r32(di + Self.polyX - 4) != xy, roomForCorner(di, in: dest) {
                         w32(di + Self.polyX, xy)
                         w16(di + Self.polyShade, r16(si + Self.polyShade))
                         di += 4

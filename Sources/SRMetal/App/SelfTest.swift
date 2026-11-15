@@ -362,6 +362,51 @@ enum SelfTest {
                 check("VISU modern look glides between animation frames",
                       moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
             }
+            // The recording scales the big ship down as it leaves, and the original's light dims
+            // with that scale. The modern look must do the same (it once normalised the scale away:
+            // +4.5 here, against +0.7 now).
+            if let test = VisuTestCases.all.first(where: { $0.name == "ships-0100" }) {
+                let lean = try VisuTestCommand.brightnessLean(test.kind)
+                check("VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)",
+                      lean.pixels > 50_000 && abs(lean.lean) < 2.5,
+                      String(format: "modern is %+.2f of 255 brighter on average over %d ship pixels", lean.lean, lean.pixels))
+            }
+
+            // Both whole animations, every frame, through the 1993 replay: nothing the original
+            // would have crashed on, and one engine drawing every frame in turn gives exactly the
+            // pictures a fresh engine gives for each frame alone (so what the engine carries over
+            // from picture to picture, see docs/visu-engine.md "Kept quirks", changes no pixel).
+            var loopFaults = 0, carriedOver: [String] = [], framesDrawn = 0
+            for scene in ["U2A", "U2E"] {
+                let world = try VisuWorld(name: scene)
+                if scene == "U2E" { world.distanceRule = VisuWorld.cityOrdering }
+                let one = VisuEngine()
+                VisuWorld.setSceneWindow(one)
+                while world.advance() {
+                    one.clear(to: 0)
+                    world.draw(with: one)
+                    let fresh = VisuEngine()
+                    VisuWorld.setSceneWindow(fresh)
+                    world.draw(with: fresh)
+                    loopFaults += fresh.faults
+                    framesDrawn += 1
+                    if fresh.pixels != one.pixels && carriedOver.count < 5 { carriedOver.append("\(scene) frame \(world.frame)") }
+                }
+                loopFaults += one.faults
+            }
+            check("VISU replay of both whole animations meets nothing the original would have crashed on",
+                  framesDrawn == 2322 && loopFaults == 0, "\(framesDrawn) frames, \(loopFaults) faults")
+            check("VISU replay: what the engine carries from picture to picture changes no pixel in either animation",
+                  framesDrawn == 2322 && carriedOver.isEmpty, carriedOver.joined(separator: ", "))
+
+            // Damaged data files must be turned away with an error, or load and draw, but never
+            // crash; and the engine must hold a polygon that clipping would grow without end.
+            let damaged = try VisuDamagedFiles.run()
+            check("VISU loader turns damaged data files away instead of crashing",
+                  damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty,
+                  damaged.wronglyAccepted.isEmpty ? damaged.summary : "not turned away: \(damaged.wronglyAccepted.joined(separator: ", "))")
+            check("VISU engine stops a scribbled polygon growing past its record while being clipped",
+                  damaged.scribblesStopped > 0, "\(damaged.scribblesStopped) corners refused")
         } catch {
             check("VISU engine test cases could be set up", false, "\(error)")
         }
