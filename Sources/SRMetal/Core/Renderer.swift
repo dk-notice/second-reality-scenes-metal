@@ -98,13 +98,12 @@ final class Renderer: NSObject, MTKViewDelegate {
         switch look {
         case .modern:
             // Draw the scene straight onto the screen at full resolution.
+            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: entry.canvasSize,
+                                  targetSize: SIMD2(Float(box.width), Float(box.height)))
+            scene.prepare(commands: commands, frame: frame)
             if let encoder = commands.makeRenderCommandEncoder(descriptor: Self.clearPass(into: screen)) {
                 encoder.setViewport(box)
-                scene.draw(into: encoder, frame: FrameInfo(
-                    look: .modern,
-                    alpha: alpha,
-                    canvasSize: entry.canvasSize,
-                    targetSize: SIMD2(Float(box.width), Float(box.height))))
+                scene.draw(into: encoder, frame: frame)
                 encoder.endEncoding()
             }
 
@@ -128,8 +127,10 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     /// Draws one classic-look frame into `texture`. Also used by the self-test.
     static func drawClassic(scene: DemoScene, canvasSize: SIMD2<Float>, into texture: MTLTexture, commands: MTLCommandBuffer) {
+        let frame = FrameInfo(look: .classic, alpha: 0, canvasSize: canvasSize, targetSize: canvasSize)
+        scene.prepare(commands: commands, frame: frame)
         guard let encoder = commands.makeRenderCommandEncoder(descriptor: clearPass(into: texture)) else { return }
-        scene.draw(into: encoder, frame: FrameInfo(look: .classic, alpha: 0, canvasSize: canvasSize, targetSize: canvasSize))
+        scene.draw(into: encoder, frame: frame)
         encoder.endEncoding()
     }
 

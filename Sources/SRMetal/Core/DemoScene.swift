@@ -34,12 +34,21 @@ protocol DemoScene: AnyObject {
     func reset()
     /// Advance the scene by one step. Called 70 times per second, like the VGA refresh the demo was timed to.
     func tick()
+    /// Called just before `draw`, while no drawing pass is open yet. A scene that needs to draw
+    /// into a picture of its own first (for example 3D shapes with a depth buffer, which the app's
+    /// main pass does not have) does that here, using `commands`. Most scenes need nothing: there
+    /// is an empty default.
+    func prepare(commands: MTLCommandBuffer, frame: FrameInfo)
     /// Draw the current state. The viewport is already set; (0,0) is the canvas's top-left corner.
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo)
     /// The classic-look picture for the current state, worked out on the processor by the 1993 rules:
     /// red, green, blue bytes (0...255) for each canvas pixel, row by row. The self-test compares
     /// what the graphics chip draws against this.
     func classicReferenceFrame() -> [UInt8]
+}
+
+extension DemoScene {
+    func prepare(commands: MTLCommandBuffer, frame: FrameInfo) {}
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.

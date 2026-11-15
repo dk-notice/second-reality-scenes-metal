@@ -70,12 +70,13 @@ enum Snapshot {
                 pixelFormat: Renderer.pixelFormat, width: width, height: height, mipmapped: false)
             descriptor.usage = [.renderTarget]
             descriptor.storageMode = .shared
+            let frame = FrameInfo(look: .modern, alpha: 0, canvasSize: entry.canvasSize,
+                                  targetSize: SIMD2(Float(width), Float(height)))
+            scene.prepare(commands: commands, frame: frame)
             guard let texture = device.makeTexture(descriptor: descriptor),
                   let encoder = commands.makeRenderCommandEncoder(descriptor: Renderer.clearPass(into: texture))
             else { throw Failure.couldNotDraw }
-            scene.draw(into: encoder, frame: FrameInfo(
-                look: .modern, alpha: 0, canvasSize: entry.canvasSize,
-                targetSize: SIMD2(Float(width), Float(height))))
+            scene.draw(into: encoder, frame: frame)
             encoder.endEncoding()
             commands.commit()
             commands.waitUntilCompleted()
@@ -108,6 +109,12 @@ enum Snapshot {
             }
         }
 
+        guard let image = image(bgra: pixels, width: width, height: height) else { throw Failure.couldNotDraw }
+        return image
+    }
+
+    /// A picture from pixels given as blue, green, red, (unused) bytes, row by row.
+    static func image(bgra pixels: [UInt8], width: Int, height: Int) -> CGImage? {
         let bitmapInfo = CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.noneSkipFirst.rawValue
         guard let provider = CGDataProvider(data: Data(pixels) as CFData),
               let colourSpace = CGColorSpace(name: CGColorSpace.sRGB),
@@ -115,11 +122,11 @@ enum Snapshot {
                 width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4,
                 space: colourSpace, bitmapInfo: CGBitmapInfo(rawValue: bitmapInfo), provider: provider,
                 decode: nil, shouldInterpolate: true, intent: .defaultIntent)
-        else { throw Failure.couldNotDraw }
+        else { return nil }
         return image
     }
 
-    private static func writePNG(_ image: CGImage, to url: URL) -> Bool {
+    static func writePNG(_ image: CGImage, to url: URL) -> Bool {
         guard let destination = CGImageDestinationCreateWithURL(
             url as CFURL, UTType.png.identifier as CFString, 1, nil)
         else {

@@ -293,6 +293,23 @@ enum SelfTest {
                   wrong.isEmpty, wrong.isEmpty ? "" : "differ: \(wrong.joined(separator: " "))")
             check("VISU engine replay met nothing the original would have crashed on", faults == 0,
                   faults == 0 ? "" : "\(faults) faults")
+            // The modern look of the engine (triangles on the graphics chip) has no exact reference,
+            // so it is held to the 1993 picture loosely: the average difference per colour channel
+            // must stay small. (Measured over all cases when written: 5.0 at most, out of 255.)
+            var far: [String] = []
+            for name in ["ship-turn1", "ships-0060", "bigship-1", "logo-1", "city-0100", "city-0800", "city-1420"] {
+                guard let test = VisuTestCases.all.first(where: { $0.name == name }) else { continue }
+                let difference = try VisuTestCommand.difference(test.kind)
+                if difference > 8 { far.append("\(name) \(difference)") }
+            }
+            check("VISU modern look stays close to the 1993 picture in 7 test cases", far.isEmpty, far.joined(separator: ", "))
+            if let test = VisuTestCases.all.first(where: { $0.name == "city-0800" }) {
+                let still = try VisuTestCommand.modern(test.kind, blend: 0)
+                let between = try VisuTestCommand.modern(test.kind, blend: 0.5)
+                let moved = zip(still, between).reduce(0) { $0 + ($1.0 != $1.1 ? 1 : 0) }
+                check("VISU modern look glides between animation frames",
+                      moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
+            }
         } catch {
             check("VISU engine test cases could be set up", false, "\(error)")
         }

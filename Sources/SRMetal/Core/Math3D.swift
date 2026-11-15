@@ -28,6 +28,21 @@ enum Math3D {
             SIMD4(0, 0, -near * depth, 0)))
     }
 
+    /// The same projection as `perspective`, for scenes that use a depth buffer over a very large
+    /// range of distances (the VISU engine's city: from 512 to millions). Depth comes out as
+    /// `near / Z`: exactly 1 at the near plane, falling towards 0 with distance, and there is no far
+    /// limit. Stored that way round, depth numbers stay precise far away, where the usual
+    /// arrangement runs out of digits. Use it with a depth buffer cleared to 0 and the test
+    /// "greater (or equal) wins".
+    static func perspectiveNearOverZ(focal: SIMD2<Float>, centre: SIMD2<Float>, canvasSize: SIMD2<Float>,
+                                     near: Float) -> simd_float4x4 {
+        simd_float4x4(columns: (
+            SIMD4(2 * focal.x / canvasSize.x, 0, 0, 0),
+            SIMD4(0, -2 * focal.y / canvasSize.y, 0, 0),
+            SIMD4(2 * centre.x / canvasSize.x - 1, 1 - 2 * centre.y / canvasSize.y, 0, 1),
+            SIMD4(0, 0, near, 0)))
+    }
+
     /// Where a camera-space point lands, in pixels of a drawing area `targetSize` big.
     static func project(_ point: SIMD3<Float>, with matrix: simd_float4x4, targetSize: SIMD2<Float>) -> SIMD2<Float> {
         let clip = matrix * SIMD4(point, 1)
