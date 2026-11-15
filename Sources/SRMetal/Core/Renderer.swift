@@ -22,7 +22,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     private var scene: DemoScene
 
     private var lastTime: CFTimeInterval?
-    private var accumulator = 0.0
+    private var clock = StepClock()
 
     init(device: MTLDevice, entry: SceneEntry) throws {
         self.device = device
@@ -54,14 +54,14 @@ final class Renderer: NSObject, MTKViewDelegate {
         scene = try newEntry.make(device, Self.pixelFormat)
         entry = newEntry
         classicTexture = nil
-        accumulator = 0
+        clock = StepClock()
         lastTime = nil
     }
 
     /// Plays the current scene again from its beginning.
     func restart() {
         scene.reset()
-        accumulator = 0
+        clock = StepClock()
         lastTime = nil
     }
 
@@ -73,14 +73,9 @@ final class Renderer: NSObject, MTKViewDelegate {
         defer { lastTime = now }
         guard let last = lastTime else { return 0 }
 
-        // If the app was paused (window hidden, Mac asleep), don't try to catch up on minutes of steps.
-        accumulator += min(now - last, 0.25)
-        let step = 1.0 / Self.tickRate
-        while accumulator >= step {
-            scene.tick()
-            accumulator -= step
-        }
-        return Float(accumulator / step)
+        let due = clock.advance(by: now - last)
+        for _ in 0..<due.steps { scene.tick() }
+        return due.alpha
     }
 
     // MARK: - Drawing
@@ -159,7 +154,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     /// The largest 4:3 rectangle that fits in the window, centred, with black bars around it.
-    private static func letterbox(width: Double, height: Double) -> MTLViewport {
+    /// (Not private so that the self-test can check it.)
+    static func letterbox(width: Double, height: Double) -> MTLViewport {
         var w = width
         var h = width / displayAspect
         if h > height {
@@ -167,6 +163,33 @@ final class Renderer: NSObject, MTKViewDelegate {
             w = height * displayAspect
         }
         return MTLViewport(originX: (width - w) / 2, originY: (height - h) / 2, width: w, height: h, znear: 0, zfar: 1)
+    }
+}
+
+/// The arithmetic of the 70-steps-a-second clock, kept apart from the real time source so that the
+/// self-test can feed it made-up times (a 60 Hz display, a 120 Hz one, a long pause).
+struct StepClock {
+    /// Length of one step in seconds.
+    static let step = 1.0 / Renderer.tickRate
+    /// After a pause (window hidden, Mac asleep) at most this much time is caught up on, so the
+    /// scene does not race through minutes of steps.
+    static let longestCatchUp = 0.25
+
+    /// Time not yet turned into steps: always at least 0 and less than one step.
+    private(set) var owed = 0.0
+
+    /// Adds `elapsed` seconds of real time. Returns how many whole steps are now due, and how far
+    /// we are into the next one: 0 up to, but never reaching, 1.
+    mutating func advance(by elapsed: Double) -> (steps: Int, alpha: Float) {
+        owed += min(max(elapsed, 0), Self.longestCatchUp)
+        var steps = 0
+        while owed >= Self.step {
+            owed -= Self.step
+            steps += 1
+        }
+        // The fraction is below 1 as a 64-bit number, but squeezing it into 32 bits can round it
+        // up to exactly 1 (anything above 0.99999997 does). Hold it just under.
+        return (steps, min(Float(owed / Self.step), Float(1).nextDown))
     }
 }
 

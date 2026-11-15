@@ -1,3 +1,4 @@
+import Foundation
 import Metal
 import simd
 
@@ -75,8 +76,16 @@ final class IndexedCanvas {
                                   withBytes: buffer.baseAddress!, bytesPerRow: width)
         }
 
+        // The buffers are used in turn and keep what an earlier frame put in them. So after this
+        // frame's colours, blank the rest: a colour number beyond a short palette then shows black,
+        // not whatever colour a longer palette left there three frames ago.
         palette.withUnsafeBytes { bytes in
-            paletteBuffer.contents().copyMemory(from: bytes.baseAddress!, byteCount: bytes.count)
+            if let colours = bytes.baseAddress {
+                paletteBuffer.contents().copyMemory(from: colours, byteCount: bytes.count)
+            }
+            if bytes.count < paletteBuffer.length {
+                memset(paletteBuffer.contents() + bytes.count, 0, paletteBuffer.length - bytes.count)
+            }
         }
         encoder.setRenderPipelineState(second == nil ? pipeline : pairPipeline)
         encoder.setFragmentBuffer(paletteBuffer, offset: 0, index: 0)

@@ -64,7 +64,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   `glenz_reference.py`, `visu_reference.py`, and `x86interp.py`, the small x86 interpreter the last three share
   (moved out of the plasma cube tool unchanged on 2026-11-14; both older tools print the same as before).
 - `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
-  (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
+  (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test (`SelfTest.swift`; the checks of the
+  shared code and command line are in `CoreChecks.swift`).
 
 ## Adding a scene
 1. Create `Sources/SRMetal/Scenes/<Name>/` with a class that conforms to `DemoScene` (`reset`, `tick`, `draw`).
@@ -103,6 +104,30 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   pipelines did not have to change.
 - `docs/images/window.png` is a capture of the app's window only (`screencapture -l <window id>`), never
   the desktop.
+
+## Code review of core and app (2026-11-14)
+- Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
+  Full account, with how each finding was proven: `docs/how-it-works.md`, "Code review of the core and the app".
+- Fixed (8): clock fraction could be exactly 1; `IndexedCanvas` showed stale colours beyond a short palette;
+  `--snapshot` / `--motion-check` crashed on a negative step; `--motion-check` ignored a malformed range and
+  exited 0 on a failed `--csv`; mistyped `--scene` / `--look` / `--sidebar` / unknown `--option` were ignored
+  (now reported, exit code 2, no window); `--snapshot`'s 1993 look was up to one output pixel off from the
+  window's; `build.sh` left a stale app after a failed compile; holding L strobed the look (reasoned only).
+- No API that scenes call changed. New: `StepClock` (the clock's sums, in `Renderer.swift`), `StartupOptions`
+  (in `SRMetalApp.swift`), `Snapshot.request(from:)`, `MotionCheck.stepRange(from:)`.
+- Self-test: 235 checks (was 200; the 200 print exactly as before). Core and app checks are in
+  `App/CoreChecks.swift` and run first. New checks of shared code go THERE, not among the scenes' checks.
+  The self-test's last lines now give the number of checks run.
+- `docs/images/` classic pictures were NOT remade after the `--snapshot` scaling fix (at most one pixel's
+  difference at block edges). Remake them if exactness matters.
+- For the user to try by hand (none of this can be done by program): hold L down (should switch once, not
+  flicker); L, R and arrows with the sidebar list focused; fullscreen in and out with the sidebar shown and
+  hidden beforehand; resize and drag between displays; sleep and wake with the app open; quit within a
+  second of launch; relaunch and see what macOS restored; `open build/SRMetal.app --args --scene typo`
+  (nothing should open: the message only shows when the program is run directly in a terminal).
+- Proposals, not done: use the display's own timestamp for the clock; a `/simplify` pass over the
+  duplicated picture-difference loops in `SelfTest.swift` and `MotionCheck.swift` and the per-scene
+  shader recompiling; give `SceneEntry` a loop length so `--motion-check` need not guess where a loop ends.
 
 ## Dot Tunnel notes
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
