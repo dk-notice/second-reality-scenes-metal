@@ -635,6 +635,35 @@ enum SelfTest {
             check("3D City scene could be set up", false, "\(error)")
         }
 
+        // The sidebar builds and steps scenes on a background thread (for its small pictures) while
+        // the main scene runs. The two 3D scenes read files and share the engine's tables, so: built
+        // and stepped on four threads at once, they must draw exactly what one alone draws.
+        do {
+            func shipsPicture() throws -> [UInt8] {
+                let ships = try ShipsFlybyModel()
+                for _ in 0..<350 { ships.tick() }
+                return ships.screen
+            }
+            func cityPicture() throws -> [UInt8] {
+                let city = try City3DModel()
+                for _ in 0..<700 { city.tick() }
+                return city.screen
+            }
+            let alone = [try shipsPicture(), try cityPicture()]
+            let lock = NSLock()
+            var together = [[UInt8]?](repeating: nil, count: 4)
+            DispatchQueue.concurrentPerform(iterations: 4) { i in
+                let picture = i % 2 == 0 ? try? shipsPicture() : try? cityPicture()
+                lock.lock()
+                together[i] = picture
+                lock.unlock()
+            }
+            check("Ships and City built and stepped on four threads at once draw what one alone draws",
+                  (0..<4).allSatisfy { together[$0] == alone[$0 % 2] } && alone[0].contains { $0 != 0 })
+        } catch {
+            check("Ships and City could be built for the threads check", false, "\(error)")
+        }
+
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
         if let device = MTLCreateSystemDefaultDevice() {
             for entry in SceneCatalog.all {
