@@ -275,7 +275,7 @@ enum SelfTest {
                   && glenz.classicReferenceFrame() == glenzStart)
 
 
-        // The VISU 3D engine (groundwork for the ships and city scenes; no scene uses it yet).
+        // The VISU 3D engine by itself (the Ships Fly-by scene, further down, and the city are built on it).
         // Expected numbers come from tools/visu_reference.py, which runs the original assembly.
         check("VISU sine table matches the original file", crc32(words16(VisuTables.sine)) == 2_483_307_983)
         check("VISU field-of-view table matches the original file",
@@ -338,10 +338,23 @@ enum SelfTest {
             var differ: [Int] = []
             var pauseTouched = 0
             var firstShown = 0, lastShown = 0, shownAtEnd = 0, mostChanged = 0
-            var glideGap: Float = 0
+            var glideGap: Float = 0, halfwayGap: Float = 0
+            var glided = 0
             var previous = ships.screen
             for step in 1..<length {
                 let predicted = ships.pose(alpha: 1)
+                // Half-way through the glide every object must be half-way (not already at the
+                // next frame, and not still at this one).
+                let halfway = ships.pose(alpha: 0.5)
+                for item in halfway.items {
+                    guard let from = ships.currentPose.items.first(where: { $0.object === item.object }),
+                          let to = ships.nextPose.items.first(where: { $0.object === item.object }) else { continue }
+                    for c in 0..<4 {
+                        let middle = (from.matrix[c] + to.matrix[c]) * 0.5
+                        halfwayGap = max(halfwayGap, simd_reduce_max(simd_abs(item.matrix[c] - middle)))
+                    }
+                    if from.matrix != to.matrix { glided += 1 }
+                }
                 ships.tick()
                 let frame = ShipsFlybyModel.animationFrame(atStep: step)
                 let screen = ships.screen
@@ -381,6 +394,8 @@ enum SelfTest {
                   firstShown > 1 && lastShown == ShipsFlybyModel.animationFrames && shownAtEnd < 16 && mostChanged < 1200,
                   "\(shownAtEnd) ship pixels on the last step; at most \(mostChanged) pixels change per step near the ends")
             check("Ships modern look ends each glide exactly where the next step starts", glideGap < 0.001, "\(glideGap)")
+            check("Ships modern look is half-way between frames half-way through a step",
+                  glided > 900 && halfwayGap < 0.01, "\(glided) object moves checked, largest gap \(halfwayGap)")
             ships.tick()
             check("Ships loop after \(length) steps back to the empty horizon",
                   ships.step == 0 && ships.screen == firstPicture)

@@ -84,7 +84,13 @@ final class ShipsFlybyModel {
         // last step of the loop.
         if step >= Self.pauseSteps && step + 1 < Self.lengthInSteps {
             ahead.advance()
-            nextPose = ahead.pose()
+            // The look-ahead copy has its own objects; name each by its twin in `world`, because
+            // the blend pairs up "now" and "next" by which object it is.
+            nextPose = VisuPose(items: ahead.pose().items.compactMap { item in
+                guard let index = ahead.objects.firstIndex(where: { $0 === item.object }),
+                      let twin = world.objects[index] else { return nil }
+                return VisuPose.Item(object: twin, matrix: item.matrix)
+            })
         } else {
             nextPose = currentPose
         }

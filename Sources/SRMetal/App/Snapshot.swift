@@ -8,9 +8,11 @@ import UniformTypeIdentifiers
 ///
 /// - the command-line option that makes the pictures in the documentation:
 ///
-///       SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png>
+///       SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png> [blend]
 ///
-///   (960x720: 4:3, like the scene picture in the app's window), and
+///   (960x720: 4:3, like the scene picture in the app's window). The optional `blend` (0...1,
+///   modern look only) draws the picture that far from that step towards the next, as the app
+///   does between steps; it is for checking that motion is smooth. And
 /// - the small pictures in the window's scene list (see `Thumbnails.swift`).
 enum Snapshot {
     static let width = 960
@@ -34,14 +36,15 @@ enum Snapshot {
               let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] }),
               let look = Look(rawValue: arguments[flag + 2]),
               let step = Int(arguments[flag + 3]) else {
-            print("Usage: SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png>")
+            print("Usage: SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png> [blend 0...1]")
             print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", "))
             return false
         }
         let output = URL(fileURLWithPath: arguments[flag + 4])
+        let blend = arguments.count > flag + 5 ? min(max(Float(arguments[flag + 5]) ?? 0, 0), 1) : 0
 
         do {
-            let image = try render(entry: entry, look: look, step: step, width: width, height: height)
+            let image = try render(entry: entry, look: look, step: step, width: width, height: height, alpha: blend)
             return writePNG(image, to: output)
         } catch {
             print("Could not draw scene \(entry.title): \(error)")
@@ -51,8 +54,9 @@ enum Snapshot {
 
     /// Starts a fresh copy of a scene, runs it for `step` steps and returns a picture of what it then
     /// shows, `width` x `height` pixels. Opens no window, and is safe to call away from the main thread:
-    /// it makes its own scene and talks to the graphics chip through its own queue.
-    static func render(entry: SceneEntry, look: Look, step: Int, width: Int, height: Int) throws -> CGImage {
+    /// it makes its own scene and talks to the graphics chip through its own queue. `alpha` is how
+    /// far past the step to draw the modern look (0 = exactly on the step).
+    static func render(entry: SceneEntry, look: Look, step: Int, width: Int, height: Int, alpha: Float = 0) throws -> CGImage {
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             throw Failure.noGraphicsDevice
         }
@@ -70,7 +74,7 @@ enum Snapshot {
                 pixelFormat: Renderer.pixelFormat, width: width, height: height, mipmapped: false)
             descriptor.usage = [.renderTarget]
             descriptor.storageMode = .shared
-            let frame = FrameInfo(look: .modern, alpha: 0, canvasSize: entry.canvasSize,
+            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: entry.canvasSize,
                                   targetSize: SIMD2(Float(width), Float(height)))
             scene.prepare(commands: commands, frame: frame)
             guard let texture = device.makeTexture(descriptor: descriptor),

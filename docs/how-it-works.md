@@ -97,7 +97,7 @@ work this way.
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
 palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars,
-Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube and Glenz Vectors work this way.
+Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors and Ships Fly-by work this way.
 
 Some originals showed two slightly different pictures on alternate frames and let the eye mix them.
 `IndexedCanvas` can be given both pictures and shows their even mix (Plasma Cube does this).
@@ -166,8 +166,8 @@ list.
 **Scene behaviour.** For example, that Dot Tunnel loops back to an empty tunnel, and that Interference
 returns to its exact first frame after one full run.
 
-**The 3D engine against the original's code.** The engine in `Core/Visu/` has no scene yet, so it is
-tested by itself: 109 test pictures (single objects, clipping cases, whole frames of the ships and city
+**The 3D engine against the original's code.** The engine in `Core/Visu/` is also tested by itself,
+apart from the scenes that use it: 109 test pictures (single objects, clipping cases, whole frames of the ships and city
 animations) are drawn and their checksums compared with those from the original assembly, run by
 `tools/visu_reference.py`. Its modern look is held loosely to the 1993 pictures. See
 [visu-engine.md](visu-engine.md).
@@ -213,8 +213,9 @@ These came out of building the first scenes.
   prove it reproduces the file exactly, and calculate the table.
 - **Keep the 1993 look pixel-faithful in how things are drawn**, including the original's quirks where they
   affect pixels.
-- **No original artwork unless a scene cannot do without it.** Glenz Vectors is the one exception so
-  far (its chequered plate is a hand-drawn picture); it is kept as a Swift source file and the scene's
-  page says so.
+- **No original artwork unless a scene cannot do without it.** Two exceptions so far, each declared
+  at the top of the scene's page: Glenz Vectors (its chequered plate is a hand-drawn picture, kept as a
+  Swift source file) and Ships Fly-by (original 3D models and animation, and the original horizon
+  painting behind them, kept as data files in `Data/Visu/`).
 - **Make each scene work on its own.** Scenes loop cleanly. Full-screen white flashes and lead-ins to other
   scenes are left out. Straying from the original for this is fine, as long as the scene's page says so.

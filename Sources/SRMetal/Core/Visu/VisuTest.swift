@@ -1,7 +1,7 @@
 import Foundation
 
 /// Sets up and draws the engine's test cases (`VisuTestCases`), for the self-test and for the
-/// `--visu-test` command-line option. No scene in the app uses this; it exists so the engine can be
+/// `--visu-test` command-line option. Scenes do not draw through this; it exists so the engine can be
 /// checked and looked at by itself.
 enum VisuTest {
     /// A test case made ready to draw: the scene's objects with the things to draw placed in

@@ -12,7 +12,7 @@ import Metal
 /// case, `blend` (0...1) draws the modern picture that far between that frame and the next, the
 /// way a scene glides between animation steps.
 ///
-/// The engine has no scene in the app yet; this is how to look at it.
+/// This is how to look at the engine by itself, apart from the scenes built on it.
 enum VisuTestCommand {
     static let width = 960
     static let height = 720

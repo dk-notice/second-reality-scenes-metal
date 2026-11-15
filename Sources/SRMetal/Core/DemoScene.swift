@@ -170,8 +170,8 @@ enum SceneCatalog {
             title: "Ships Fly-by",
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 70, 130, 200, 290, 330, 345, 400, 480, 560, 591],
-            thumbnailStep: 330,
+            checkpoints: [0, 70, 130, 200, 290, 330, 345, 350, 400, 480, 560, 591],
+            thumbnailStep: 350,
             make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
         )
     ]

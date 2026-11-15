@@ -10,9 +10,10 @@ Two parts of Second Reality are real 3D: the **ships fly-by** near the start (`U
 city** near the end (`U2E.EXE`). Both are the same program with different data. The shared part is a
 small 3D engine its author (Psi) called **VISU**, about 4,000 lines of assembly and a little C.
 
-This page describes that engine, the data it reads, and this project's version of it. **There is no
-scene in the app yet.** The engine was built and checked by itself first, so that when the two scenes
-are added, a wrong picture can be traced to either the engine or the scene. What exists now:
+This page describes that engine, the data it reads, and this project's version of it. The engine was
+built and checked by itself first, so that when the two scenes were added, a wrong picture could be
+traced to either the engine or the scene. The ships scene now exists
+([scenes/ships-flyby.md](scenes/ships-flyby.md)); the city is still to come. What the engine consists of:
 
 - `Sources/SRMetal/Core/Visu/`: the engine, for both looks.
 - `Data/Visu/`: the original models and animation, 52 files, 257 KB (see "The data" below).
@@ -396,16 +397,18 @@ between the two looks stays under 8 out of 255 in seven cases (measured over all
   `vis_loadobject`, `vis_drawobject`, the animation reader, the object ordering. A misreading made the
   same way in both would not show. (The pictures are recognisably right, which limits how wrong
   they can be.)
-- **Whole scenes.** No scene exists yet. In particular, nothing here covers how the scenes start,
-  end, fade, or keep time with the music; the table above is from reading `U2A.C` and `U2E.C`.
+- **Whole scenes.** Nothing on this page covers how the scenes start, end, fade, or keep time with
+  the music; the table above is from reading `U2A.C` and `U2E.C`. The ships scene's own page says what
+  was checked for it ([scenes/ships-flyby.md](scenes/ships-flyby.md)).
 - **Paths the data never takes:** two-sided polygons, polygons with no shading, 8-shade ranges.
   They are ported but no test reaches them.
 - **Mode X page flipping and the screen-refresh queue**: not modelled at all.
 - **Which pictures a real PC drew.** A 1993 PC skipped animation frames when it was slow; this
   engine can draw every one. Because of the never-cleared flag above, the exact pixels of a frame
   can depend on which frames were drawn before it. Each single-frame test starts from a fresh engine.
-- **The modern look in motion**: only still pictures and one blended picture were looked at. Two
-  things to watch when the scenes are built: objects that sit almost exactly on top of each other
+- **The modern look in motion**, for the city: only still pictures and one blended picture were
+  looked at. (For the ships, every step of the scene was rendered and compared with its neighbours:
+  see the scene's page.) Two things to watch when the city is built: objects that sit almost exactly on top of each other
   (roads on ground plates are 10 units apart, which the depth buffer handles in the stills), and the
   city frames 901...1099 where the original forced the ship to be drawn last.
 

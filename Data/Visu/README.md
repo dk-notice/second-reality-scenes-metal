@@ -11,7 +11,7 @@ cannot be calculated, so the two 3D scenes load them. `./build.sh` copies this f
 | `U2A.00M` | palette (768 bytes) and the list of objects | Ships fly-by |
 | `U2A.001` ... `U2A.003` | objects: small ship, big ship, engine | Ships fly-by |
 | `U2A.0AA`, `U2A.0AB` | list of animations, and the one animation (521 frames) | Ships fly-by |
-| `U2ABG.UH` | background picture, 320x200, 64 colours (linked into U2A.EXE as `_BG.OBK`) | Ships fly-by |
+| `U2ABG.UH` | background picture, 320x200, 64 colours (linked into U2A.EXE as `_BG.OBK`): original hand-made ARTWORK | Ships fly-by |
 | `U2E.00M` | palette and the list of objects | 3D city |
 | `U2E.001` ... `U2E.042` | objects: buildings, ground plates, trees, cars, ship, logo | 3D city |
 | `U2E.0AA`, `U2E.0AB` | list of animations, and the one animation (1801 frames) | 3D city |

@@ -9,8 +9,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Ten scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
-  Hidden Starfield, 3D Sine Landscape, Plasma Cube and Glenz Vectors (the last three added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+- Eleven scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
+  Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors and Ships Fly-by (the last four added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
   own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
@@ -23,21 +23,23 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   The user tried it by hand and reported it "working perfectly" (2026-11-14); which interactions they tried
   was not itemised. Seen in window captures: sidebar open and hidden, both looks, row highlight, pictures,
   4:3 letterbox, window title.
-- The original's shared 3D engine ("VISU") is built and verified as groundwork, with NO scene yet
-  (2026-11-14): `Core/Visu/`, original data in `Data/Visu/`, `tools/visu_reference.py`, and
-  `docs/visu-engine.md`. The Ships fly-by and 3D city scenes are to be built on it. See "VISU engine notes"
+- The original's shared 3D engine ("VISU") is built and verified (2026-11-14): `Core/Visu/`, original data
+  in `Data/Visu/`, `tools/visu_reference.py`, and `docs/visu-engine.md`. Ships Fly-by is built on it
+  (2026-11-14, see "Ships Fly-by notes"); the 3D city is to be built on it next. See "VISU engine notes"
   and "How to build the Ships and City scenes" below.
 - No music.
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
-- `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
-  960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
+- `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png> [blend]` saves a
+  960x720 picture without opening a window. `blend` (0...1, optional, modern look) draws that far on towards
+  the next step, for checking motion (added with Ships Fly-by). The pictures in `docs/images/` were made this way (steps:
   dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
-  starfield 1700, sine-landscape 700, plasma-cube 416, glenz-vectors 1300 and, for the squash picture, 365).
+  starfield 1700, sine-landscape 700, plasma-cube 416, glenz-vectors 1300 and, for the squash picture, 365;
+  ships-flyby 350, and 170 and 345 for its "bigship" and "near" pictures).
 - `build/SRMetal.app/Contents/MacOS/SRMetal --visu-test list` names the 3D engine's 109 test cases;
   `--visu-test <case> <modern|classic> <file.png> [blend]` saves a 960x720 picture of one;
   `--visu-test compare` prints how far the modern look is from the 1993 one for each case.
@@ -410,9 +412,76 @@ Pitfalls found:
   above ground plates; fine in stills), and city frames 901-1099, where the original forced the ship to be
   drawn last and the modern look trusts the depth buffer instead. If flicker shows, a small depth bias in
   favour of later-drawn objects is the first thing to try.
-- Decisions the scenes still need (ask the user or follow the house rules): how to start and end without
-  the music cues and white fades, how to loop, and the ships' 7.4 s length (the original waited on the music
-  before and after).
+- Decisions the CITY still needs (ask the user or follow the house rules): how to start and end without
+  the music cues and white fades, and how to loop. (For the ships these were settled by the user: see
+  "Ships Fly-by notes".)
+
+## Ships Fly-by notes
+Full write-up: `docs/scenes/ships-flyby.md`.
+- Source: `VISU/C/U2A.C` (scene program) + the VISU engine + `U2A.*` data + `U2ABG.UH`. Files in
+  `Scenes/ShipsFlyby/`: `ShipsFlybyModel.swift` (background, palette, timetable; no graphics code) and
+  `ShipsFlybyScene.swift` (Metal).
+- USES ORIGINAL ARTWORK AND DATA (user's decision, 2026-11-14): the hand-painted horizon picture
+  `U2ABG.UH` stays as the background; the ships and their flight are the original's models and recorded
+  animation. Declared at the top of the scene's page, in the README and in `Data/Visu/README.md`.
+- What U2A.C adds to the engine: copies the WHOLE 320x200 background over the page every frame
+  (`vid_clearbg`; rows outside 25...174 of the picture are black), palette = scene colours + the picture's
+  64 colours at 192...255, no fades at all, starts and ends on music cues with the plain horizon showing.
+- Speed: NOT PC-dependent. An interrupt counts screen refreshes and the program reads one animation frame
+  per refresh (skipping frames when drawing was slow). So one frame per step is the original's rate.
+- Timetable: steps 0...70 empty horizon (`ShipsFlybyModel.pauseSteps` = 70, our choice, the ONE number to
+  change by eye), steps 71...591 = animation frames 1...521, loop at 592 (8.5 s). The animation itself
+  is empty for its first 22 frames and a speck for its last second. The last frame still has 4 pixels of
+  the big ship (it is never switched off); they vanish at the loop point.
+- Objects: 1, 4, 5 = small ship (one model three times; on at frames 260, 260, 271; off at 515, 520,
+  518), 2 = big ship (on at 17, first seen at 23, never off), 3 = engine (never on). Frame 521 switches
+  object 5 back on (a leftover in the data; harmless).
+- Classic look: model draws EVERY step (background copy + `world.draw(with: engine)`), whichever look is
+  showing, so the engine's carried-over state depends only on the step. `reset()` restarts both worlds and
+  calls `engine.resetClipper()`.
+- Modern look: background drawn first (smooth scaling; band edges kept crisp by clamping in the shader),
+  then `VisuModernRenderer` composited over it. Gliding uses a SECOND `VisuWorld` kept one frame ahead
+  (`ahead`), so at blend 0 the modern look shows exactly the classic frame, and it glides towards a
+  known next frame.
+- Replacement background for the modern look (for upscaled artwork later): put a picture named
+  `U2ABG-modern.png` in `Data/Visu/` and rebuild (`build.sh` copies `Data/Visu/U2*`). It must show the
+  whole 320x200 screen (4:3 as displayed, bars included; any pixel size). The 1993 look ignores it. Tried
+  once with a test picture; none is shipped. Code: `ShipsFlybyScene.modernBackgroundFile`.
+- Checked: scene pictures agree with all 15 assembly-verified ships frames (self-test: same ship pixels,
+  background untouched elsewhere); background and palette checksums from the original files; the loop;
+  restart; the glide (ends where the next step starts, and is half-way at half-way); the two looks within
+  2.8/255 of each other at 5 steps; motion of the whole loop by program (below).
+- Not checked: a running original or recording; U2A.C's start/end as the demo showed them; the modern
+  look by eye in the running app (the user is the first to watch it move).
+- MOTION CHECK (first time in this project): every step of the loop was rendered in both looks, the
+  modern look also half-way between steps (1,776 pictures), and neighbours compared by a small program.
+  Result: no jumps in either look (no step's change stands out from its neighbours, including the pause
+  and the loop point); the glide is even (the two halves of a step carry the same change, 2% apart on
+  average); no flicker on the big ship's hull panels (the engine notes' predicted problem did not show);
+  the only violent moment is the animation's own (steps 331...346, fighters entering through the near
+  plane from behind the camera, same shapes in both looks). The first run FOUND A REAL BUG that stills
+  could not show: the modern look was not gliding at all (see the trap below). Fixed and self-tested.
+- For the city session:
+  - Copy the structure of `ShipsFlybyModel`/`ShipsFlybyScene`. The city's animation frame lasts TWO
+    steps, so its look-ahead world advances every second step and the blend is `(stepWithinFrame +
+    alpha) / 2`.
+  - TRAP met here: `VisuPose.blended` pairs objects by identity. A pose taken from a second `VisuWorld`
+    has different objects, so NOTHING pairs and the "blend" silently shows the next frame (no glide, and
+    stills look perfect). Re-label the look-ahead pose with the main world's objects, as
+    `ShipsFlybyModel.tick` does. The self-test check "is half-way between frames half-way through a step"
+    exists to catch this; write the same check for the city.
+  - Stills cannot show motion faults. Use `--snapshot <id> modern <step> <file> 0.5` to render between
+    steps, render a run of consecutive pictures, and compare neighbours (a jump = one change much bigger
+    than those around it; flicker = pixels unlike both neighbours while the neighbours agree). The
+    comparison program was a throw-away Swift script (about 70 lines, ImageIO); rendering all 1,776
+    pictures took about 10 minutes, one process per picture.
+  - Never leave test files in `build/SRMetal.app/Contents/Resources/Visu/` while rendering: a test
+    background left there for a minute showed up as a "pop" in two pictures.
+  - No depth trouble showed in the ships scene (objects never interlock, and each ship is drawn in
+    the original's own polygon order). The city is the real test of the predicted problems: roads 10
+    units above ground plates, and frames 901...1099 (ship forced last in the original).
+  - The Swift compiler gives up ("unable to type-check in reasonable time") on a closure that builds a
+    SIMD4 from several `Float(...)` conversions and divides; write the parts out as separate `let`s.
 
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
@@ -424,13 +493,16 @@ stills are out of scope.
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - DONE (it shares nothing with the plasma after all)
 6. Glenz vectors (GLENZ) - DONE (the floor is a hand-drawn picture, included as data)
 -  The shared 3D engine for 7 and 8 (VISU) - DONE as groundwork, verified, no scene (2026-11-14)
-7. Ships fly-by (VISU engine + U2A data) - NEXT
-8. 3D city (VISU engine + U2E data)
+7. Ships fly-by (VISU engine + U2A data) - DONE (original background picture kept, user's decision)
+8. 3D city (VISU engine + U2E data) - NEXT
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: ships fly-by (rank 7 above), built on the finished engine. Read "How to build the Ships and
-  City scenes with this" above and `docs/visu-engine.md` first. Then the 3D city the same way.
+- Next scene: the 3D city (rank 8 above), built on the engine the same way Ships Fly-by was. Read "How to
+  build the Ships and City scenes with this" and "Ships Fly-by notes" (especially "For the city session")
+  above, and `docs/visu-engine.md`, first. `Scenes/ShipsFlyby/` is the pattern to copy.
+- Waiting on the user: watch Ships Fly-by in the app and judge the pause between passes
+  (`ShipsFlybyModel.pauseSteps`, now 70 = one second) and the look of the scaled-up background by eye.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Undecided idea: a third "Reimagined" look per scene using present-day graphics features. First thoughts and
