@@ -44,6 +44,9 @@ struct TechnoBarsModel {
         var centre: SIMD2<Double>
         /// How far the picture has slid to the right (section three's exit).
         var slide: Double
+        /// True for the first step of a section. The bars jump there (new angle, new thickness), so the
+        /// modern look must not glide into this step from the one before.
+        var startsSection = false
     }
 
     private(set) var section = Section.one
@@ -70,6 +73,10 @@ struct TechnoBarsModel {
 
     private(set) var history: [BarState] = []
     private var raster = BarRasteriser()
+    /// The next step drawn is the first of its section (see `BarState.startsSection`).
+    private var startsSection = true
+    /// Section three has slid off: the next step is the black one before the scene starts again.
+    private var endsAfterThisStep = false
 
     mutating func reset() {
         self = TechnoBarsModel()
@@ -77,16 +84,16 @@ struct TechnoBarsModel {
 
     // MARK: - One step
 
+    /// One pass of the original's loop. A page drawn in one pass only appeared on screen at the screen
+    /// refresh inside the NEXT pass. Just before that refresh, the original set the slide; just after it,
+    /// it set the flash colours. So each page was seen with the next pass's slide and flash. The end of
+    /// this function does that next-pass work early, so the page and the values it was seen with stay together.
     mutating func tick() {
-        // Beat flash.
-        let row = Int(Double(sceneTicks) / Self.musicRowInTicks)
-        if row != lastRow {
-            lastRow = row
-            if row & 7 == 7 { flash = 15 }
+        if endsAfterThisStep {
+            // Slid right off: the original went on to the next picture. We show one black step and start again.
+            reset()
+            return
         }
-        shownFlash = flash
-        if flash > 0 { flash -= 1 }
-        sceneTicks += 1
 
         var centre = SIMD2(160, 100)
         var thicknessScale = vm                 // section one uses vm directly
@@ -98,15 +105,6 @@ struct TechnoBarsModel {
             thicknessScale = vm / 64
         case .three:
             thicknessScale = vm / 64
-            if Self.sectionThreeTicks - passes < Self.slideWhenTicksLeft {
-                xpos -= xposa / 4
-                if xpos < 0 { xpos = 0 } else { xposa += 1 }
-                if xpos == 0 {
-                    // Slid right off: the original went on to the next picture. We start again.
-                    reset()
-                    return
-                }
-            }
             if rot2 < 32 {
                 centre = SIMD2(SinTable.sin(rot2) * rot2 / 8 + 160, SinTable.cos(rot2) * rot2 / 8 + 100)
             } else {
@@ -122,12 +120,13 @@ struct TechnoBarsModel {
         }
         let picture = raster.filled()
 
-        history.append(BarState(
+        var drawn = BarState(
             rotation: Double(rot),
             halfThickness: 0.16 * (section == .one ? Double(vm) : Double(vm) / 64),
             centre: SIMD2(Double(centre.x), Double(centre.y)),
-            slide: Double(320 - xpos)))
-        if history.count > 64 { history.removeFirst(history.count - 64) }
+            slide: 0,
+            startsSection: startsSection)
+        startsSection = false
 
         // Move on: spin, and bounce the thickness as if under gravity.
         switch section {
@@ -156,7 +155,6 @@ struct TechnoBarsModel {
             pages[pageIndex][i] = (pages[pageIndex][i] & clearMask) | (picture[i] != 0 ? layerBit : 0)
         }
         shownPage = pageIndex
-        shownSlide = 320 - xpos
 
         // Next page; after a full round of pages, next layer. Section three uses every other page.
         pageIndex = (pageIndex + (section == .three ? 2 : 1)) & 7
@@ -165,6 +163,34 @@ struct TechnoBarsModel {
         }
 
         passes += 1
+
+        // The start of the next pass, up to the screen refresh that shows this page.
+        // Section three's slide (KOE.C `doit3`): `passes` now counts the next pass.
+        if section == .three && Self.sectionThreeTicks - passes < Self.slideWhenTicksLeft {
+            let before = xpos
+            xpos -= xposa / 4
+            if xpos < 0 { xpos = 0 } else { xposa += 1 }
+            if xpos == 0 {
+                // The original stopped here without showing a slide of 0, so this page keeps the last one.
+                xpos = before
+                endsAfterThisStep = true
+            }
+        }
+        shownSlide = 320 - xpos
+        // The beat flash, set just after the refresh (KOE.C `waitborder`).
+        sceneTicks += 1
+        let row = Int(Double(sceneTicks) / Self.musicRowInTicks)
+        if row != lastRow {
+            lastRow = row
+            if row & 7 == 7 { flash = 15 }
+        }
+        shownFlash = flash
+        if flash > 0 { flash -= 1 }
+
+        drawn.slide = Double(shownSlide)
+        history.append(drawn)
+        if history.count > 64 { history.removeFirst(history.count - 64) }
+
         switch section {
         case .one where passes == Self.sectionOneTicks:
             // The pages are NOT cleared here, so section one's last frames linger as ghosts.
@@ -172,6 +198,7 @@ struct TechnoBarsModel {
             passes = 0
             rot = 50; rota = 10; vm = 100 * 64; vma = 0
             pageIndex = 0; layerBit = 1
+            startsSection = true
         case .two where passes == Self.sectionTwoTicks:
             section = .three
             passes = 0
@@ -182,6 +209,7 @@ struct TechnoBarsModel {
                 pages[i] = [UInt8](repeating: 0, count: Self.width * Self.height)
             }
             history.removeAll()
+            startsSection = true
         default:
             break
         }
@@ -268,14 +296,15 @@ struct TechnoBarsModel {
         var slide = 0.0
         for ghost in 0..<4 {
             let later = newest - ghost * gap
-            let earlier = later - 1
-            guard earlier >= 0 else {
+            guard later >= 0 else {
                 snapshots.append((BarState(rotation: 0, halfThickness: 0, centre: SIMD2(0, 0), slide: 0), 0))
                 continue
             }
-            // Glide between two neighbouring steps.
-            let a = history[earlier]
+            // Glide between two neighbouring steps. A step that begins a section is held still instead:
+            // the bars jump there, and gliding across the jump would sweep them through angles never drawn.
+            // The very first step has nothing before it, so it is held still too.
             let b = history[later]
+            let a = later > 0 && !b.startsSection ? history[later - 1] : b
             let state = BarState(
                 rotation: a.rotation + (b.rotation - a.rotation) * alpha,
                 halfThickness: a.halfThickness + (b.halfThickness - a.halfThickness) * alpha,

@@ -89,6 +89,9 @@ frame, and see whether its distance across the bars falls in a bar or a gap.
 - Edges are softened over one screen pixel, so the count changes smoothly at edges.
 - The bars glide between steps. To do that, the picture runs one step behind, so that there is always a
   "next" position to glide towards.
+- They do not glide into the first step of a section. The bars jump there (the original starts each section
+  at a new angle and thickness), and gliding across the jump would sweep them through angles never drawn.
+  The cut stays a cut, as in the original.
 
 | | 1993 | This version (modern look) |
 |---|---|---|
@@ -104,13 +107,49 @@ frame, and see whether its distance across the bars falls in a bar or a gap.
   (self-test).
 - **The fill routine** fills a plain rectangle with exactly the expected pixels, left and top edges
   included, right and bottom not, which is the original's rule (self-test).
+- **The modern look never glides across a section change** (self-test, over a whole loop and into the next).
+  Within a section the bars only spin forwards, by at most 84/1024 of a turn per step. A glide that goes
+  backwards, spins more than 1/8 turn or changes thickness by more than 3 pixels has crossed a section change.
+  With the fix below removed, this check fails at exactly the four expected steps.
+- **The modern look shows the current bars whenever the 1993 look shows any** (self-test, same run).
+- **Independent review of the drawing code (2026-11-14).** A code review compared `BarRasteriser` line by
+  line against the original assembly (`KOEA.ASM` `asmbox` and `drawline`, `POLYCLIP.ASM`
+  `clipanypoly`, `cliplinex`, `clipliney`). It found them the same: trimming top/bottom first and then
+  left/right, against rows 0...199 and columns 0...319; each line end moved using the other end as already
+  moved; whole-number division rounding towards zero, as the 386's `idiv` did; repeated points dropped the
+  same way; left/right edge direction chosen the same way and the same edge-stepping arithmetic; the top
+  row of each edge flipped, the bottom one not. It also confirmed that the original's 16-bit arithmetic
+  never overflows with these numbers, so this version's larger numbers give the same results. The original's
+  extra "left overflow" path in `drawline` is never switched on (`clipleft` is always 0), so leaving it out
+  changes nothing.
+
+### Fixed after that review
+
+The same review found four problems elsewhere in the scene, all now fixed:
+
+- **Modern look: the bars whirled at the change from section one to two.** The glide went from the last
+  angle of section one (883/1024) straight to the first of section two (50/1024): about 293° backwards
+  within one step. Then the same happened to each ghost, 8, 16 and 24 steps later. Now a section's first
+  step is held still (see "Modern look" above).
+- **Modern look: one blank step.** With only one step recorded (at the very start and at the start of
+  section three), nothing was drawn. Now that step is shown, held still.
+- **1993 look: the flash was one step early.** In the original, a page drawn in one pass of the loop only
+  appears at the screen refresh inside the next pass, and the flash colours are set just after that refresh.
+  So each page was seen with the next pass's flash. This version had paired it with its own pass's flash.
+- **1993 look: the slide-off lagged one step.** For the same reason, each page was seen with the slide
+  amount worked out at the start of the next pass. Like the original, the last page keeps its slide: the
+  original stops before showing a slide of zero.
 
 ### What was not checked
 
 Unlike the tunnel and the rings, this scene has no data files to compare against. Its 1993 look depends on
-the port of the drawing and trimming assembly being right, and that was verified by careful reading, not
-against a running copy of the original. The self-test cannot catch a mistake there, because the processor
-does all the work and the graphics chip only looks up colours. A bar edge could be off by a pixel somewhere.
+the port of the drawing and trimming assembly being right. That has now been checked twice by reading
+(once when it was written, once in the independent review above), but never against a running copy of the
+original. The self-test cannot catch a mistake there, because the processor does all the work and the
+graphics chip only looks up colours.
+
+Also not reproduced: before each section, the original waits for one extra screen refresh, which moves the
+flash on by a step. Since the beat is recreated anyway (see below), this would only change where it starts.
 
 ## Differences from the original
 

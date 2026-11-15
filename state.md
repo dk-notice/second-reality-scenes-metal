@@ -151,6 +151,18 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   blank frame); section one's last frames linger as ghosts at the start of section two.
 - Left out: the original's lead-in (white flash, then four columns dropping to black on four beats), stale
   video memory showing briefly at the start of `doit1`, and the picture that scrolls in after the slide-off.
+- Code review (2026-11-14): the rasteriser and clipper were reviewed independently, line by line, against
+  KOEA.ASM / POLYCLIP.ASM and found to match. Four other problems were fixed (see docs/scenes/techno-bars.md):
+  - Modern look: it whirled at the section 1->2 cut. Each section's first step is now held still
+    (`BarState.startsSection`).
+  - Modern look: it showed a blank step when only one step was recorded.
+  - Classic look: each page is now seen with the NEXT pass's flash and slide, as in the original. `tick()`
+    ends by doing that next-pass work early.
+  - New self-test checks: there is no glide across a section change (confirmed to fail without the fix),
+    and the current bars are shown whenever the classic look shows bars.
+- Review tidy-ups deliberately left for later (user's choice): the per-step 64 KB picture copy, the flash
+  formula written twice (classic/modern), duplicated thickness and bounce code, and the screen-size
+  constants written out in several places.
 
 ## Bouncing Dots notes
 - Source: DOTS/MAIN.C and DOTS/ASM.ASM (`drawdots`). 512 dots; each step one dot (in a shuffled order) is
@@ -547,9 +559,10 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 
 ## Next steps
 The planned list of scenes is complete (2026-11-14).
-- NEXT: the user's planned code review. Run `/code-review` over the scene code and `Core/`, paying most
+- NEXT: the user's planned code review, in progress. Techno Bars is DONE (2026-11-14; 4 fixes, see its
+  notes). Still to do: run `/code-review` over the other scenes and `Core/`, paying most
   attention to what each scene page lists under "What was not checked" (ports checked by reading only:
-  Techno Bars, Bouncing Dots, the C parts of the 3D scenes; the plasma's plane layout; the VISU scene
+  Bouncing Dots, the C parts of the 3D scenes; the plasma's plane layout; the VISU scene
   programs' ordering and pacing) and to the code shared between scenes.
 - Waiting on the user, by eye in the running app: the 3D City's fades (`City3DModel.fadeInSteps`,
   `fadeOutSteps`, `darkSteps`) and whether the evened-out camera roll looks right

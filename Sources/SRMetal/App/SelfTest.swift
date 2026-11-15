@@ -104,6 +104,52 @@ enum SelfTest {
         for _ in 0..<DotTunnelModel.lengthInTicks { tunnel.tick() }
         check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0)
 
+        // Techno Bars, modern look, over one whole loop and into the next. Within a section the bars only
+        // spin forwards, by at most about 85/1024 of a turn per step, and their thickness by under
+        // about a pixel. At a section change they jump (by 833/1024 of a turn backwards into section two).
+        // So a glide that goes backwards, or spins more than 1/8 turn, or changes thickness by more than
+        // 3 pixels, has crossed a section change. Also: whenever the 1993 look shows bars, the modern look
+        // must show the current bars too (not only ghosts, and not nothing).
+        do {
+            var bars = TechnoBarsModel()
+            var seenSectionThree = false
+            var stepsAfterLoop = -1
+            var steps = 0
+            var worstBackward = 0.0, worstForward = 0.0, worstThickness = 0.0
+            var badGlides: [String] = []
+            var missingCurrent: [Int] = []
+            while stepsAfterLoop < 40 && steps < 5000 {
+                bars.tick()
+                steps += 1
+                if bars.section == .three { seenSectionThree = true }
+                if seenSectionThree && bars.section == .one && stepsAfterLoop < 0 { stepsAfterLoop = 0 }
+                if stepsAfterLoop >= 0 { stepsAfterLoop += 1 }
+
+                let start = bars.modernParameters(alpha: 0).snapshots
+                let end = bars.modernParameters(alpha: 1).snapshots
+                for ghost in 0..<4 where start[ghost].weight > 0 {
+                    let spin = end[ghost].state.rotation - start[ghost].state.rotation
+                    let thickness = abs(end[ghost].state.halfThickness - start[ghost].state.halfThickness)
+                    worstBackward = min(worstBackward, spin)
+                    worstForward = max(worstForward, spin)
+                    worstThickness = max(worstThickness, thickness)
+                    if (spin < 0 || spin > 128 || thickness > 3) && badGlides.count < 5 {
+                        badGlides.append("step \(steps) ghost \(ghost)")
+                    }
+                }
+                if bars.classicIndices().contains(where: { $0 != 0 }) && start[0].weight == 0 {
+                    missingCurrent.append(steps)
+                }
+            }
+            check("Techno Bars modern look never glides across a section change (one loop of \(steps) steps)",
+                  seenSectionThree && stepsAfterLoop >= 40 && badGlides.isEmpty,
+                  badGlides.isEmpty
+                      ? "spin per glide \(worstBackward)...\(worstForward), thickness change up to \(String(format: "%.2f", worstThickness))"
+                      : badGlides.joined(separator: ", "))
+            check("Techno Bars modern look shows the current bars whenever the 1993 look shows bars",
+                  missingCurrent.isEmpty, missingCurrent.prefix(5).map { "step \($0)" }.joined(separator: ", "))
+        }
+
         // Interference should loop seamlessly: after one full run it is back at its first frame, and the
         // last step before the loop differs from the first frame no more than any two neighbouring steps do.
         func changed(_ a: [UInt8], _ b: [UInt8]) -> Int {
