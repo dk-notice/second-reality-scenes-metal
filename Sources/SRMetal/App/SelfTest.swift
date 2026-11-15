@@ -1,5 +1,6 @@
 import Foundation
 import Metal
+import simd
 
 /// Checks run with `SRMetal --selftest`. No window is opened.
 ///
@@ -317,6 +318,94 @@ enum SelfTest {
             }
         } catch {
             check("VISU engine test cases could be set up", false, "\(error)")
+        }
+
+        // Ships Fly-by. The scene's 1993 pictures against the engine test pictures that match the
+        // original assembly (drawn there into an empty screen by a fresh engine): wherever the test
+        // picture has a ship pixel the scene must have the same colour number, and everywhere else
+        // the scene must show its background picture untouched.
+        do {
+            let ships = try ShipsFlybyModel()
+            let pause = ShipsFlybyModel.pauseSteps, length = ShipsFlybyModel.lengthInSteps
+            let background = ships.background
+            let firstPicture = ships.screen
+            var expected: [Int: [UInt8]] = [:]
+            for test in VisuTestCases.all {
+                if case .frame(let scene, let frame) = test.kind, scene == "U2A" {
+                    expected[frame] = try VisuTest.classicPicture(test.kind).pixels
+                }
+            }
+            var differ: [Int] = []
+            var pauseTouched = 0
+            var firstShown = 0, lastShown = 0, shownAtEnd = 0, mostChanged = 0
+            var glideGap: Float = 0
+            var previous = ships.screen
+            for step in 1..<length {
+                let predicted = ships.pose(alpha: 1)
+                ships.tick()
+                let frame = ShipsFlybyModel.animationFrame(atStep: step)
+                let screen = ships.screen
+                let shipPixels = zip(screen, background).reduce(0) { $0 + ($1.0 != $1.1 ? 1 : 0) }
+                if step <= pause { pauseTouched += shipPixels }
+                if shipPixels > 0 { if firstShown == 0 { firstShown = frame }; lastShown = frame }
+                if step == length - 1 { shownAtEnd = shipPixels }
+                // The biggest change between neighbouring pictures at the start and the end of the
+                // pass: a ship popping into view, rather than sliding in over the top edge at a few
+                // pixel rows a step, would show here.
+                if frame < 40 || frame > 470 {
+                    mostChanged = max(mostChanged, zip(screen, previous).reduce(0) { $0 + ($1.0 != $1.1 ? 1 : 0) })
+                }
+                previous = screen
+                if let test = expected[frame], step > pause {
+                    let same = (0..<screen.count).allSatisfy { test[$0] != 0 ? screen[$0] == test[$0] : screen[$0] == background[$0] }
+                    if !same { differ.append(frame) }
+                }
+                // The modern look glides towards a pose worked out one frame ahead; at the end of
+                // the glide it must be exactly where the next step starts (else motion would jerk).
+                let now = ships.currentPose
+                if predicted.items.count == now.items.count {
+                    for (a, b) in zip(predicted.items, now.items) where a.object === b.object {
+                        for c in 0..<4 { glideGap = max(glideGap, simd_reduce_max(simd_abs(a.matrix[c] - b.matrix[c]))) }
+                    }
+                } else if step < length - 1 && !predicted.items.isEmpty {
+                    glideGap = .infinity
+                }
+            }
+            check("Ships pictures match the original assembly's at \(expected.count) animation frames (over the background)",
+                  expected.count == 15 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
+            check("Ships: the pause shows only the background, and the background is the original file",
+                  pauseTouched == 0 && firstPicture == background && crc32(background) == 913_980_884
+                      && crc32(ships.palette) == 1_218_441_595,
+                  "checksums \(crc32(background)), \(crc32(ships.palette))")
+            check("Ships enter and leave gently (first seen at frame \(firstShown), last at \(lastShown))",
+                  firstShown > 1 && lastShown == ShipsFlybyModel.animationFrames && shownAtEnd < 16 && mostChanged < 1200,
+                  "\(shownAtEnd) ship pixels on the last step; at most \(mostChanged) pixels change per step near the ends")
+            check("Ships modern look ends each glide exactly where the next step starts", glideGap < 0.001, "\(glideGap)")
+            ships.tick()
+            check("Ships loop after \(length) steps back to the empty horizon",
+                  ships.step == 0 && ships.screen == firstPicture)
+
+            // The two looks, drawn as the app draws them (960x720), must show the same thing. The
+            // background alone differs a little (smooth against hard-edged scaling of the stars).
+            func picture(_ look: Look, _ step: Int) throws -> [UInt8] {
+                guard let entry = SceneCatalog.all.first(where: { $0.id == "ships-flyby" }),
+                      let data = try Snapshot.render(entry: entry, look: look, step: step, width: 960, height: 720)
+                        .dataProvider?.data as Data? else { throw Snapshot.Failure.couldNotDraw }
+                return [UInt8](data)
+            }
+            var worst = 0.0
+            for step in [0, 200, 330, 345, 400] {
+                let a = try picture(.classic, step), b = try picture(.modern, step)
+                var total = 0
+                for i in stride(from: 0, to: a.count, by: 4) {
+                    total += abs(Int(a[i]) - Int(b[i])) + abs(Int(a[i + 1]) - Int(b[i + 1])) + abs(Int(a[i + 2]) - Int(b[i + 2]))
+                }
+                worst = max(worst, Double(total) / Double(a.count / 4 * 3))
+            }
+            check("Ships modern look stays close to the 1993 picture at 5 steps", worst < 8,
+                  String(format: "average difference at most %.2f of 255", worst))
+        } catch {
+            check("Ships Fly-by scene could be set up", false, "\(error)")
         }
 
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.

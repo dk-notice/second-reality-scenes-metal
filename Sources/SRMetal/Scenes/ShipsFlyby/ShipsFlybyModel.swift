@@ -17,8 +17,8 @@ final class ShipsFlybyModel {
 
     /// How long the empty horizon is held before the animation starts again, in steps (70 = one
     /// second). This is the one number to change if the gap between passes feels wrong. Note that
-    /// the recorded animation is itself empty for its first 31 frames and shows only a few distant
-    /// pixels for its last 60 or so, so the horizon looks empty for longer than this number says.
+    /// the recorded animation itself shows nothing for its first 22 frames, and only a far-off
+    /// speck for its last second, so the horizon looks empty for longer than this number says.
     static let pauseSteps = 70
 
     /// Frames in the recorded animation (U2A.0AB).
