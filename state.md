@@ -9,8 +9,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Seven scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma, and
-  Hidden Starfield. (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+- Eight scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
+  Hidden Starfield and 3D Sine Landscape (added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
   own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
@@ -28,11 +28,12 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
-  dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000).
+  dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
+  starfield 1700, sine-landscape 700).
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
@@ -41,6 +42,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
   the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
+- `tools/` development-only scripts (not part of the app): `landscape_reference.py`.
 - `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
   (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
 
@@ -179,13 +181,40 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   adding stars at step 1984, fades out over the last 33 of 2048 steps and loops from black.
 - Docs picture step: starfield 1700.
 
+## 3D Sine Landscape notes
+- Source: COMAN/MAIN.C, ASM.ASM (`docol`, `docopy`), THELOOP.INC (the inner loop, written out by DOLOOP.C as
+  128 unrolled steps). Built as 3DSINFLD.EXE. MAIN1.C, ASM1.ASM, DOLOOP1/2.C, DOLOOP.OK are older versions.
+- It is a Comanche-style column renderer: height = wave1[x] + wave2[y] (two 32768-entry lists), 160 columns
+  each 2 pixels wide on a 320x200 canvas, 128 ray steps per column (64 single, 64 double).
+- NO background picture: COMBG.* is not linked (`_COMBG.OBK`), MAIN.C has a 16-byte stand-in, and the code
+  that would show it is inside `IFDEF PXLSUX`, never set. The picture is only test stripes anyway. Sky = black.
+- Tables calculated and identical to the files: WAVE.H (KOE.C's formula), W1DTA.BIN (needs Microsoft C
+  `rand()` from seed 1), W2DTA.BIN, and the per-step constants. One catch: the shipped DOLOOP.C says
+  `120-j/8` for the colour offset but the built THELOOP.INC/OBJ and C.EXE have `140-j/8`; 140 is used.
+- Classic look: `SineLandscapeModel` replays the loop on the processor (the original's "flipped" 16.16
+  numbers, carries and partial buffer clearing), shown through `IndexedCanvas`. Verified against
+  `tools/landscape_reference.py`, which runs THELOOP.INC's assembly text in a small x86 interpreter:
+  identical pictures at steps 100, 200, 700, 1300, 1978, 2047. MAIN.C/docol/docopy were ported by reading.
+- Modern look: one ray per display pixel in the fragment shader (same 128 steps, then 7 halvings to the
+  exact hit), smooth height tables without the random roughness, palette formula evaluated directly,
+  camera gliding between steps.
+- Deliberate departures: one camera move per 1/70 s (the original moved once per drawn picture, so slower
+  PCs flew slower); the land sinks fully out of sight and the scene loops from black after 2048 steps (the
+  original sank about 22 lines and cut on a music cue); the two video pages and one-frame display lag are
+  not modelled.
+- Useful for the later 3D scenes: (1) read the MAKEFILE first, it settled which files and even which
+  artwork were live; (2) check generated or built files against their generator source, they can differ;
+  (3) when an inner loop is plain assembly text, interpreting that text in Python is a cheap, strong check
+  of a port (about 100 lines; see `tools/`); (4) C.EXE files linked with `/E` are run-length packed, so
+  data cannot be searched for in them reliably.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
 1. Bouncing dots - DONE
 2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM) - DONE
 3. Hidden starfield (DDSTARS) - DONE
-4. 3D sine landscape (COMAN) - a voxel landscape; has a background picture
+4. 3D sine landscape (COMAN) - DONE (the background picture turned out to be unused)
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
 6. Glenz vectors (GLENZ)
 7. Ships fly-by (VISU engine + U2A data)
@@ -193,7 +222,7 @@ stills are out of scope.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: 3D sine landscape (rank 4 above).
+- Next scene: plasma cube (rank 5 above).
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),

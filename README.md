@@ -18,6 +18,7 @@ Every scene can be shown two ways, switchable at any time:
 | Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
 | Plasma | ![](docs/images/plasma-modern.png) | ![](docs/images/plasma-classic.png) |
 | Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
+| 3D Sine Landscape | ![](docs/images/sine-landscape-modern.png) | ![](docs/images/sine-landscape-classic.png) |
 
 ## What this is, and is not
 
@@ -42,8 +43,9 @@ There is no music yet.
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
+| 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 
-Planned, roughly easiest first: 3D sine landscape, plasma cube, glenz vectors, ships fly-by, 3D city.
+Planned, roughly easiest first: plasma cube, glenz vectors, ships fly-by, 3D city.
 Picture-based scenes, scrollers and stills are out of scope.
 
 ## Build and run
@@ -86,7 +88,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape` |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 

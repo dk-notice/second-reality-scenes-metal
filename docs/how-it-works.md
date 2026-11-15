@@ -95,8 +95,8 @@ work this way.
 
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
-palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars
-and Bouncing Dots work this way.
+palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars,
+Bouncing Dots, Hidden Starfield and 3D Sine Landscape work this way.
 
 ## The window
 
@@ -188,7 +188,7 @@ Useful shared pieces in `Core/`:
 
 ## House rules for scenes
 
-These came out of building the first six.
+These came out of building the first scenes.
 
 - **Calculate rather than copy.** If a table the original shipped as data follows a formula, find it,
   prove it reproduces the file exactly, and calculate the table.

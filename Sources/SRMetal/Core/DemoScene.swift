@@ -127,6 +127,15 @@ enum SceneCatalog {
             checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
             thumbnailStep: 1700,
             make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "sine-landscape",
+            title: "3D Sine Landscape",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 31, 100, 200, 700, 1300, 1978, 2047],
+            thumbnailStep: 700,
+            make: { device, format in try SineLandscapeScene(device: device, pixelFormat: format) }
         )
     ]
 }

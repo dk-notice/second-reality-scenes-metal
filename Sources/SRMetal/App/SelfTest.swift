@@ -160,6 +160,39 @@ enum SelfTest {
               starfield.ticks == 0 && starfield.classicIndices() == starfieldStart
                   && StarfieldModel.fadeLevel(tick: StarfieldModel.lengthInTicks - 1) == 1)
 
+        // 3D Sine Landscape. Its tables are calculated; the expected checksums are those of the
+        // original's WAVE.H, W1DTA.BIN and W2DTA.BIN, and of the constants in the generated THELOOP.INC.
+        func words16(_ values: [Int16]) -> [UInt8] {
+            values.flatMap { [UInt8(truncatingIfNeeded: $0), UInt8(truncatingIfNeeded: $0 >> 8)] }
+        }
+        check("landscape wave shape matches original WAVE.H",
+              crc32(words16(SineLandscapeModel.waveSin.map { Int16($0) })) == 717_965_942)
+        check("landscape height table 1 matches original W1DTA.BIN (random roughness included)",
+              crc32(words16(SineLandscapeModel.waves.first)) == 3_057_778_354)
+        check("landscape height table 2 matches original W2DTA.BIN",
+              crc32(words16(SineLandscapeModel.waves.second)) == 2_437_580_373)
+        let raySteps = SineLandscapeModel.raySteps
+        let riseBytes = raySteps.flatMap { step in (0..<4).map { UInt8(truncatingIfNeeded: step.rise >> ($0 * 8)) } }
+        check("landscape ray-step constants match the original's generated code",
+              raySteps.count == 128
+                  && crc32(words16(raySteps.map { $0.terrainAdd })) == 456_993_559
+                  && crc32(words16(raySteps.map { $0.colourAdd })) == 1_790_154_188
+                  && crc32(riseBytes) == 109_985_885)
+        // The 1993 pictures, against the original's own assembly text (THELOOP.INC) run instruction by
+        // instruction in a small interpreter (tools/landscape_reference.py).
+        var landscape = SineLandscapeModel()
+        var landscapeSums: [UInt32] = []
+        for step in 1..<SineLandscapeModel.lengthInTicks {
+            landscape.tick()
+            if [100, 200, 700, 1300, 1978, 2047].contains(step) { landscapeSums.append(crc32(landscape.classicIndices())) }
+        }
+        check("Landscape pictures match the original assembly at steps 100, 200, 700, 1300, 1978, 2047",
+              landscapeSums == [4_036_401_441, 663_277_066, 3_928_198_433, 1_804_669_828, 2_173_268_025, 2_109_903_275],
+              "\(landscapeSums)")
+        landscape.tick()
+        check("Landscape loops from black after \(SineLandscapeModel.lengthInTicks) steps",
+              landscape.ticks == 0 && !landscape.classicIndices().contains { $0 != 0 })
+
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
         if let device = MTLCreateSystemDefaultDevice() {
             for entry in SceneCatalog.all {
