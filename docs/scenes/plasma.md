@@ -216,8 +216,7 @@ None of this has been compared with the original program running.
   not 32). It is not proven: the player itself is only in the release as a compiled library, and the
   tempo may change within the tune. Nothing was changed; the scene still uses 1/70 second.
 - **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (now twice).
-- The picture `docs/images/plasma-classic.png` was made before fix 1 and differs from the current 1993
-  look at pixel level only.
+- The pictures in `docs/images/` were remade after the review was merged, so they show the corrected 1993 look.
 
 ## Differences from the original, on purpose
 

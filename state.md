@@ -705,11 +705,24 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 
 ## Next steps
 The planned list of scenes is complete (2026-11-14).
-- NEXT: the user's planned code review, in progress. Techno Bars is DONE (2026-11-14; 4 fixes, see its
-  notes). Still to do: run `/code-review` over the other scenes and `Core/`, paying most
-  attention to what each scene page lists under "What was not checked" (ports checked by reading only:
-  Bouncing Dots, the C parts of the 3D scenes; the plasma's plane layout; the VISU scene
-  programs' ordering and pacing) and to the code shared between scenes.
+- DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
+  own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,
+  landscape and glenz; the 3D engine with ships and city; the shared core and app). Their branches merged
+  cleanly into main. 24 proven bugs fixed, each with a self-test check; the self-test went from 200 to 253
+  checks. Every scene page now has a "Code review" section saying what was found, what was confirmed, and
+  what is still unverified. All docs pictures were remade afterwards.
+  Notable: Dot Tunnel's 1993 look now replays the original's dot-by-dot erasing (about one dot in twenty is
+  missing each frame, as in 1993); every Hidden Starfield dot had been one step out of place; the plasma's
+  sideways shift was paired with the wrong frame; the 3D loader no longer crashes on damaged files.
+- OPEN QUESTION for the user (from the Plasma review, see docs/scenes/plasma.md "What was not checked"): the
+  plasma's section timings may be in music ticks (about 1/52 s), not screen refreshes (1/70 s). If so the
+  original's sections were about a third longer (whole scene about 43 s, not 32). Not proven; nothing changed.
+  The same question may apply to other music-timed lengths. Best settled when music is added.
+- NEXT, if the user wants it: a `/simplify` pass. Each scene page and the core notes list "Possible
+  tidy-ups" that the review deliberately left alone.
+- Still never done: comparing any scene with the original program running. The user's own copy of the
+  released demo is in `../second-reality-original/` (outside this repository); it could be run in a DOS
+  emulator for a side-by-side check.
 - Waiting on the user, by eye in the running app: the 3D City's fades (`City3DModel.fadeInSteps`,
   `fadeOutSteps`, `darkSteps`) and whether the evened-out camera roll looks right
   (`City3DModel.smoothCameraRoll`); Ships Fly-by's pause (`ShipsFlybyModel.pauseSteps`) and scaled-up background.
