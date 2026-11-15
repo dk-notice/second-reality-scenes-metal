@@ -146,6 +146,15 @@ enum SceneCatalog {
             checkpoints: [0, 16, 60, 100, 416, 800, 1200, 1600, 1916, 2010, 2047],
             thumbnailStep: 416,
             make: { device, format in try PlasmaCubeScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "glenz-vectors",
+            title: "Glenz Vectors",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 1, 100, 330, 420, 800, 960, 1014, 1300, 1700, 2100, 2250, 2340, 2359],
+            thumbnailStep: 1300,
+            make: { device, format in try GlenzScene(device: device, pixelFormat: format) }
         )
     ]
 }

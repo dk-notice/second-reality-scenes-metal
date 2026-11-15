@@ -65,4 +65,31 @@ enum Math3D {
     static func facesCamera(_ a: SIMD3<Float>, _ b: SIMD3<Float>, _ c: SIMD3<Float>) -> Bool {
         simd_dot(a, simd_cross(b - a, c - a)) >= 0
     }
+
+    /// The turn matrix of the original's MATH.ASM `calcmatrix` ("rY*rX*rZ"), used by Glenz Vectors.
+    /// Angles in radians. Multiply a point by the result. (The 1993 code stored each number as a
+    /// 16-bit fraction of 32768; this is the same matrix in ordinary decimals.)
+    static func rotationYXZ(x: Float, y: Float, z: Float) -> simd_float3x3 {
+        let (xs, xc) = (sin(x), cos(x))
+        let (ys, yc) = (sin(y), cos(y))
+        let (zs, zc) = (sin(z), cos(z))
+        return simd_float3x3(rows: [
+            SIMD3(yc * zc - xs * ys * zs, xs * ys * zc + yc * zs, -xc * ys),
+            SIMD3(-xc * zs, xc * zc, xs),
+            SIMD3(xs * yc * zs + ys * zc, ys * zs - xs * yc * zc, xc * yc)])
+    }
+
+    /// Where a camera-space point lands on the canvas by the original's rule
+    /// "centre + focal * (x, y) / z", with z held to at least `near` as the original did.
+    static func canvasPosition(_ point: SIMD3<Float>, focal: SIMD2<Float>, centre: SIMD2<Float>,
+                               near: Float) -> SIMD2<Float> {
+        centre + focal * SIMD2(point.x, point.y) / max(point.z, near)
+    }
+
+    /// Twice the area of a triangle on the canvas, with a sign: positive or zero when the corners run
+    /// the way the original's front faces do. The 2D form of the "which faces show" test, used by
+    /// the parts that test faces after projecting them (GLENZ `checkhiddenbx`).
+    static func screenFacing(_ a: SIMD2<Float>, _ b: SIMD2<Float>, _ c: SIMD2<Float>) -> Float {
+        (a.x - b.x) * (a.y - c.y) - (a.y - b.y) * (a.x - c.x)
+    }
 }

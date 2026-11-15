@@ -240,6 +240,40 @@ enum SelfTest {
               cube.ticks == 0 && !cubeStart.contains { $0 != 0 } && !cubeEnd.contains { $0 != 0 }
                   && cube.classicReferenceFrame() == cubeStart)
 
+        // Glenz Vectors. The 3600-step sine table against a checksum of MATHSIN.INC; the plate
+        // picture (original artwork, kept as data) against checksums of FC.UH, which is byte for
+        // byte what the program linked in as _FC.OBK.
+        check("glenz sine table matches original MATHSIN.INC",
+              crc32(words16(GlenzModel.sine.map { Int16($0) })) == 1_760_842_562)
+        check("glenz plate picture and its colours match original FC.UH",
+              crc32(GlenzFloorArt.pixels) == 1_371_256_604 && crc32(GlenzFloorArt.palette) == 294_416_773)
+        // The 1993 pictures, against the original's own assembly text (MATH.ASM, VEC.ASM, NEW.ASM)
+        // run instruction by instruction (tools/glenz_reference.py): the screen's colour numbers
+        // and all 256 colours.
+        var glenz = GlenzModel()
+        let glenzSteps = [1, 100, 177, 214, 330, 420, 440, 600, 800, 925, 960, 980, 1000, 1014, 1100, 1300, 1500, 1700, 1900, 2050, 2100, 2200, 2250, 2300, 2340, 2359]
+        var glenzSums: [[UInt32]] = [[], []]
+        let glenzStart = glenz.classicReferenceFrame()
+        for step in 1..<GlenzModel.lengthInTicks {
+            glenz.tick()
+            if glenzSteps.contains(step) {
+                glenzSums[0].append(crc32(glenz.screen))
+                glenzSums[1].append(crc32(glenz.colours))
+            }
+        }
+        check("Glenz pictures match the original assembly at steps \(glenzSteps)",
+              glenzSums[0] == [1_475_827_238, 1_198_900_278, 2_128_776_517, 2_128_776_517, 2_049_735_344, 97_443_243, 1_267_192_796, 389_018_312, 3_701_128_063, 1_434_470_769, 55_326_528, 2_908_534_221, 1_887_063_064, 3_036_571_660, 1_212_644_248, 723_950_535, 1_740_146_126, 563_560_407, 1_355_435_813, 4_020_491_463, 1_814_432_785, 2_258_457_995, 959_312_536, 3_804_102_944, 3_645_819_784, 3_750_939_033],
+              "\(glenzSums[0])")
+        check("Glenz palettes match the original assembly at the same steps",
+              glenzSums[1] == [598_395_524, 598_395_524, 598_395_524, 1_068_706_964, 239_537_398, 857_862_542, 2_809_852_906, 1_788_019_199, 2_608_372_831, 1_774_669_999, 2_266_534_623, 2_114_222_140, 2_022_150_290, 4_156_311_231, 1_274_690_563, 2_422_693_122, 752_574_599, 1_118_943_418, 3_632_057_437, 2_921_458_546, 610_749_747, 1_277_248_279, 2_860_270_479, 1_769_274_053, 4_017_522_155, 3_807_903_798],
+              "\(glenzSums[1])")
+        let glenzEnd = glenz.classicReferenceFrame()
+        glenz.tick()
+        check("Glenz is black at both ends and loops after \(GlenzModel.lengthInTicks) steps",
+              glenz.ticks == 0 && !glenzStart.contains { $0 != 0 } && !glenzEnd.contains { $0 != 0 }
+                  && glenz.classicReferenceFrame() == glenzStart)
+
+
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
         if let device = MTLCreateSystemDefaultDevice() {
             for entry in SceneCatalog.all {
