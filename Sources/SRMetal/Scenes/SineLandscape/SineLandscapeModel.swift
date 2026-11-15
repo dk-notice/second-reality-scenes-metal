@@ -19,8 +19,12 @@ struct SineLandscapeModel {
     static let columns = 160
     /// The whole scene, then it loops: rise from below, fly, sink away.
     static let lengthInTicks = 2048
-    /// The step after which the landscape starts sinking again.
-    static let sinkStart = lengthInTicks - 130
+    /// How many 1/70 s steps each drawn picture stays on screen. The original moved its camera once per
+    /// picture it managed to draw, so a PC that needed two screen refreshes per picture flew at half the
+    /// speed of one that needed one. 1 would be a PC fast enough to draw a picture every refresh.
+    static let ticksPerPicture = 2
+    /// The step after which the landscape starts sinking again (130 lines takes it out of sight).
+    static let sinkStart = lengthInTicks - 130 - 2 * ticksPerPicture
 
     // MARK: Tables (all calculated; each reproduces the original's data exactly, see the self-test)
 
@@ -147,7 +151,7 @@ struct SineLandscapeModel {
 
     mutating func reset() { self = SineLandscapeModel() }
 
-    /// One frame of the original's main loop.
+    /// One 1/70 s step. Every `ticksPerPicture` steps, one frame of the original's main loop is run.
     mutating func tick() {
         ticks += 1
         if ticks >= Self.lengthInTicks {
@@ -155,11 +159,16 @@ struct SineLandscapeModel {
             reset()
             return
         }
+        guard ticks % Self.ticksPerPicture == 0 else { return }
 
-        if ticks > Self.sinkStart {
-            if startRise < 160 { startRise += 1 }
-        } else if startRise > 0 {
-            startRise -= 1
+        // The rise and fall kept to real time in the original: one line per screen refresh that had
+        // passed, however long the picture took to draw.
+        for _ in 0..<Self.ticksPerPicture {
+            if ticks > Self.sinkStart {
+                if startRise < 160 { startRise += 1 }
+            } else if startRise > 0 {
+                startRise -= 1
+            }
         }
 
         // The heading swings from side to side: `rot` is a running total of a sine wave.
@@ -300,9 +309,11 @@ struct SineLandscapeModel {
         return frame
     }
 
-    /// The camera, gliding from the previous step's to this step's.
-    func camera(alpha: Double) -> Camera {
-        Camera(
+    /// The camera, gliding from the previous picture's to the latest picture's.
+    /// `alpha` is how far we are towards the next step, 0..<1.
+    func camera(alpha stepAlpha: Double) -> Camera {
+        let alpha = (Double(ticks % Self.ticksPerPicture) + stepAlpha) / Double(Self.ticksPerPicture)
+        return Camera(
             position: previousCamera.position + (camera.position - previousCamera.position) * alpha,
             heading: previousCamera.heading + (camera.heading - previousCamera.heading) * alpha,
             startRise: previousCamera.startRise + (camera.startRise - previousCamera.startRise) * alpha)

@@ -194,12 +194,16 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Classic look: `SineLandscapeModel` replays the loop on the processor (the original's "flipped" 16.16
   numbers, carries and partial buffer clearing), shown through `IndexedCanvas`. Verified against
   `tools/landscape_reference.py`, which runs THELOOP.INC's assembly text in a small x86 interpreter:
-  identical pictures at steps 100, 200, 700, 1300, 1978, 2047. MAIN.C/docol/docopy were ported by reading.
+  identical pictures at steps 100, 200, 700, 1300, 1978, 2046. MAIN.C/docol/docopy were ported by reading.
 - Modern look: one ray per display pixel in the fragment shader (same 128 steps, then 7 halvings to the
   exact hit), smooth height tables without the random roughness, palette formula evaluated directly,
   camera gliding between steps.
-- Deliberate departures: one camera move per 1/70 s (the original moved once per drawn picture, so slower
-  PCs flew slower); the land sinks fully out of sight and the scene loops from black after 2048 steps (the
+- Speed: the original moved the camera once per drawn picture, so its speed depended on the PC. One move
+  per step was first tried and the user found it significantly too fast (2026-11-14). Now one picture every
+  `SineLandscapeModel.ticksPerPicture` = 2 steps (the rise/fall still moves one line per step, as in the
+  original). 2 is an estimate; the user offered a YouTube clip to measure the real speed. If the number
+  changes, change `EVERY` in `tools/landscape_reference.py` too, re-run it, and update the self-test sums.
+- Deliberate departures: the land sinks fully out of sight and the scene loops from black after 2048 steps (the
   original sank about 22 lines and cut on a music cue); the two video pages and one-frame display lag are
   not modelled.
 - Useful for the later 3D scenes: (1) read the MAKEFILE first, it settled which files and even which

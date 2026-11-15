@@ -184,10 +184,10 @@ enum SelfTest {
         var landscapeSums: [UInt32] = []
         for step in 1..<SineLandscapeModel.lengthInTicks {
             landscape.tick()
-            if [100, 200, 700, 1300, 1978, 2047].contains(step) { landscapeSums.append(crc32(landscape.classicIndices())) }
+            if [100, 200, 700, 1300, 1978, 2046].contains(step) { landscapeSums.append(crc32(landscape.classicIndices())) }
         }
-        check("Landscape pictures match the original assembly at steps 100, 200, 700, 1300, 1978, 2047",
-              landscapeSums == [4_036_401_441, 663_277_066, 3_928_198_433, 1_804_669_828, 2_173_268_025, 2_109_903_275],
+        check("Landscape pictures match the original assembly at steps 100, 200, 700, 1300, 1978, 2046",
+              landscapeSums == [3_772_065_790, 1_058_285_202, 2_259_277_037, 2_267_902_942, 3_774_399_680, 2_109_903_275],
               "\(landscapeSums)")
         landscape.tick()
         check("Landscape loops from black after \(SineLandscapeModel.lengthInTicks) steps",

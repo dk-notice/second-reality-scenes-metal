@@ -133,7 +133,7 @@ The camera glides between steps.
 | Height tables | Loaded from the program file | Calculated, identical | Calculated without rounding or roughness |
 | Arithmetic | 16/32-bit whole numbers | Same | Floating point |
 | Colours | 120 of a 256-colour palette | Same | The palette's formula, stepless |
-| Motion | One move per drawn picture | One move per 1/70 s | Glides between moves |
+| Motion | One move per drawn picture | One move and one picture per 2 steps (35 a second) | Glides between moves |
 | Sky | Black | Black | Black |
 
 ## What was checked
@@ -144,7 +144,7 @@ The camera glides between steps.
 - **The picture against the original's own code.** A small interpreter, `tools/landscape_reference.py`
   (Python), reads `THELOOP.INC` as text and carries out its instructions one by one, driven by
   `MAIN.C`'s frame logic and the original table files. The 1993 pictures here match its output exactly at
-  steps 100, 200, 700, 1300, 1978 and 2047 (and, because each frame depends on what earlier frames left in
+  steps 100, 200, 700, 1300, 1978 and 2046 (and, because each frame depends on what earlier frames left in
   the buffer, in effect at every step up to those). The checksums are in the self-test.
 - **That the built program used this code.** The distinctive instruction bytes of `THELOOP.INC` (the
   "140" variant) are present in `THELOOP.OBJ` and in `C.EXE`, the unpacked build; the picture-drawing code
@@ -162,15 +162,18 @@ The camera glides between steps.
   the height tables could only be found in it in part (about 70% of 1 KB pieces match byte for byte).
 - How the original's two video pages behave was simplified (see below), on the strength of reasoning,
   not a test.
-- How fast the original flew on a typical 1993 PC is not known.
+- How fast the original flew on a typical 1993 PC has not been measured; half of full speed is a first
+  estimate.
 - The modern look was checked by eye only. It is a smooth re-drawing of the same landscape, not a
   pixel-exact one.
 
 ## Deliberate differences
 
-- **Speed.** One camera move per 1/70-second step: the speed of a PC fast enough to draw a picture every
-  refresh. On a 486 the original probably managed a picture every second or third refresh and so flew at
-  half or a third of this speed.
+- **Speed.** The original's speed depended on the PC. This version draws one picture every 2 steps (35 a
+  second), as a PC that needed two screen refreshes per picture would have, and so flies at half the
+  speed a very fast PC would. One picture per step was tried first and was plainly faster than the demo
+  as people remember it (user, 2026-11-14). The number is `ticksPerPicture` in the model; it has not yet
+  been measured against a recording. The modern look glides between pictures, so it is smooth either way.
 - **The ending.** The original sank for about 22 lines and cut to the next part on a music cue. Here the
   land sinks all the way out of sight (130 steps), then the scene starts again from a black screen. The
   loop point is therefore invisible. The scene's length (2048 steps) is this version's choice; the

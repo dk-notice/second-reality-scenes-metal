@@ -7,15 +7,20 @@ table files (W1DTA.BIN, W2DTA.BIN, SIN1024.INC). It prints a CRC-32 checksum of 
 (colour numbers) at the steps asked for; those numbers are what App/SelfTest.swift expects from the
 Swift replay. It also writes each of those frames as referenceNNNN.png in the current folder.
 
-Usage:  python3 tools/landscape_reference.py [path-to-COMAN-folder] step [step ...]
-        e.g. python3 tools/landscape_reference.py 100 200 700 1300 1978 2047   (takes a few minutes)
+Usage:  python3 tools/landscape_reference.py [--every N] [path-to-COMAN-folder] step [step ...]
+        e.g. python3 tools/landscape_reference.py 100 200 700 1300 1978 2046   (takes a few minutes)
 
-The start (rise from 160) is the original's. The sinking after step 1918 and the stop at 2047 are this
+Steps are 1/70 s. One picture is drawn every N steps (default 2), as on a PC that needed N screen
+refreshes per picture; ask only for steps that are multiples of N.
+
+The start (rise from 160) is the original's. The sinking near the end and the stop before step 2048 are this
 project's loop, not the original's ending. Development tool only; the app does not use it.
 """
 import struct, re, sys, zlib, os
 args=sys.argv[1:]
 D=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','secondreality','COMAN','')
+EVERY=2   # steps per drawn picture; must match SineLandscapeModel.ticksPerPicture
+if args and args[0]=='--every': args.pop(0); EVERY=int(args.pop(0))
 if args and not args[0].isdigit(): D=os.path.join(args.pop(0),'')
 w1=open(D+'W1DTA.BIN','rb').read(); w2=open(D+'W2DTA.BIN','rb').read()
 vals=[]
@@ -119,14 +124,15 @@ def palette():
     for a in range(768-48):
         p[a]=min(63,p[a]*9//6)
     return p
-def frames(maxframe, want, sinkstart=None):
+def frames(maxframe, want, sinkstart=None, every=1):
     vbuf=bytearray(65536)
     startrise=160; rot=rot2=0; xwav=ywav=0
     out={}
-    for f in range(1,maxframe+1):
-        if sinkstart is not None and f>sinkstart:
-            if startrise<160: startrise+=1
-        elif startrise>0: startrise-=1
+    for f in range(every,maxframe+1,every):   # f counts 1/70 s steps; one picture every `every` steps
+        for _ in range(every):
+            if sinkstart is not None and f>sinkstart:
+                if startrise<160: startrise+=1
+            elif startrise>0: startrise-=1
         rot2+=4; rot+=cdiv(sin1024[rot2&1023],15); r=rot>>3
         rsin=sin1024[r&1023]; rcos=sin1024[(r+256)&1023]; rsin2=sin1024[(r+177)&1023]; rcos2=sin1024[(r+177+256)&1023]
         xw,yw=xwav,ywav
@@ -157,6 +163,6 @@ def png(path,scr,pal):
     open(path,'wb').write(b'\x89PNG\r\n\x1a\n'+ch(b'IHDR',struct.pack('>IIBBBBB',320,200,8,2,0,0,0))+ch(b'IDAT',zlib.compress(raw))+ch(b'IEND',b''))
 if __name__=='__main__':
     want=[int(v) for v in args]
-    out=frames(max(want),set(want),sinkstart=1918)
+    out=frames(max(want),set(want),sinkstart=2048-130-2*EVERY,every=EVERY)
     pal=palette()
     for f,s in out.items(): png('reference%04d.png'%f,s,pal)
