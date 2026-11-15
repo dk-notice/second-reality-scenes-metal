@@ -286,8 +286,16 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   gets denser for ever. Bottom half of the screen = the picture 32 places round the ring, upside down.
   512 stars to step 900, nothing 901-1200, then 1024 stars each also drawn 17 pictures ahead.
 - Classic look: `StarfieldModel` replays that on the processor (own random generator: Microsoft's constants
-  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Checked by reading
-  the assembly plus an independent Python re-run with matching checksums; NOT compared with a running original.
+  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Since the
+  2026-11-14 review it is checked against the original's own routines run in the x86 interpreter
+  (`tools/starfield_reference.py <DDSTARS folder> <steps>`): whole screens match at 15 steps. The frame
+  logic around those routines (step marks, picture ring, mirror, fade) is still from reading only, and
+  nothing was compared with a running original.
+- Code review 2026-11-14: one real bug fixed. Dots were placed with the star's depth from before the step;
+  the original uses the depth after it (`movzx bx,[si]` / `sub bl,2`). All 1993 pictures changed slightly and
+  the self-test checksums were replaced with the original's. The earlier Python "independent re-run" shared
+  the misreading. Modern look in motion: no jumps found over the whole loop. Minor items left alone are
+  listed in docs/scenes/starfield.md.
 - Modern look: the model also records each star's "flight"; the shader works out which dots of each flight are
   in the picture now showing and draws soft round stars, bigger and brighter when nearer, gliding between steps.
 - Deliberate departures: the two text panels (a picture) are left out; the original never ended, this stops
@@ -320,6 +328,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Deliberate departures: the land sinks fully out of sight and the scene loops from black after 2048 steps (the
   original sank on a music cue; in the recording it gets nearly out of sight before the cut); the two video pages and one-frame display lag are
   not modelled.
+- Code review 2026-11-14: Swift re-read against MAIN.C, `docol`, `docopy` and THELOOP.INC; no bug found,
+  nothing changed in the scene. Modern look in motion: no jumps (`--motion-check`), and a new self-test checks
+  the camera glide is unbroken over a loop and into the next. MAIN.C/docol/docopy are still verified by
+  reading only (now twice), not by running them.
 - Useful for the later 3D scenes: (1) read the MAKEFILE first, it settled which files and even which
   artwork were live; (2) check generated or built files against their generator source, they can differ;
   (3) when an inner loop is plain assembly text, interpreting that text in Python is a cheap, strong check
@@ -415,7 +427,14 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   loop; one picture per step. Kept quirks are listed in docs/scenes/glenz-vectors.md (the third bounce
   sticks for four frames because of 16-bit overflow; blue faces' red is a leftover register; a face is
   unlit on its first frame; the plate does not fade under the glenz).
-- Not verified: against a running original or a recording; the music timings; the modern look in motion.
+- Code review 2026-11-14: script and plate re-read against MAIN.C, no difference. One modern-look bug
+  fixed: the plate snapped up 0.94 of a row on the step it settled (it switched from the fall's exact
+  position to the 1993 look's whole row); it now rests at 47 15/16. New self-tests: modern corners within
+  3 pixels of the 1993 corners at every step and every glide unbroken (so nothing glides across a phase
+  change), and the plate never moves faster than it falls. The one-step dimming at step 1070 is the
+  original's (`lightshift` becomes 10 when bscale 116 passes xscale 115), in both looks.
+- Not verified: against a running original or a recording; the music timings; how the modern look's
+  colours look in motion (positions are now checked by program).
 - For the two remaining 3D scenes (ships, city; VISU engine):
   - `tools/glenz_reference.py` shows how to reuse the interpreter: `import plasmacube_reference as pc`,
     replace `pc.compile_instruction` / `pc.parse_operand` with wrappers that add instructions, and feed

@@ -318,8 +318,10 @@ enum SelfTest {
         }
 
         // Hidden Starfield. The original worked its tables out when it started, so there is no data file
-        // to compare with; the expected numbers here come from a separate re-run of the assembly's rules
-        // (written independently in Python while studying STARS.ASM).
+        // to compare with. The expected numbers here come from running the original's own routines
+        // (random, the table set-up, staradd, staradd2 in STARS.ASM) one instruction at a time in a small
+        // interpreter (tools/starfield_reference.py). Until the 2026-11-14 review they came from a Python
+        // re-write that shared a misreading with the Swift (see docs/scenes/starfield.md).
         check("Starfield scale tables match the assembly's formula",
               Array(StarfieldModel.scaleY[0...2]) == [23592, 22980, 22398] && StarfieldModel.scaleY[255] == 3024
                   && Array(StarfieldModel.scaleX[0...2]) == [31457, 30640, 29864] && StarfieldModel.scaleX[255] == 4032)
@@ -329,12 +331,23 @@ enum SelfTest {
                   == [[55, -512, -386], [54, 120, -278], [53, 278, 244], [52, 125, 182]])
         let starfieldStart = starfield.classicIndices()
         var starfieldSums: [UInt32] = []
+        var starfieldScreens: [UInt32] = []
+        let starfieldSteps = [1, 2, 33, 64, 500, 900, 901, 1200, 1201, 1217, 1499, 1500, 1501, 1700, 1984]
         for step in 1...StarfieldModel.lengthInTicks {
             starfield.tick()
             if [1, 900, 1200, 1500].contains(step) { starfieldSums.append(crc32(starfield.currentPicture)) }
+            if starfieldSteps.contains(step) { starfieldScreens.append(crc32(starfield.classicIndices())) }
         }
-        check("Starfield pictures match the independent re-run at steps 1, 900, 1200, 1500",
-              starfieldSums == [2_529_779_785, 1_705_863_020, 2_791_989_969, 907_008_394])
+        check("Starfield pictures match the original assembly at steps 1, 900, 1200, 1500",
+              starfieldSums == [3_540_269_994, 2_667_235_922, 2_123_349_935, 3_777_362_598], "\(starfieldSums)")
+        // The whole 320x400 screen (both halves, so two pictures of the ring at once), at more steps:
+        // either side of every mark in the timetable. This is the check that catches a dot placed with
+        // the wrong depth: with the old "depth before the step" rule every one of these differs.
+        check("Starfield screens match the original assembly at steps \(starfieldSteps)",
+              starfieldScreens == [2_333_570_087, 2_924_147_294, 3_046_112_483, 1_249_645_176, 1_714_077_540,
+                                   2_633_477_184, 2_714_334_314, 1_125_324_415, 3_486_042_079, 854_166_899,
+                                   739_869_190, 902_598_680, 1_200_130_203, 2_883_636_437, 1_268_624_448],
+              "\(starfieldScreens)")
         check("Starfield loops after \(StarfieldModel.lengthInTicks) steps",
               starfield.ticks == 0 && starfield.classicIndices() == starfieldStart
                   && StarfieldModel.fadeLevel(tick: StarfieldModel.lengthInTicks - 1) == 1)
@@ -371,6 +384,35 @@ enum SelfTest {
         landscape.tick()
         check("Landscape loops from black after \(SineLandscapeModel.lengthInTicks) steps",
               landscape.ticks == 0 && !landscape.classicIndices().contains { $0 != 0 })
+        // Landscape, modern look, over one whole loop and into the next: the camera's glide must be
+        // continuous. Where one step's glide ends, the next one's must begin (a picture is drawn only every
+        // second step, so each glide spans two steps). The one place the camera may jump is the restart,
+        // and there the land must be out of sight on both sides (pushed down 130 lines or more).
+        do {
+            var land = SineLandscapeModel()
+            var breaks: [String] = []
+            var visibleJump = false
+            var worstMove = 0.0, worstTurn = 0.0
+            for step in 1...(SineLandscapeModel.lengthInTicks + 40) {
+                let before = land.camera(alpha: 1)
+                land.tick()
+                let after = land.camera(alpha: 0)
+                let moved = simd_length(after.position - before.position)
+                let same = moved < 1e-9 && abs(after.heading - before.heading) < 1e-9
+                    && abs(after.startRise - before.startRise) < 1e-9
+                if !same {
+                    if before.startRise >= 130 && after.startRise >= 130 { continue }
+                    visibleJump = true
+                    if breaks.count < 5 { breaks.append("step \(step)") }
+                }
+                let end = land.camera(alpha: 1)
+                worstMove = max(worstMove, simd_length(end.position - after.position))
+                worstTurn = max(worstTurn, abs(end.heading - after.heading))
+            }
+            check("Landscape modern camera glides without a break over one loop and into the next",
+                  !visibleJump && worstMove < 600 && worstTurn < 2,
+                  breaks.isEmpty ? "per step: moves up to \(String(format: "%.0f", worstMove)) units, turns up to \(String(format: "%.2f", worstTurn))/1024" : breaks.joined(separator: ", "))
+        }
 
         // Plasma Cube. Two tables are the original's own numbers (no formula reproduces them), checked
         // here against checksums of SINIT.INC and SPLINE.INC; the path points against RATA.INC as the
@@ -494,6 +536,63 @@ enum SelfTest {
         check("Glenz is black at both ends and loops after \(GlenzModel.lengthInTicks) steps",
               glenz.ticks == 0 && !glenzStart.contains { $0 != 0 } && !glenzEnd.contains { $0 != 0 }
                   && glenz.classicReferenceFrame() == glenzStart)
+        // Glenz, modern look in motion, over one whole loop and into the next.
+        //  1. At the start of every step the modern look's corners are where the 1993 look's are (the 1993
+        //     ones are rounded to whole pixels and use a squash rounded to whole steps, so "within 3 pixels").
+        //  2. Where one step's glide ends the next one's begins. With 1, that means every glide runs from
+        //     the 1993 position at one step to the 1993 position at the next, and never across anything else.
+        //  3. The plate never moves further in a step than it is falling (it used to snap up by most of a
+        //     row on the step it settled).
+        do {
+            var g = GlenzModel()
+            var worstOffset: Float = 0, worstBreak: Float = 0, worstPlate: Float = 0
+            var compared = 0
+            var problems: [String] = []
+            var plateProblems: [String] = []
+            func note(_ text: String, in list: inout [String]) { if list.count < 5 { list.append(text) } }
+            for step in 1...(GlenzModel.lengthInTicks + 250) {
+                let endOfGlide = [false, true].map { g.modernCorners(second: $0, alpha: 1) }
+                let plateEnd = g.modernPlateRow(alpha: 1)
+                let speedBefore = abs(g.plateSpeed)
+                g.tick()
+                if let end = plateEnd, let start = g.modernPlateRow(alpha: 0), abs(end - start) > 1e-4 {
+                    note("plate breaks at step \(step)", in: &plateProblems)
+                }
+                if let start = g.modernPlateRow(alpha: 0), let end = g.modernPlateRow(alpha: 1), !g.mainStarted {
+                    let moved = abs(end - start)
+                    worstPlate = max(worstPlate, moved)
+                    // The fall's speed is in sixteenths of a row per step and changes by one a step.
+                    if moved > Float(max(speedBefore, abs(g.plateSpeed)) + 1) / 16 {
+                        note("plate moves \(moved) rows in step \(step)", in: &plateProblems)
+                    }
+                }
+                for second in [false, true] {
+                    let drawn = g.mainStarted && g.script.frame >= 1
+                        && (second ? g.script.frame > 800 && g.script.bscale > 4 : g.script.xscale > 4)
+                    let now = g.modernCorners(second: second, alpha: 0)
+                    if drawn != (now != nil) { note("step \(step): drawn in one look only", in: &problems) }
+                    guard let now else { continue }
+                    let classic = g.screenCorners(second: second)
+                    for (a, b) in zip(now, classic) {
+                        worstOffset = max(worstOffset, simd_length(a - SIMD2(Float(b.x), Float(b.y))))
+                    }
+                    compared += 1
+                    if let end = endOfGlide[second ? 1 : 0] {
+                        let gap = zip(now, end).map { simd_length($0 - $1) }.max() ?? 0
+                        worstBreak = max(worstBreak, gap)
+                        if gap > 0.1 { note("step \(step): glide breaks by \(gap) pixels", in: &problems) }
+                    }
+                }
+            }
+            check("Glenz modern look follows the 1993 corners and glides without a break (\(compared) glenz-steps)",
+                  problems.isEmpty && worstOffset < 3 && compared > 3000,
+                  problems.isEmpty
+                      ? "furthest from the 1993 corner \(String(format: "%.2f", worstOffset)) pixels, largest break \(String(format: "%.4f", worstBreak))"
+                      : problems.joined(separator: "; "))
+            check("Glenz modern plate never moves faster than it is falling",
+                  plateProblems.isEmpty && worstPlate > 1,
+                  plateProblems.isEmpty ? "largest move in a step \(String(format: "%.2f", worstPlate)) rows" : plateProblems.joined(separator: "; "))
+        }
 
 
         // The VISU 3D engine by itself (the Ships Fly-by and 3D City scenes, further down, are built on it).

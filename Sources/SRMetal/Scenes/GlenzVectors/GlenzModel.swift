@@ -560,9 +560,13 @@ struct GlenzModel {
                          move: SIMD3(Float(s.oxp), Float(s.ypos + 1500 + s.oyp), Float(s.zpos + s.ozp)))
     }
 
+    /// The plate's position for the modern look, in rows and fractions of a row; nil before it is drawn.
+    /// Once settled it rests where its fall ended (47 15/16), not at the whole row the 1993 look draws
+    /// (47). Until the 2026-11-14 review it switched to the whole row on the step it settled, which
+    /// made the plate snap up by most of a row in one step, four times its speed just before.
     private func plateRow() -> Float? {
-        guard let shown = plateShown else { return nil }
-        return plateSettled ? Float(shown) : Float(plateY) / 16
+        guard plateShown != nil else { return nil }
+        return Float(plateY) / 16
     }
 
     private func plateBrightness() -> Float {
@@ -571,10 +575,50 @@ struct GlenzModel {
         return Float(max(764 - script.frame, 0)) / 64
     }
 
-    /// The state `alpha` of the way from this step to the next (0...1).
-    func modernState(alpha: Float) -> ModernState {
+    /// This model one step on, as far as the script goes (nothing is drawn). At the last step before
+    /// the restart it is this model unchanged: nothing glides across the restart.
+    private func oneStepOn() -> GlenzModel {
         var next = self
         if ticks + 1 < Self.lengthInTicks { _ = next.advance() }
+        return next
+    }
+
+    /// One glenz's 14 corners on the canvas, `alpha` of the way from this step to the next, in
+    /// decimals. Nil while that glenz is not drawn.
+    func modernCorners(second: Bool, alpha: Float) -> [SIMD2<Float>]? {
+        modernCorners(second: second, alpha: alpha, next: oneStepOn())
+    }
+
+    private func modernCorners(second: Bool, alpha: Float, next: GlenzModel) -> [SIMD2<Float>]? {
+        guard var place = placement(second: second, ahead: alpha) else { return nil }
+        if let later = next.placement(second: second, ahead: 0) {
+            place.scale += (later.scale - place.scale) * alpha
+            place.move += (later.move - place.move) * alpha
+        }
+        func radians(_ tenths: Float) -> Float { tenths * Float.pi / 1800 }
+        // `cmatrix_yxz` hands its first two angles over crossed (see `turnMatrix`).
+        let turn = Math3D.rotationYXZ(x: radians(place.angles.y), y: radians(place.angles.x), z: radians(place.angles.z))
+        let clipToFloor = !second && script.frame < 800
+        let source = second ? Self.secondCorners : Self.firstCorners
+        return source.map { (corner: SIMD3<Int>) -> SIMD2<Float> in
+            let turned = turn * SIMD3(Float(corner.x), Float(corner.y), Float(corner.z))
+            // Two passes through the original's routine, each swapping y and z: the first
+            // scale number widens x, the THIRD squashes the height, the second the depth.
+            var p = SIMD3(turned.x * place.scale.x, turned.y * place.scale.z, turned.z * place.scale.y) / 512 + place.move
+            if clipToFloor { p.y = min(p.y, 1500) }
+            return Math3D.canvasPosition(p, focal: SIMD2(256, 213), centre: SIMD2(160, 130), near: 128)
+        }
+    }
+
+    /// The plate's position as the modern look draws it, `alpha` of the way to the next step.
+    func modernPlateRow(alpha: Float) -> Float? {
+        guard let row = plateRow() else { return nil }
+        return row + ((oneStepOn().plateRow() ?? row) - row) * alpha
+    }
+
+    /// The state `alpha` of the way from this step to the next (0...1).
+    func modernState(alpha: Float) -> ModernState {
+        let next = oneStepOn()
         func mix(_ a: Float, _ b: Float) -> Float { a + (b - a) * alpha }
         var state = ModernState()
 
@@ -592,24 +636,7 @@ struct GlenzModel {
         state.toggleTint = shown(4)
 
         for second in [false, true] {
-            guard var place = placement(second: second, ahead: alpha) else { continue }
-            if let later = next.placement(second: second, ahead: 0) {
-                place.scale += (later.scale - place.scale) * alpha
-                place.move += (later.move - place.move) * alpha
-            }
-            func radians(_ tenths: Float) -> Float { tenths * Float.pi / 1800 }
-            // `cmatrix_yxz` hands its first two angles over crossed (see `turnMatrix`).
-            let turn = Math3D.rotationYXZ(x: radians(place.angles.y), y: radians(place.angles.x), z: radians(place.angles.z))
-            let clipToFloor = !second && script.frame < 800
-            let source = second ? Self.secondCorners : Self.firstCorners
-            let corners = source.map { (corner: SIMD3<Int>) -> SIMD2<Float> in
-                let turned = turn * SIMD3(Float(corner.x), Float(corner.y), Float(corner.z))
-                // Two passes through the original's routine, each swapping y and z: the first
-                // scale number widens x, the THIRD squashes the height, the second the depth.
-                var p = SIMD3(turned.x * place.scale.x, turned.y * place.scale.z, turned.z * place.scale.y) / 512 + place.move
-                if clipToFloor { p.y = min(p.y, 1500) }
-                return Math3D.canvasPosition(p, focal: SIMD2(256, 213), centre: SIMD2(160, 130), near: 128)
-            }
+            guard let corners = modernCorners(second: second, alpha: alpha, next: next) else { continue }
             for (index, face) in Self.faces.enumerated() {
                 let points = face.map { corners[$0] }
                 let v = Math3D.screenFacing(points[0], points[1], points[2])

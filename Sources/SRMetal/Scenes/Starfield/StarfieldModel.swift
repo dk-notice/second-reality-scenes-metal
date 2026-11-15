@@ -144,6 +144,7 @@ struct StarfieldModel {
         for i in 0..<count {
             let oldDepth = Int(stars[i].depth)
             stars[i].depth = UInt8((oldDepth - 2) & 255)
+            let newDepth = oldDepth - 2
             if oldDepth < 2 {
                 // Flown past: a new random place. Not drawn this step.
                 closeFlight(of: i, at: step)
@@ -159,7 +160,7 @@ struct StarfieldModel {
             if stars[i].flight < 0 {
                 stars[i].flight = flights.count
                 let flight = Flight(x: Float(stars[i].x), y: Float(stars[i].y), start: Float(step),
-                                    startDepth: Float(oldDepth), end: Self.openEnded)
+                                    startDepth: Float(newDepth), end: Self.openEnded)
                 flights.append(flight)
                 stars[i].flightHasTwin = echo
                 if echo {
@@ -169,13 +170,15 @@ struct StarfieldModel {
                 }
             }
 
-            // Perspective, with the original's whole-number rounding. Note it uses the depth from before
-            // this step for the position and the depth after it for the colour.
-            let row = ((stars[i].y * Self.scaleY[oldDepth]) >> 14) + 100
+            // Perspective, with the original's whole-number rounding. Position and colour both use the
+            // depth from AFTER this step: the assembly does `movzx bx,[si]` / `sub bl,2` and then uses BX
+            // to look up the tables. (Until the 2026-11-14 review this used the depth from before the
+            // step for the position, which put every dot where the original drew it one step earlier.)
+            let row = ((stars[i].y * Self.scaleY[newDepth]) >> 14) + 100
             guard row >= 0, row <= 99 else { continue }
-            let column = ((stars[i].x * Self.scaleX[oldDepth]) >> 14) + 160
+            let column = ((stars[i].x * Self.scaleX[newDepth]) >> 14) + 160
             guard column >= 0, column <= 319 else { continue }
-            let colour = Self.colour(depth: oldDepth - 2)
+            let colour = Self.colour(depth: newDepth)
             let offset = row * Self.width + column
             // Dots are OR-ed in, so two stars on one pixel combine their colour numbers.
             pictures[page][offset] |= colour

@@ -268,19 +268,31 @@ and the chip is handed triangles already placed on the screen; nothing here need
 - **The two looks against each other**: pictures at steps 365, 420, 440 and 1300 looked at side by
   side, and at step 1300 the red levels sampled on a grid of points agree.
 - **The loop**: black at step 0 and at step 2359, and step 2360 is step 0 again (self-test).
+- **The modern look in motion (2026-11-14 review).** A self-test runs one whole loop and into the next
+  and checks, for both glenzes at every step they are drawn (3,502 in all): the modern look's 14 corners
+  start each step within 3 pixels of the 1993 look's (worst found: 1.85; the 1993 ones are rounded to whole
+  pixels), and each step's glide ends exactly where the next begins. Together these mean every glide runs
+  from one 1993 position to the next and across nothing else: not across the bounces, the squash, the
+  second glenz appearing, the change of wander rule at step 2013, the shrink or the restart. It also checks
+  that both looks start and stop drawing each glenz on the same step, and that the plate never moves
+  further in a step than it is falling. `--motion-check glenz-vectors modern` over the loop reports two
+  jumps, both expected: the plate's first appearance, and step 1070 (see "Kept quirks").
 
 ## What was not checked
 
 - **Against a running original or a recording.** Nothing here has been compared with the real program
   on screen.
 - **`MAIN.C` as a whole.** The script was ported by reading, twice (Python and Swift), by the same
-  author. Only the bounce line was confirmed in the compiled code.
+  author, and read a third time, independently, in the 2026-11-14 review, which found no difference.
+  Only the bounce line was confirmed in the compiled code. It has not been run.
 - **Three small changes to the assembly text in the tool**: `rotlist` writes numbers into its own
   instructions, which the tool keeps in variables instead; the C calling wrappers are bypassed; a
   debugging macro is emptied. None should change a result.
 - **Timing against the music**: how long the original paused between the plate and the glenz, and
   when the music cut the part off.
-- **The modern look in motion.** Still pictures were checked; smoothness was not measured.
+- **The modern look's colours in motion.** Positions are now checked by program (above); how the
+  colours and blending look while moving was checked only by the picture-difference numbers of
+  `--motion-check` and a few still pictures, not by a person watching.
 - **The linked library `gl10.lib`.** `zoomer2` calls `setpalarea`, which is in no source file here, so
   it presumably comes from that library. Only the left-out lead-in uses it.
 
@@ -304,6 +316,8 @@ and the chip is handed triangles already placed on the screen; nothing here need
     faces are lit from their first frame.
   - The squash uses the wobble value without rounding to whole steps.
   - The plate picture is smoothly scaled, not row-picked.
+  - The plate comes to rest where its fall ended, 47 15/16 rows down, not at the whole row (47) the
+    1993 look draws. That is under half a canvas row at its far edge.
 
 ## Kept quirks
 
@@ -321,6 +335,9 @@ All in the 1993 look.
 - **The plate does not fade under the glenz.** The fade changes colours 0-15 only. The first glenz's
   front faces have their own copies of the plate's colours at quarter strength, and those are not
   faded. So for a second the plate is visible only through the glenz.
+- **The first glenz dims by a quarter in one step** at step 1070 (both looks). The original halves its
+  light rule (`lightshift` 9 becomes 10) the moment the red glenz's size number (116) passes the first
+  one's (115, where the wobble happened to leave it), and the blue faces' red goes from 7 to 10.
 - **Wiped rows.** While the plate is being wiped, two screen rows a frame are cleared outright. Any part
   of the glenz on those rows whose colour number did not change that frame stays cleared until it
   does change.
@@ -333,3 +350,38 @@ All in the 1993 look.
   sweep stops one pixel short of the bottom-right corner.
 - **A face narrowed to nothing**: if a triangle's first and last corners land on the same pixel, the
   last is dropped and the two-cornered remainder draws nothing.
+
+## Code review (2026-11-14)
+
+**What was reviewed.** `GlenzModel.swift` (script, plate, pipeline, colour rules, modern look),
+`GlenzFiller.swift`, `GlenzScene.swift` and `GlenzFloorArt.swift`. The script and the plate's fall were
+read line by line against `GLENZ/MAIN.C`. The assembly routines (`MATH.ASM`, `VEC.ASM`, `NEW.ASM`) were
+not read again in full: they are already run instruction by instruction by the reference tool, and the 26
+stored comparisons still pass. Also a general code review of the folder, and the modern look in motion.
+
+**Found and fixed: the plate snapped when it settled (modern look).** While falling, the modern look
+places the plate by the fall's exact position; once settled it used the whole row the 1993 look draws.
+The fall ends at 47 15/16, so on step 177 the plate jumped up by 0.94 of a row within one step, about four
+times its speed just before (`--motion-check`: a change of 0.8 where 0.13 is usual). Now it stays where
+the fall ended. The new self-test fails at exactly that step with the fix removed.
+
+**Looked like a fault, is the original's:** the one-step dimming at step 1070 (see "Kept quirks"). Both
+looks do it, and a re-run of `MAIN.C`'s rule puts the switch on that step.
+
+**Confirmed correct, by reading against `MAIN.C`:** the plate's fall and its row arithmetic; the 256
+starting colours; rotation counters; both wander rules and the first glenz's exit; grow and shrink (the
+original's `else if (frame > 1400+789)` branch can never run and is rightly absent); the bounce, squash
+and spring, with 16-bit wrapping where the original has it; the three palette phases; which glenz is
+drawn when; the floor clamp ending at frame 800. No out-of-range read was found: the wipe touches rows up
+to 199, palette blocks stay inside the 256 colours, the filler holds columns to 1...319.
+
+**Confirmed by program:** the modern look's geometry (`Math3D.rotationYXZ`, `Math3D.canvasPosition`, the
+crossed angles and the swapped scale numbers) agrees with the 1993 look to within 1.85 pixels at every step.
+
+**Still unverified:** see "What was not checked".
+
+**Possible tidy-ups** (not done; for a later `/simplify` pass): `modernState()` copies the model and
+steps the script on the copy for every drawn frame, where once per step would do; the 1993 look rebuilds
+its 256-colour list and the modern look its vertex lists on every frame; `GlenzModel.plateShown` is now
+only used to tell whether the plate has been drawn at all.
+
