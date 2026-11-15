@@ -199,6 +199,44 @@ enum SelfTest {
               loopStep <= ordinaryStep * 11 / 10,
               "\(loopStep) pixels change across the loop, \(ordinaryStep) across an ordinary step")
 
+        // Bouncing Dots, modern look, over one whole loop and into the next. A dot glides from where it
+        // was a step ago to where it is now, unless it is marked as jumping. In ordinary motion no dot
+        // or shadow moves more than about 27 canvas pixels in a step. A longer glide means the dot has
+        // been slid between two places it was never between: from a placeholder on the first step with
+        // dots (511 dots, 164 pixels, before the code review), or across the screen when its 16-bit
+        // height wraps round (up to 718 pixels). Also: the smooth fade must stay within 0...64 and must
+        // not snap at a step boundary (it used to dip below 0 at the end of the fade-in).
+        do {
+            var dots = BouncingDotsModel()
+            var longest = 0.0
+            var longGlides: [String] = []
+            var fadeLow = 64.0, fadeHigh = 0.0, fadeSnap = 0.0
+            let steps = BouncingDotsModel.fadeInTicks + BouncingDotsModel.mainTicks + 300
+            for step in 1...steps {
+                let fadeBefore = dots.smoothFade(alpha: 0.999)
+                dots.tick()
+                fadeSnap = max(fadeSnap, abs(dots.smoothFade(alpha: 0) - fadeBefore))
+                for alpha in [0, 0.5, 0.999] {
+                    fadeLow = min(fadeLow, dots.smoothFade(alpha: alpha))
+                    fadeHigh = max(fadeHigh, dots.smoothFade(alpha: alpha))
+                }
+                guard dots.ticks > BouncingDotsModel.fadeInTicks else { continue }
+                for i in 0..<BouncingDotsModel.dotCount where !dots.current[i].jumped {
+                    let now = dots.current[i], before = dots.previous[i]
+                    let glide = max(abs(now.position.x - before.position.x), abs(now.position.y - before.position.y),
+                                    abs(now.shadowY - before.shadowY))
+                    longest = max(longest, glide)
+                    if glide > 50 && longGlides.count < 5 { longGlides.append("step \(step) dot \(i): \(Int(glide))") }
+                }
+            }
+            check("Bouncing Dots modern look never glides a dot from a placeholder or across a height wrap (\(steps) steps)",
+                  longGlides.isEmpty && longest > 5,
+                  longGlides.isEmpty ? String(format: "longest glide %.1f canvas pixels", longest) : longGlides.joined(separator: ", "))
+            check("Bouncing Dots modern fade stays within 0...64 and does not snap between steps",
+                  fadeLow >= 0 && fadeHigh <= 64 && fadeSnap < 0.6,
+                  String(format: "range %.2f...%.2f, largest change across a step boundary %.3f", fadeLow, fadeHigh, fadeSnap))
+        }
+
         // Plasma should loop exactly: any moment and the same moment one full run later look identical,
         // and the loop point itself is black (the band has fallen away; the next palette has not begun).
         var plasma = PlasmaModel()

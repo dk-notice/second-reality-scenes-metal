@@ -192,6 +192,20 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Deliberate departures: the original ended with a flash to white and then a fade to black; this fades straight
   to black (frames 2360-2424) and loops, starting again with the original's 130-step floor fade-in. The
   original's uninitialised re-drop counter starts at 0 here. The unused "face" data is not used.
+- Code review (2026-11-14), against DOTS/MAIN.C and ASM.ASM; see docs/scenes/bouncing-dots.md:
+  - The port of `drawdots` and of MAIN.C's script was re-read instruction by instruction in a separate
+    session and found to match. Still never compared with a running original. 1993 pictures unchanged.
+  - FIXED, modern look: (1) on the first step with dots (131) all dots and shadows glided in from a
+    placeholder at the top-left corner; (2) once gravity is off, a rising dot's 16-bit height wraps
+    (-32768 -> +32767 and usually back), and the modern look glided it across the screen (e.g. dot 419,
+    steps 2383-2384); (3) the smooth fade-in went below 0 for two steps and snapped back at step 130.
+    `Projected.jumped` now also covers (1) and (2).
+  - New self-test checks: no glide longer than 50 canvas pixels over a loop and a bit (normal maximum
+    27; confirmed to fail without the fixes); the smooth fade stays in 0...64 without snapping.
+  - Noted, not changed: dots the 1993 look hides (off the side, or shadow below the screen) are still
+    drawn by the modern look, and do not fall while hidden.
+  - Tidy-ups left: unused `floorGrey`; colour formulas written 2-3 times; per-draw 64 KB copy and
+    palette rebuild; literal screen numbers.
 
 ## Plasma notes
 - Source: PLZPART/PLZ.C, ASMYT.ASM (`plzline`, `setplzparas`), COPPER.ASM (`moveplz`, `pompota`, `do_drop`),

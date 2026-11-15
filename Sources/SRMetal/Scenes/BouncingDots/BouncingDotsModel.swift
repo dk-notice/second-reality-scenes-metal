@@ -81,7 +81,9 @@ struct BouncingDotsModel {
         var position = SIMD2<Double>(0, 0)
         var shadowY = 0.0
         var depth = 9000.0
-        /// True when the dot was re-dropped this step, so it should jump rather than glide.
+        /// True when the dot should jump to this place rather than glide to it: it was re-dropped this
+        /// step, or this is the first step with dots (there is no earlier place to glide from), or its
+        /// 16-bit height wrapped round this step (from far above the screen to far below, or back).
         var jumped = true
     }
     private(set) var previous = [Projected](repeating: Projected(), count: dotCount)
@@ -175,7 +177,11 @@ struct BouncingDotsModel {
 
         previous = current
         drawDots(rotSin: rotSin, rotCos: rotCos)
-        current[i].jumped = dropped
+        if dropped { current[i].jumped = true }
+        if frame == 1 {
+            // The first step with dots: `previous` holds only placeholders, so nothing may glide from it.
+            for dot in 0..<Self.dotCount { current[dot].jumped = true }
+        }
 
         if frame == Self.mainTicks {
             reset()
@@ -235,13 +241,21 @@ struct BouncingDotsModel {
 
             // Gravity, and the bounce off the floor.
             fallSpeed[i] = Self.wrap16(fallSpeed[i] + gravity)
-            var newY = Self.wrap16(y[i] + fallSpeed[i])
+            let fallen = y[i] + fallSpeed[i]
+            var newY = Self.wrap16(fallen)
+            var wrapped = newY != fallen
             if newY >= floorLevel {
                 fallSpeed[i] = Self.wrap16(-fallSpeed[i] * bounce) >> 4
-                newY = Self.wrap16(newY + fallSpeed[i])
+                let bounced = newY + fallSpeed[i]
+                newY = Self.wrap16(bounced)
+                wrapped = wrapped || newY != bounced
             }
             y[i] = newY
             current[i].position.y = Double(newY * 64) / Double(depth) + 100
+            // Once gravity is off, a rising dot keeps rising until its 16-bit height wraps round to far
+            // below the floor (and usually straight back). Both places are off the screen, so the 1993
+            // look never shows it; the modern look must not glide between them across the screen.
+            if wrapped { current[i].jumped = true }
 
             let ballRow = Self.wrap16((newY << 6) / depth + 100)
             if ballRow < 0 || ballRow > 199 {
@@ -322,7 +336,8 @@ struct BouncingDotsModel {
     /// The same, but changing smoothly between steps (for the modern look).
     func smoothFade(alpha: Double) -> Double {
         let time = Double(ticks) + alpha
-        if time < Double(Self.fadeInTicks) { return 64 - time / 2 }
+        // Never below 0: the stepped fade reaches full brightness two steps before the fade-in ends.
+        if time < Double(Self.fadeInTicks) { return max(0, 64 - time / 2) }
         return fadeLevel(at: time)
     }
 
