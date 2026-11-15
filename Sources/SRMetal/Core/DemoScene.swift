@@ -164,6 +164,15 @@ enum SceneCatalog {
             checkpoints: [0, 1, 100, 330, 420, 800, 960, 1014, 1300, 1700, 2100, 2250, 2340, 2359],
             thumbnailStep: 1300,
             make: { device, format in try GlenzScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "ships-flyby",
+            title: "Ships Fly-by",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 70, 130, 200, 290, 330, 345, 400, 480, 560, 591],
+            thumbnailStep: 330,
+            make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
         )
     ]
 }
