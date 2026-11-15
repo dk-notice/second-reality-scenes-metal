@@ -33,6 +33,26 @@ struct DotTunnelModel {
     private var sx = 0
     private var sy = 0
 
+    /// Video memory as the original's drawing loop leaves it: one colour number per pixel. It is 65536
+    /// bytes, not 64000, because the original sent dots above or below the screen to addresses just past
+    /// the last visible pixel, and remembered a dot off the left or right edge by a bare 16-bit number.
+    private var screen = [UInt8](repeating: 0, count: 65536)
+    /// Where each dot was last drawn, by its place in the drawing order (not by ring). The original
+    /// never set this list up; here it starts as zeros, which only ever blanks pixel 0.
+    private var oldPositions = [Int](repeating: 0, count: 77 * dotsPerRing)
+
+    /// The original's circle table (TUNNEL.DAT): 64 points for each circle size, already centred on
+    /// the screen. Entry `n` is the circle of vertical radius `n + 10`. This formula reproduces the file.
+    static let circleTable: [[SIMD2<Int>]] = (0..<138).map { entry in
+        let radiusY = entry + 10
+        let radiusX = classicRadiusX(radiusY: radiusY)
+        return (0..<dotsPerRing).map { dot in
+            let angle = Double(dot) * .pi / 32
+            return SIMD2(160 + Int((sin(angle) * Double(radiusX)).rounded(.toNearestOrEven)),
+                         100 + Int((cos(angle) * Double(radiusY)).rounded(.toNearestOrEven)))
+        }
+    }
+
     // The original loaded these two tables from SINIT.DAT. These formulas (from its SINGEN.PAS)
     // reproduce that file exactly. The waves grow wider the further along the table you go.
     static let sinTable: [Int] = (0...4096).map { x in
@@ -71,6 +91,63 @@ struct DotTunnelModel {
         if tickCount == Self.lengthInTicks {
             reset()
         }
+        drawClassic()
+    }
+
+    /// The original's drawing loop, replayed step for step into `screen`.
+    ///
+    /// The original never cleared the screen. Each dot, just before it is drawn, blanks the pixel
+    /// where the dot with the same place in the drawing order was drawn the frame before. Rings are
+    /// drawn far to near, so that blanking often lands on a dot a further ring has only just drawn
+    /// this frame, and that dot is then missing: about one dot in twenty, different ones each frame.
+    /// That is part of how the original looked, so it is reproduced.
+    private mutating func drawClassic() {
+        let reference = rings[Self.referenceSlot]
+        var index = 0
+        for slot in stride(from: 80, through: 4, by: -1) {
+            let ring = rings[slot]
+            let colour = Self.colourNumber(slot: slot, band: ring.band)
+            // Colour numbers below 64 are rings not switched on yet (or switched off at the end).
+            guard colour >= 64 else { continue }
+            let circle = Self.circleTable[Self.classicRadiusY(slot: slot) - 10]
+            let offsetX = ring.x - reference.x
+            let offsetY = ring.y - reference.y
+            for dot in 0..<Self.dotsPerRing {
+                screen[oldPositions[index]] = 0
+                // 16-bit arithmetic: a dot left of the screen wraps round to a large number.
+                var position = (circle[dot].x + offsetX) & 0xFFFF
+                if position <= 319 {
+                    let row = circle[dot].y + offsetY
+                    // Rows off the top or bottom go to address 64000, just past the visible screen.
+                    position = (position + ((0..<200).contains(row) ? row * 320 : 64000)) & 0xFFFF
+                    screen[position] = UInt8(colour)
+                }
+                oldPositions[index] = position
+                index += 1
+            }
+        }
+    }
+
+    /// The colour number the original gave a ring: its band's base (64 or 128) plus a step that grows
+    /// with distance. The palette then makes higher numbers darker.
+    static func colourNumber(slot: Int, band: Band) -> Int {
+        Int(band.rawValue) + Int((Double(slot) / 1.3).rounded(.toNearestOrEven))
+    }
+
+    /// The original's palette as brightness (0...63, the VGA scale) for each colour number: two grey
+    /// ramps, with numbers 68 and 132 set to black (which blanks the ring in the reference slot).
+    static let classicPalette: [Int] = {
+        var palette = [Int](repeating: 0, count: 256)
+        for step in 0...64 { palette[64 + step] = (64 - step) & 63 }
+        for step in 0...64 { palette[128 + step] = (64 - step) * 3 / 4 }
+        palette[68] = 0
+        palette[132] = 0
+        return palette
+    }()
+
+    /// The 1993 picture as colour numbers, one byte per pixel, 320x200.
+    func classicIndices() -> [UInt8] {
+        Array(screen[0..<(320 * 200)])
     }
 
     // MARK: - The original's size and colour rules
@@ -86,38 +163,8 @@ struct DotTunnelModel {
         Int((Double(radiusY) * 1.7).rounded(.toNearestOrEven))
     }
 
-    /// Brightness (0...63, the VGA scale) of a ring in a slot. Further away is darker.
-    static func classicBrightness(slot: Int, band: Band) -> Int {
-        let step = Int((Double(slot) / 1.3).rounded(.toNearestOrEven))
-        // The original set palette entries 68 and 132 to black, which blanks the ring in the reference slot.
-        if step == 4 { return 0 }
-        switch band {
-        case .invisible: return 0
-        case .bright: return 64 - step
-        case .dim: return (64 - step) * 3 / 4
-        }
-    }
-
-    /// The classic-look picture worked out on the processor, exactly as the 1993 code drew it:
-    /// one byte per pixel, 320x200, 0...63. Used to check the graphics-chip version against.
+    /// The 1993 picture as brightness: one byte per pixel, 320x200, 0...63.
     func classicReferenceFrame() -> [UInt8] {
-        var frame = [UInt8](repeating: 0, count: 320 * 200)
-        let reference = rings[Self.referenceSlot]
-        for slot in stride(from: 80, through: 4, by: -1) {
-            let ring = rings[slot]
-            guard ring.band != .invisible else { continue }
-            let value = UInt8(Self.classicBrightness(slot: slot, band: ring.band))
-            let radiusY = Self.classicRadiusY(slot: slot)
-            let radiusX = Self.classicRadiusX(radiusY: radiusY)
-            for dot in 0..<Self.dotsPerRing {
-                let angle = Double(dot) * .pi / 32
-                let x = 160 + Int((sin(angle) * Double(radiusX)).rounded(.toNearestOrEven)) + ring.x - reference.x
-                let y = 100 + Int((cos(angle) * Double(radiusY)).rounded(.toNearestOrEven)) + ring.y - reference.y
-                if x >= 0, x < 320, y >= 0, y < 200 {
-                    frame[y * 320 + x] = value
-                }
-            }
-        }
-        return frame
+        classicIndices().map { UInt8(Self.classicPalette[Int($0)]) }
     }
 }

@@ -104,6 +104,31 @@ enum SelfTest {
         for _ in 0..<DotTunnelModel.lengthInTicks { tunnel.tick() }
         check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0)
 
+        // Dot Tunnel, 1993 look, against a separate re-run of the original's loop (TUN10.PAS: each dot
+        // blanks its old pixel just before it is drawn, with the screen never cleared), written in
+        // Python and reading the original TUNNEL.DAT and SINIT.DAT. The sums are of the screen's colour
+        // numbers. Clearing and redrawing instead (as this scene did before its code review) gives
+        // different pictures at every one of these steps: the original loses about one dot in twenty.
+        do {
+            let table = DotTunnelModel.circleTable
+            check("tunnel circle table matches original spot values",
+                  table.count == 138 && table[0][0] == SIMD2(160, 110) && table[0][16] == SIMD2(177, 100)
+                      && table[137][5] == SIMD2(278, 230) && table[100][40] == SIMD2(28, 22))
+            var replay = DotTunnelModel()
+            var sums: [UInt32] = []
+            var litNearEnd = 0
+            for step in 1..<DotTunnelModel.lengthInTicks {
+                replay.tick()
+                if [60, 250, 500, 777, 900, 1000].contains(step) { sums.append(crc32(replay.classicIndices())) }
+                if step >= 1054 { litNearEnd += replay.classicReferenceFrame().reduce(0) { $0 + ($1 != 0 ? 1 : 0) } }
+            }
+            check("Dot Tunnel pictures match the re-run of the original's erase-and-draw loop at steps 60, 250, 500, 777, 900, 1000",
+                  sums == [2_581_361_537, 231_369_616, 2_597_006_008, 2_878_197_779, 1_960_365_762, 637_159_662],
+                  "\(sums)")
+            check("Dot Tunnel leaves no dots behind when it empties (steps 1054...1059)", litNearEnd == 0,
+                  "\(litNearEnd) lit pixels")
+        }
+
         // Techno Bars, modern look, over one whole loop and into the next. Within a section the bars only
         // spin forwards, by at most about 85/1024 of a turn per step, and their thickness by under
         // about a pixel. At a section change they jump (by 833/1024 of a turn backwards into section two).

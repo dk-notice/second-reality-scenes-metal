@@ -108,9 +108,22 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
   so it moves the same way. It adds gliding between steps, round dots, and larger dots when nearer.
 - Modern look does not blank the ring in slot 5 as the original palette did.
-- Known small difference: the original erased dots individually and could leave a few stale dots on
-  screen while the tunnel emptied at the end. This version clears the screen every frame.
 - The scene loops after 1060 steps (about 15 seconds), the original's length.
+- Code review (2026-11-14), against TUNNELI/TUN10.PAS; see docs/scenes/dot-tunnel.md:
+  - FIXED, 1993 look: it cleared and redrew every frame, showing every dot. The original never clears:
+    each dot blanks the old pixel of the dot in its place in the drawing order just before it is drawn,
+    and that often lands on a dot a further ring has just drawn. Roughly one dot in twenty is missing each
+    frame (163-296 pixels' difference at steps 100-900). The classic look is now a processor replay of that
+    loop (`DotTunnelModel.drawClassic`, shown through `IndexedCanvas`), no longer calculated in the shader.
+    Every 1993 picture with dots changed; `docs/images/dot-tunnel-classic.png` was remade.
+  - The old note here about "stale dots at the end" was wrong and is gone: the original leaves none (the
+    one ring never erased, slot 4, is always off screen).
+  - Verified against a Python re-run of TUN10.PAS reading the original TUNNEL.DAT / SINIT.DAT: same
+    checksums at steps 60, 250, 500, 777, 900, 1000 (in the self-test). Same reviewer wrote both.
+  - Modern look: no fault found; `--motion-check` shows no jumps, loop point included.
+  - `docs/how-it-works.md` still lists Dot Tunnel under "calculate it on the graphics chip"; it now
+    belongs under "replay it on the processor" (not edited by the review session, by its brief).
+  - Tidy-ups left: modern look repeats the size/brightness formulas; literal 320/200/160/100.
 
 ## Rings and Interference notes
 - Both scenes live in `Scenes/Interference/` and share one model, one shader and the ring pictures; a `part`
