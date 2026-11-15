@@ -3,10 +3,13 @@
 set -e
 cd "$(dirname "$0")"
 
+APP="build/SRMetal.app"
+# Remove the last build's app BEFORE compiling. If the compile fails, the script stops (set -e)
+# and there is then no app at all, rather than an old one that looks like the result of this build.
+rm -rf "$APP"
+
 swift build -c release
 
-APP="build/SRMetal.app"
-rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 cp .build/release/SRMetal "$APP/Contents/MacOS/SRMetal"
 
