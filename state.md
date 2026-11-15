@@ -20,10 +20,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Scene chooser built (2026-11-14): a sidebar lists every scene with a small picture, title and original
   coder; the toolbar has a Modern / 1993 switch and a restart button. Keys: L look, R restart, right/down
   next scene, left/up previous. Fullscreen hides the sidebar and toolbar. The "Scene" menu has the same actions.
-  NOT yet tried by hand: fullscreen behaviour, the toolbar switch and restart button, the sidebar button,
-  and the L / R / arrow keys in the new window (synthetic key presses are blocked by macOS, so only the
-  user can try them). Seen working in window captures: sidebar open and hidden, both looks, row highlight,
-  pictures, 4:3 letterbox, window title.
+  The user tried it by hand and reported it "working perfectly" (2026-11-14); which interactions they tried
+  was not itemised. Seen in window captures: sidebar open and hidden, both looks, row highlight, pictures,
+  4:3 letterbox, window title.
 - No music.
 
 ## How to build and run
@@ -195,7 +194,6 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 
 ## Next steps
 - Next scene: 3D sine landscape (rank 4 above).
-- User to try by hand the scene-chooser interactions listed under Status as not yet tried.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
