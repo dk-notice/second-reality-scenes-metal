@@ -53,3 +53,42 @@ flat colour looked up in a table. Light can now glow, bounce, bend, scatter and 
 Start with the Dot Tunnel. It needs only glow, haze and bright output, the cheapest ingredients, so it would
 show quickly whether the direction is worth pursuing. The shared pieces built for it would be reused by
 most other scenes. Best done after the remaining planned scenes and the code review.
+
+## The whole demo, in the modern look
+
+Raised 2026-11-14. Once the ships and the city are done, the app will hold 12 of the demo's roughly 23
+effects. The user's view: the existing complete port is the original code at the original resolution, so
+the whole demo redrawn in the modern look, with music, would be something that does not yet exist.
+
+**Status: likely direction after the 3D city, not yet started and not yet scheduled.** This widens the
+scope beyond "purely calculated and 3D scenes" to the picture-based scenes too.
+
+### The pieces, in suggested order
+
+1. **Music.** Render the two tracker songs (`MAIN/MUSIC0.S3M`, `MAIN/MUSIC1.S3M` in the original source)
+   to ordinary audio once, with a tool built on libopenmpt, and play them with what macOS provides (no new
+   dependencies). Make a timing table at the same time giving the second at which each section ("order")
+   of each song starts, so the app can tell where the music is from the clock, and so that choosing a scene
+   starts the music at that scene's section. Each scene's song and starting section are known. First
+   benefit: the Techno Bars flash on the real beat instead of the estimated one.
+   To confirm before the repository is made public: that the songs are covered by the same public-domain
+   release as the code.
+2. **Picture-based scenes**, with the 1993 look using the original pictures and the modern look using
+   artwork upscaled by the user. About eleven: opening credits, explosion, title picture, the picture with
+   the TV switch-off, mountain scroller, lens, rotozoomer, water scroller, jelly logo, end picture, credits,
+   end scroller. Most are small; the lens and rotozoomer have the most substance.
+3. **A "play the demo" mode**: every scene in order, timed to the music, with the original lead-ins and
+   transitions (which the standalone scenes deliberately leave out) restored as an option.
+
+### Notes on upscaling the artwork
+
+- The originals are in old formats (LBM, and the demo's own); they can be converted to PNG with correct
+  colours for the user to work from.
+- 320x200 pixels were not square. Each picture filled a 4:3 screen, so the upscale must also correct the
+  shape.
+- With 256 colours the artists faked smooth shading with fine dot patterns (dithering). Upscalers made for
+  photographs tend to smear these; tools made for pixel art, or a light smoothing pass first, usually do
+  better. Expect to experiment per picture.
+- Some scenes do more than show a picture (the lens tints and bends what is beneath it using palette
+  tricks). In the modern look those become real tinting and distortion in a shader.
+- Large picture files need the app to carry data files; see how the VISU engine work handles resources.
