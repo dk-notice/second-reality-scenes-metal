@@ -193,6 +193,53 @@ enum SelfTest {
         check("Landscape loops from black after \(SineLandscapeModel.lengthInTicks) steps",
               landscape.ticks == 0 && !landscape.classicIndices().contains { $0 != 0 })
 
+        // Plasma Cube. Two tables are the original's own numbers (no formula reproduces them), checked
+        // here against checksums of SINIT.INC and SPLINE.INC; the path points against RATA.INC as the
+        // assembler lays it out. The texture, shift table and palette were calculated by the original
+        // when it started, so there is no file: their sums come from tools/plasmacube_reference.py.
+        check("cube sine table matches original SINIT.INC",
+              crc32(words16(PlasmaCubeTables.sine)) == 1_587_716_556)
+        check("cube path blend table matches original SPLINE.INC",
+              crc32(words16(PlasmaCubeTables.blend)) == 3_882_426_550)
+        check("cube path points match original RATA.INC",
+              crc32(words16((0..<40).flatMap { PlasmaCubeModel.pathPoint($0).map { Int16($0) } })) == 606_685_329)
+        check("cube texture, shift table and palette match the reference tool",
+              crc32(PlasmaCubeModel.texture) == 2_722_653_712
+                  && crc32((0..<128).map { PlasmaCubeModel.sideShift[$0 * 256] }) == 88_279_259
+                  && crc32(PlasmaCubeModel.basePalette) == 1_269_355_970)
+        // The 1993 pictures, against the original's own assembly text (PLZA.ASM, SPLINE.ASM) run
+        // instruction by instruction (tools/plasmacube_reference.py): the screen's colour numbers for
+        // both of the alternating two-pixel shifts, and the lit palette.
+        var cube = PlasmaCubeModel()
+        let cubeSteps = [16, 60, 100, 416, 800, 1200, 1600, 1916, 2010, 2047]
+        var cubeSums: [[UInt32]] = [[], [], []]
+        let cubeStart = cube.classicReferenceFrame()
+        for step in 1..<PlasmaCubeModel.lengthInTicks {
+            cube.tick()
+            if cubeSteps.contains(step) {
+                cubeSums[0].append(crc32(cube.cards[0].screen()))
+                cubeSums[1].append(crc32(cube.cards[1].screen()))
+                cubeSums[2].append(crc32(cube.palette))
+            }
+        }
+        check("Cube pictures match the original assembly at steps \(cubeSteps) (first shift)",
+              cubeSums[0] == [217_181_906, 4_126_692_819, 198_132_681, 3_130_113_999, 4_202_209_341,
+                              2_873_010_333, 1_548_758_970, 822_199_749, 3_872_210_463, 181_403_106],
+              "\(cubeSums[0])")
+        check("Cube pictures match the original assembly at the same steps (second shift)",
+              cubeSums[1] == [2_463_643_729, 42_824_033, 3_142_962_629, 1_658_347_174, 2_796_845_361,
+                              1_627_954_972, 3_747_529_998, 2_744_917_341, 3_381_679_536, 1_660_630_442],
+              "\(cubeSums[1])")
+        check("Cube palettes match the original assembly at the same steps",
+              cubeSums[2] == [2_077_809_398, 3_645_965_777, 3_631_874_327, 86_136_016, 1_160_387_906,
+                              2_103_546_921, 2_231_204_868, 3_079_804_970, 2_007_781_427, 898_134_552],
+              "\(cubeSums[2])")
+        let cubeEnd = cube.classicReferenceFrame()
+        cube.tick()
+        check("Cube is black at both ends and loops after \(PlasmaCubeModel.lengthInTicks) steps",
+              cube.ticks == 0 && !cubeStart.contains { $0 != 0 } && !cubeEnd.contains { $0 != 0 }
+                  && cube.classicReferenceFrame() == cubeStart)
+
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
         if let device = MTLCreateSystemDefaultDevice() {
             for entry in SceneCatalog.all {

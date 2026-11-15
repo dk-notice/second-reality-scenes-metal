@@ -9,8 +9,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Eight scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
-  Hidden Starfield and 3D Sine Landscape (added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+- Nine scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
+  Hidden Starfield, 3D Sine Landscape and Plasma Cube (both added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
   own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
@@ -28,21 +28,21 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
   dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
-  starfield 1700, sine-landscape 700).
+  starfield 1700, sine-landscape 700, plasma-cube 416).
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
 - `Sources/SRMetal/Core/` shared by all scenes: `DemoScene.swift` (the scene contract and the scene list),
-  `Renderer.swift` (clock and the two looks), `Shaders.swift`.
+  `Renderer.swift` (clock and the two looks), `Shaders.swift`, `Math3D.swift` (3D helpers, see Plasma Cube notes).
 - `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
   the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
-- `tools/` development-only scripts (not part of the app): `landscape_reference.py`.
+- `tools/` development-only scripts (not part of the app): `landscape_reference.py`, `plasmacube_reference.py`.
 - `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
   (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
 
@@ -215,6 +215,57 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   speed above); (5) C.EXE files linked with `/E` are run-length packed, so
   data cannot be searched for in them reliably.
 
+## Plasma Cube notes
+- Source: PLZPART/VECT.C, PLZFILL.C, PLZA.ASM (`do_block`, `do_clear`, `shadepal`), SPLINE.ASM (`getspl`) with
+  RATA.INC and SPLINE.INC, SINIT.INC; COPPER.ASM only uploads the palette and counts frames here.
+  PLZPART.PRJ and the link map settle what is live.
+- NOT used by the shipped program: TILE.INC / TILEPAL.INC (so no original artwork in this scene), the
+  plasma's tables, the plasma's fifth palette. No floor, no shadow. The planning notes' "doubling" is the
+  alternating 2-pixel shift below. `Scenes/Plasma/` was not touched.
+- What it shows: a cube (corners +-125) on a hand-made path of 36 points blended by a weight table, 64 frames
+  per point; faces culled by normal (no sorting); three colour ranges of 64, dimmed through the palette by a
+  moving light; the light ends up behind the cube, so the scene fades itself to black at original frame 1995.
+- Texture: 256x64, calculated once (`wave[4y + wave[2x]]/4 + 32`); the flow comes from a per-row sideways
+  shift table read one row further on each frame. One texture lookup per 4 pixels (all four VGA planes
+  written at once); line ends masked to the exact pixel.
+- Canvas 320x400: 134 picture rows, each three monitor lines. Pages are 640x136, three of them; the view is
+  320 wide starting 160 in.
+- Classic look: `PlasmaCubeModel` (path, turn, projection, culling, lighting in 16/32-bit arithmetic) and
+  `CubeVideoCard` in `PlasmaCubeFiller.swift` (planes, pages, edge walker, line filler with the processor's
+  registers mirrored, eraser), shown through `IndexedCanvas`. Verified against `tools/plasmacube_reference.py`,
+  which runs PLZA.ASM and SPLINE.ASM as text in a small x86 interpreter (macros expanded, planes modelled):
+  identical screens and palettes at 10 steps for both shifts. The C parts were ported by reading (twice:
+  Python and Swift, same author).
+- Two replays run half a cycle apart and the classic look shows the even mix (`IndexedCanvas.draw(...,
+  blendedWith:)`, new), because the original drew alternate frames 2 pixels apart for the eye to mix.
+- Tables kept as original numbers in `PlasmaCubeTables.swift` (made by the tool's `--tables`): SINIT.INC and
+  SPLINE.INC. No formula reproduces either exactly (tried: sine amplitudes 32760...32768 with three roundings;
+  cubic pieces and cosine sums for the blend table). Path points are written out in the model.
+- Modern look: real triangles through `Math3D.perspective`, texture per pixel from the wave formulas,
+  perspective-correct, edges faded over one pixel on oversized faces, everything gliding via the path read
+  between table entries.
+- Deliberate departures: starts 16 steps early (cube fully out of sight) and loops after 2048 steps from
+  black; the alternating shift shown mixed; picture and palette shown the step they are made.
+- Kept quirks: light level remembered per drawing position, not per face (stale colours now and then); two
+  register accidents in the filler; signed shift read as unsigned.
+- Not verified: against a running original or a recording; when the music cut the part; the C compiler's
+  `sin()` for the start-up tables; the modern look beyond still pictures.
+- For the later 3D scenes (glenz, ships, city):
+  - `Core/Math3D.swift`: `perspective(focal:centre:canvasSize:near:far:)` gives the matrix for an original's
+    "x*focal/z + centre" projection in canvas pixels (camera looks along +z, y down); it already spreads depth
+    over 0...1. Also `project`, `rotationX/Y/Z`, `transform`, `facesCamera`.
+  - There is NO depth buffer yet: the render passes in `Renderer`, `Snapshot` and the self-test have only a
+    colour attachment. A convex cube does not need one. Glenz (see-through, convex shapes) probably will not
+    either; ships and city will, or must sort faces as the original did. Adding one means a depth texture in
+    those three passes AND `depthAttachmentPixelFormat` on every scene's pipeline, so plan it as its own change.
+  - Edge smoothing without multisampling: draw each face oversized, pass 0...1 face coordinates, fade by
+    `min(uv, 1-uv) / fwidth(uv) + 1`, blend with premultiplied alpha. Works for convex objects drawn in any order.
+  - The interpreter in `tools/plasmacube_reference.py` is general enough to reuse: it parses Turbo Assembler
+    IDEAL and MASM operands, IRP/REPT/INCLUDE, data and ARG, and about 35 instructions with flags, in a 1 MB
+    memory with VGA planes. Check new instructions before trusting it.
+  - A C expression trap met here: `a>>15+7` means `a>>22`.
+  - Check what a path really shows before designing a loop: this scene already ended in black by itself.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
@@ -222,14 +273,14 @@ stills are out of scope.
 2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM) - DONE
 3. Hidden starfield (DDSTARS) - DONE
 4. 3D sine landscape (COMAN) - DONE (the background picture turned out to be unused)
-5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
+5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - DONE (it shares nothing with the plasma after all)
 6. Glenz vectors (GLENZ)
 7. Ships fly-by (VISU engine + U2A data)
 8. 3D city (VISU engine + U2E data)
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: plasma cube (rank 5 above).
+- Next scene: glenz vectors (rank 6 above). Read "For the later 3D scenes" in the Plasma Cube notes first.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),

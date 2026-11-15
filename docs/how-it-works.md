@@ -11,7 +11,8 @@ Some terms used throughout:
 - **Shader**: a small program that runs on the graphics chip, once per corner of a shape or once per pixel.
 - **Step** (or "tick"): one beat of the scene's clock, 1/70 of a second.
 - **Canvas**: a scene's own coordinate system, the size of the original screen: 320 wide by 200 high for
-  most scenes (Plasma used a 320x400 screen mode, so its canvas is 320x400).
+  most scenes (Plasma, Hidden Starfield and Plasma Cube used 400-line screen modes, so their canvas is
+  320x400).
 - **Palette**: a table that says which colour each pixel number means. A VGA card stored pixels as small
   numbers and looked the colours up in this table.
 
@@ -96,7 +97,10 @@ work this way.
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
 palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars,
-Bouncing Dots, Hidden Starfield and 3D Sine Landscape work this way.
+Bouncing Dots, Hidden Starfield, 3D Sine Landscape and Plasma Cube work this way.
+
+Some originals showed two slightly different pictures on alternate frames and let the eye mix them.
+`IndexedCanvas` can be given both pictures and shows their even mix (Plasma Cube does this).
 
 ## The window
 
@@ -184,7 +188,8 @@ Useful shared pieces in `Core/`:
 |---|---|
 | `Shaders.swift` | Shader compiling, and a ready-made first half for any shader that paints the whole canvas |
 | `SinTable.swift` | The 1024-entry sine table several original parts share |
-| `IndexedCanvas.swift` | Shows a picture of pixel numbers through a palette of up to 256 colours |
+| `IndexedCanvas.swift` | Shows a picture of pixel numbers through a palette of up to 256 colours, or the even mix of two such pictures |
+| `Math3D.swift` | For scenes made of 3D shapes: the matrix that reproduces an original's perspective, turns about each axis, and the "does this face point at the camera" test |
 
 ## House rules for scenes
 

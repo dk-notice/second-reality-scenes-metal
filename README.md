@@ -19,6 +19,7 @@ Every scene can be shown two ways, switchable at any time:
 | Plasma | ![](docs/images/plasma-modern.png) | ![](docs/images/plasma-classic.png) |
 | Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 | 3D Sine Landscape | ![](docs/images/sine-landscape-modern.png) | ![](docs/images/sine-landscape-classic.png) |
+| Plasma Cube | ![](docs/images/plasma-cube-modern.png) | ![](docs/images/plasma-cube-classic.png) |
 
 ## What this is, and is not
 
@@ -44,8 +45,9 @@ There is no music yet.
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 | 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
+| Plasma Cube | Wildfire | [docs/scenes/plasma-cube.md](docs/scenes/plasma-cube.md) |
 
-Planned, roughly easiest first: plasma cube, glenz vectors, ships fly-by, 3D city.
+Planned, roughly easiest first: glenz vectors, ships fly-by, 3D city.
 Picture-based scenes, scrollers and stills are out of scope.
 
 ## Build and run
@@ -88,7 +90,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube` |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -126,6 +128,9 @@ It varies by scene, and each scene's page says exactly what was checked.
 - **Techno Bars, Bouncing Dots**: the original drawing code was ported step by step from the assembly.
   That port was checked by careful reading, not against a running copy of the original, so an
   off-by-one-pixel mistake is possible.
+- **3D Sine Landscape, Plasma Cube**: ported from the assembly too, but then checked against the
+  original's own assembly text run instruction by instruction in a small interpreter (`tools/`). The
+  pictures match exactly. The C code around the assembly was still ported by reading.
 
 Some scenes also differ from the original on purpose, so that each works as a standalone, looping scene:
 for example there are no full-screen white flashes, and Interference loops seamlessly. Every such change is

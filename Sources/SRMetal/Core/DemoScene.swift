@@ -136,6 +136,16 @@ enum SceneCatalog {
             checkpoints: [0, 31, 100, 200, 700, 1300, 1978, 2047],
             thumbnailStep: 700,
             make: { device, format in try SineLandscapeScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "plasma-cube",
+            title: "Plasma Cube",
+            credit: "Wildfire",
+            // 134 picture rows, each shown on three of the monitor's 400 lines.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 16, 60, 100, 416, 800, 1200, 1600, 1916, 2010, 2047],
+            thumbnailStep: 416,
+            make: { device, format in try PlasmaCubeScene(device: device, pixelFormat: format) }
         )
     ]
 }
