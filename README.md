@@ -17,6 +17,7 @@ Every scene can be shown two ways, switchable at any time:
 | Techno Bars | ![](docs/images/techno-bars-modern.png) | ![](docs/images/techno-bars-classic.png) |
 | Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
 | Plasma | ![](docs/images/plasma-modern.png) | ![](docs/images/plasma-classic.png) |
+| Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 
 ## What this is, and is not
 
@@ -40,9 +41,10 @@ There is no music yet.
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
+| Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
-Planned, roughly easiest first: hidden starfield, 3D sine landscape, plasma cube, glenz vectors,
-ships fly-by, 3D city. Picture-based scenes, scrollers and stills are out of scope.
+Planned, roughly easiest first: 3D sine landscape, plasma cube, glenz vectors, ships fly-by, 3D city.
+Picture-based scenes, scrollers and stills are out of scope.
 
 ## Build and run
 
@@ -74,7 +76,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield` |
 | `--look modern` or `--look classic` | Start in that look |
 
 Two more are run directly on the program inside the app, and open no window:

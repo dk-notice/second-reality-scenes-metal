@@ -110,6 +110,14 @@ enum SceneCatalog {
             canvasSize: SIMD2(320, 400),
             checkpoints: [0, 1, 2, 17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300, 2322],
             make: { device, format in try PlasmaScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "starfield",
+            title: "Hidden Starfield",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
+            make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
         )
     ]
 }

@@ -9,7 +9,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Six scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, and Plasma. (Rings and Interference were one
+- Seven scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma, and
+  Hidden Starfield. (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+  own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
@@ -21,7 +23,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
@@ -125,7 +127,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## Plasma notes
 - Source: PLZPART/PLZ.C, ASMYT.ASM (`plzline`, `setplzparas`), COPPER.ASM (`moveplz`, `pompota`, `do_drop`),
   TWEAK.ASM (`tw_opengraph2`). Flat plasma only; the cube is a later scene.
-- Canvas is 320x400 (the first scene not 320x200): the original mode was 320x400 with 4 planes and 96 bytes
+- Canvas is 320x400 (not 320x200; the starfield is the same): the original mode was 320x400 with 4 planes and 96 bytes
   per row. The framework needed no changes for this.
 - The plasma is a 280-line band starting at screen line 61/62, placed with the VGA line-compare register.
 - Per-pixel rule (from the self-modifying `plzline`): value = psini[8c + lsini16[y + p2 + 4(80-c)] + p1]
@@ -143,12 +145,30 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - For the plasma cube later: the fifth palette (`pals[4]`, "white II") is built in PLZ.C but not in
   `PlasmaModel.palettes`; the tables and `PlasmaModel.value` should be reusable.
 
+## Hidden Starfield notes
+- Source: DDSTARS/STARS.ASM (live; its constants are in K.EXE) wrapped by KOE.ASM. POLYEGA.ASM and SIN1024.INC
+  are included but unused; STARS.OK/STARS.PRE are older versions; DOIT1-3.C, KR.C, TEST/ are unrelated leftovers.
+- Canvas is 320x400 (EGA mode 0Dh with line-doubling off), like Plasma, not 320x200. The classic
+  texture, self-test and `--snapshot` coped without changes to `Core/`.
+- How the original worked: 64 off-screen 320x100 pictures in a ring, one shown per step; each step the stars'
+  dots are OR-ed into the current picture and pictures are never cleared, so a seamless 64-step film loop
+  gets denser for ever. Bottom half of the screen = the picture 32 places round the ring, upside down.
+  512 stars to step 900, nothing 901-1200, then 1024 stars each also drawn 17 pictures ahead.
+- Classic look: `StarfieldModel` replays that on the processor (own random generator: Microsoft's constants
+  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Checked by reading
+  the assembly plus an independent Python re-run with matching checksums; NOT compared with a running original.
+- Modern look: the model also records each star's "flight"; the shader works out which dots of each flight are
+  in the picture now showing and draws soft round stars, bigger and brighter when nearer, gliding between steps.
+- Deliberate departures: the two text panels (a picture) are left out; the original never ended, this stops
+  adding stars at step 1984, fades out over the last 33 of 2048 steps and loops from black.
+- Docs picture step: starfield 1700.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
 1. Bouncing dots - DONE
 2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM) - DONE
-3. Hidden starfield (DDSTARS)
+3. Hidden starfield (DDSTARS) - DONE
 4. 3D sine landscape (COMAN) - a voxel landscape; has a background picture
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
 6. Glenz vectors (GLENZ)
@@ -157,7 +177,7 @@ stills are out of scope.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: Hidden starfield (rank 3 above).
+- Next scene: 3D sine landscape (rank 4 above).
 - Build the sidebar scene picker when asked.
 - Later: music.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
