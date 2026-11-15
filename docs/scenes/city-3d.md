@@ -161,12 +161,13 @@ to the next.
 ## What was checked
 
 - **The 1993 pictures, against the original's own assembly.** The engine was checked before this
-  scene existed: 109 test pictures identical to those from the original assembly run instruction by
-  instruction (see [the engine's page](../visu-engine.md)). Thirty-one of them are whole frames of
-  this animation, spread from frame 1 to frame 1800 and including both sides of the ship-ordering
-  rule (905, 960, 1040, 1099 inside; 880 and 1101 outside). The self-test now also draws those frames
+  scene existed: 124 test pictures (109 at first, 15 added by the code review below) identical to
+  those from the original assembly run instruction by instruction (see
+  [the engine's page](../visu-engine.md)). Forty-five of them are whole frames of this animation,
+  spread from frame 1 to frame 1800 and including both sides of the ship-ordering rule (905, 960,
+  1040, 1099 inside; 880 and 1101 outside). The self-test now also draws those frames
   through the SCENE (one engine drawing every frame from the start, onto colour 255) and requires the
-  same colour number wherever the test picture has a pixel, and colour 255 everywhere else. All 31
+  same colour number wherever the test picture has a pixel, and colour 255 everywhere else. All 45
   agree. That also shows the engine's carried-over state (see "Kept quirks") changes nothing in these
   frames.
 - **The pace**, from `U2E.C`: one animation frame per two refreshes, independent of the PC (see
@@ -231,12 +232,13 @@ It takes about 8 seconds for this scene's whole loop and also reports how long a
 
 - **Against a running original or a recording.** Everything above compares with the original's code
   and data, not with a PC running it.
-- **`U2E.C` itself**, which was ported by reading: the clearing, the palette changes, the ordering
-  rules, the pace. (The animation reader and the ordering are part of the engine's `VisuWorld`,
-  written twice by the same author, in Python and Swift; the 31 frames above were made with the
-  Python version's ordering, so the two agree with each other, not necessarily with a misreading
-  both share.) The third-party port was consulted for the ordering rule and the frame counting only,
-  and agrees.
+- **`U2E.C` by running it.** The clearing, the palette changes, the ordering rules and the pace
+  were ported by reading. (The animation reader and the ordering are part of the engine's
+  `VisuWorld`, written twice by the same author, in Python and Swift; the 45 frames above were made
+  with the Python version's ordering, so the two agree with each other.) The code review below read
+  `U2E.C` again independently and found no difference, and the third-party port was consulted for
+  the ordering rule and the frame counting and agrees. The C program has never been compiled and
+  run against this version.
 - **The start and end as the demo showed them** (the white fades, the white band, the music cue):
   read from the source, not seen, and deliberately not reproduced.
 - **The page queue and frame skipping** are not modelled; every frame is drawn.
@@ -285,4 +287,64 @@ All in the 1993 look:
   the end (see the engine's page).
 - **A clip flag that is never cleared**, so a frame's exact pixels could depend on which frames were
   drawn before it. This is why the model draws every frame in order and why restart also resets the
-  engine.
+  engine. (The self-test now shows that in this animation no pixel does depend on it: see the code
+  review below.)
+- **One building is lit harder than the rest.** The recording stretches `"talojota"` ("house
+  row") to twice its depth, and the engine's light uses the stretched surface directions as they
+  come, so its light and dark sides are further apart than an unstretched building's. Both looks
+  do this (the modern look since the code review below).
+
+## Code review (2026-11-14)
+
+Reviewed with the `/code-review` tool and by hand against `VISU/C/U2E.C` and the engine's `VISU.C`.
+The engine's own review is on [its page](../visu-engine.md).
+
+**Found and fixed** (both in the engine, both affecting this scene)
+
+- **A damaged data file crashed the program** instead of giving an error. Every count and position
+  in the files is now checked when they are read.
+- **Modern look: a scaled object was lit differently from the 1993 look** (here the one stretched
+  building, see "Kept quirks"; it mattered more for the ships scene's big ship).
+
+No fault was found in the scene's own files (`City3DModel.swift`, `City3DScene.swift`).
+
+**New test cases from this scene.** Playing the whole flight with counters in the engine showed
+what the engine's test pictures had never reached: five engine paths (listed on the engine's
+page) and 32 pairs of object and drawing order. Fourteen more frames (97, 296, 417, 424, 498, 1129, 1176,
+1242, 1247, 1250, 1271, 1285, 1301, 1571) reach all of them; the original assembly drew them and
+this version's pictures are identical, through the engine alone and through the scene.
+
+**Confirmed, nothing to fix**
+
+- `U2E.C` against this scene, read independently: the fill with colour 255; the four palette
+  changes; ground plates (second character of the name an underscore) given distance 1,000,000,000;
+  the ship (`s01`) given distance 1 while the program's frame counter is over 1800 and under 2200,
+  and since that counter goes up by two per animation frame, that is frames 901 to 1099; the first
+  drawing turn skipped, so frame 1 is the first picture; the pace of one frame per two refreshes.
+- The timetable and fades by reading and by the existing self-test: frame 1 arrives on step 2, the
+  fade-in starts there from black, the fade-out reaches black exactly as the last frame's two steps
+  end, the modern look's fade runs between steps and meets the 1993 look's on every step, and the
+  glide never looks ahead past the last frame.
+- The camera-roll smoothing by reading: the roll is measured about the line of sight only (turning
+  the camera left or right or up or down adds nothing to it), the correction is zero at both ends
+  of the flight, and it is applied the right way round.
+- One engine drawing all 1,801 frames in turn gives exactly the pictures a fresh engine gives for
+  each frame alone (self-test).
+- Built and stepped on four threads at once, the scene draws what it draws alone (self-test).
+- **Motion check re-run after the fixes** (`--motion-check city-3d modern` and `classic`): the
+  1993 look's report is identical to before. Modern look: 5 jumps before and after (the ship
+  flying past the camera, steps 3,522 to 3,524); pictures with one-picture-only pixels 6,386 before
+  and 6,388 after of 7,207, and 137 over 0.1% of the picture both times.
+
+**Looked at, not demonstrated, left alone**
+
+- The modern renderer keeps its palette in one buffer shared by all frames, so if the graphics chip
+  ever ran a frame behind, a fade could be one step early for one frame (engine page).
+
+**Possible tidy-ups** (none is a bug): the palette list is rebuilt on every drawn frame, even at
+full brightness; the objects are still drawn (in black) during the black steps;
+`City3DModel.animationFrames` (1801) is written out though the engine can count the frames.
+
+**Still not verified:** against a running original or a recording; the start and end as the demo
+showed them; that the roll steps are rounding and not intent; the ship's visibility in every frame
+of the forced-order stretch; the modern look by eye in the running app, including the fade lengths.

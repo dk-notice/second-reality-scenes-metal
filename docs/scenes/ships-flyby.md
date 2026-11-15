@@ -161,8 +161,9 @@ picture; no such file is shipped.
 ## What was checked
 
 - **The 1993 pictures, against the original's own assembly.** The engine was checked before this
-  scene existed: 109 test pictures identical to those from the original assembly run instruction by
-  instruction (see [the engine's page](../visu-engine.md)). Fifteen of them are whole frames of this
+  scene existed: 124 test pictures (109 at first, 15 added by the code review below) identical to
+  those from the original assembly run instruction by instruction (see
+  [the engine's page](../visu-engine.md)). Fifteen of them are whole frames of this
   animation (frames 20, 60, 100, 140, 180, 220, 262, 275, 300, 340, 380, 420, 460, 500, 520), drawn
   into an empty screen. The self-test now also draws those frames through the SCENE and requires:
   wherever the test picture has a ship pixel, the scene has the same colour number; everywhere else
@@ -212,10 +213,10 @@ picture; no such file is shipped.
 
 - **Against a running original or a recording.** Everything above compares with the original's code
   and data, not with a PC running it.
-- **`U2A.C` itself**, which was ported by reading: the background copy, the palette set-up, the
-  animation reader, the object ordering, the pacing. (The animation reader and ordering are part of
-  the engine's `VisuWorld`, written twice by the same author, in Python and Swift.) The pictures are
-  plainly right, which limits how wrong the reading can be.
+- **`U2A.C` by running it.** The background copy, the palette set-up, the animation reader, the
+  object ordering and the pacing were ported by reading, and read again independently in the code
+  review below, which found no difference. The C program has never been compiled and run against
+  this version.
 - **The start and end as the demo showed them.** That the previous part leaves the same horizon on
   screen, and where in the music the scene began and was cut, were read from the source, not seen.
   Whether the music cue arrived before the animation's end is not known.
@@ -260,3 +261,56 @@ All in the 1993 look, all from the engine (described on [its page](../visu-engin
 - **A clip flag that is never cleared**, so a frame's exact pixels could depend on which frames were
   drawn before it. This is why the model draws every step and why restart also resets the engine.
 - **The big ship never leaves.** It is still switched on, a few pixels wide, at the last frame.
+- **The big ship greys as it shrinks.** The recording does not only move the big ship away, it
+  SCALES it down, steadily, to about a fifth of its size by the end. The engine's light uses the
+  scaled surface directions as they come, so the light on the ship weakens with its size and its
+  shades draw together towards the middle grey. Both looks do this (the modern look since the code
+  review below).
+
+## Code review (2026-11-14)
+
+Reviewed with the `/code-review` tool and by hand against `VISU/C/U2A.C` (compared line by line with
+`U2E.C`, from which it differs only in start, end, clearing, pacing and ordering) and the engine's
+`VISU.C`. The engine's own review is on [its page](../visu-engine.md).
+
+**Found and fixed**
+
+- **Modern look: the big ship was lit differently from the 1993 look.** The modern shader ignored
+  the scale that the recording puts on the big ship (see "Kept quirks"), so its light stayed at
+  full strength while the 1993 ship greyed. At animation frame 100 the modern ship was on average
+  4.5 of 255 brighter than the 1993 one over its 127,000 pixels; now 0.7. The fix is in the engine
+  (`VisuModern.swift`); the self-test checks this frame.
+- **A damaged data file crashed the program** instead of giving an error. Fixed in the engine's
+  loader and tested with 2,466 damaged copies of this scene's files (engine page).
+
+**Confirmed, nothing to fix**
+
+- `U2A.C` against this scene, read independently: the whole 320x200 background copied in before
+  every picture; the picture's 64 colours copied to palette entries 192 to 255; the first picture
+  drawn is animation frame 0 with nothing switched on (unlike the city, which skips its first
+  turn); one animation frame per screen refresh; the animation reader and the sort (shared with
+  the city); the test-only ordering rules behind the scene file's flag byte, which is 0, never run.
+- `vid_init(3)`, commented "oversample x 4" in `U2A.C`, sets the same numbers as the plain mode.
+- The timetable: the look-ahead for the glide starts on the last pause step and stops on the last
+  step of the loop, so the modern look never glides across the loop point or towards a frame that
+  does not exist.
+- One engine drawing every frame of this animation in turn gives exactly the pictures a fresh
+  engine gives for each frame alone (self-test, all 521 frames), so the "clip flag that is never
+  cleared" changes no pixel here.
+- **Motion check re-run after the fixes** (`--motion-check ships-flyby modern` and `classic`):
+  the 1993 look's report is identical to before; the modern look still has no jumps, and its count
+  of pictures with one-picture-only pixels went from 460 to 459 of 1,185 (9 over 0.1% of the
+  picture before and after, the fighters' entry).
+
+**Looked at, not demonstrated, left alone**
+
+- A replacement background (`U2ABG-modern.png`) is shown through smaller copies of itself when the
+  window is small, and the band's crisp top and bottom edges are only guarded at full size, so a
+  large replacement shown small might have slightly darkened edge rows. None is shipped.
+
+**Possible tidy-ups** (none is a bug): `ShipsFlybyModel.animationFrames` (521) is written out
+though the engine can count the frames; the background is copied (64,000 bytes) on every step
+whichever look shows, which is deliberate but could be skipped during the pause.
+
+**Still not verified:** against a running original or a recording; the start and end as the demo
+showed them; the modern look by eye in the running app.
