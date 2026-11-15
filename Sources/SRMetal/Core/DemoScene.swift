@@ -173,6 +173,15 @@ enum SceneCatalog {
             checkpoints: [0, 70, 130, 200, 290, 330, 345, 350, 400, 480, 560, 591],
             thumbnailStep: 350,
             make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "city-3d",
+            title: "3D City",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 2, 40, 200, 660, 1210, 1600, 1920, 2360, 2920, 3200, 3560, 3603],
+            thumbnailStep: 1600,
+            make: { device, format in try City3DScene(device: device, pixelFormat: format) }
         )
     ]
 }

@@ -42,11 +42,7 @@ final class ShipsFlybyScene: DemoScene {
         indexedCanvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat,
                                           width: ShipsFlybyModel.width, height: ShipsFlybyModel.height)
         renderer = try VisuModernRenderer(device: device, pixelFormat: pixelFormat)
-        let colours = model.palette
-        palette = (0..<256).map { (i: Int) -> SIMD4<Float> in
-            let red = Float(colours[i * 3]) / 63, green = Float(colours[i * 3 + 1]) / 63, blue = Float(colours[i * 3 + 2]) / 63
-            return SIMD4<Float>(red, green, blue, 1)
-        }
+        palette = VisuPlayback.colours(model.palette)
 
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + Self.shaderSource)
         let descriptor = MTLRenderPipelineDescriptor()

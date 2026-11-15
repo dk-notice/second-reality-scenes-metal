@@ -70,6 +70,16 @@ final class VisuWorld {
         stream = try VisuData.load("\(name).0\(letters)")
     }
 
+    /// The camera's turn and position in every frame of the animation: element 0 is before the
+    /// first frame (all zero), element n is animation frame n. Found by reading the animation
+    /// through once on a copy; this world is not touched.
+    func cameraTrack() -> [VisuMatrix] {
+        let copy = VisuWorld(copying: self)
+        var track = [copy.camera]
+        while copy.advance() { track.append(copy.camera) }
+        return track
+    }
+
     private init(copying other: VisuWorld) {
         name = other.name
         palette = other.palette

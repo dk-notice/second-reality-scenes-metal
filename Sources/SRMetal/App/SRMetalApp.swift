@@ -2,7 +2,8 @@ import MetalKit
 import SwiftUI
 
 /// Entry point. `--selftest` runs the checks and exits; `--snapshot` saves a picture and exits;
-/// `--visu-test` saves a picture of a 3D engine test case and exits; otherwise the app starts.
+/// `--visu-test` saves a picture of a 3D engine test case and exits; `--motion-check` compares a
+/// scene's neighbouring pictures for jumps and flicker and exits; otherwise the app starts.
 @main
 enum Main {
     static func main() {
@@ -14,6 +15,9 @@ enum Main {
         }
         if CommandLine.arguments.contains("--visu-test") {
             exit(VisuTestCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
+        if CommandLine.arguments.contains("--motion-check") {
+            exit(MotionCheck.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
         SRMetalApp.main()
     }

@@ -26,11 +26,11 @@ final class ShipsFlybyModel {
     /// One whole loop: the pause (showing frame 0, nothing switched on), then frames 1...521.
     static let lengthInSteps = pauseSteps + animationFrames + 1
 
-    let world: VisuWorld
-    /// A second copy of the animation kept one frame AHEAD, so the modern look knows where
-    /// everything is going and can glide towards it. It is never drawn.
-    private let ahead: VisuWorld
-    let engine = VisuEngine()
+    /// The animation being played, with the engine that draws it and the look-ahead for the
+    /// modern look's glide (shared with the 3D City: `Core/Visu/VisuPlayback.swift`).
+    private let playback: VisuPlayback
+    var world: VisuWorld { playback.world }
+    var engine: VisuEngine { playback.engine }
     /// The background picture: 320x200 colour numbers (192...242 in the picture's band).
     let background: [UInt8]
     /// 256 colours, red green blue, each 0...63.
@@ -39,36 +39,28 @@ final class ShipsFlybyModel {
     /// Steps since the start of the loop, 0..<lengthInSteps.
     private(set) var step = 0
     /// Where everything is at this step and at the next one, for the modern look to glide between.
-    private(set) var currentPose = VisuPose(items: [])
-    private(set) var nextPose = VisuPose(items: [])
+    var currentPose: VisuPose { playback.currentPose }
+    var nextPose: VisuPose { playback.nextPose }
 
     /// The animation frame showing at a given step.
     static func animationFrame(atStep step: Int) -> Int { max(0, step - pauseSteps) }
 
     init() throws {
-        world = try VisuWorld(name: "U2A")
-        ahead = try VisuWorld(name: "U2A")
+        playback = try VisuPlayback(name: "U2A")
         let file = try VisuData.load("U2ABG.UH")
         // 16 header bytes, 768 palette bytes, then the pixels.
         guard file.count >= 16 + 768 + Self.width * Self.height else { throw VisuError.badFile("U2ABG.UH", "too short") }
         background = Array(file[784..<784 + Self.width * Self.height])
         // U2A.C: memcpy(scene0+16+192*3, bg+16, 64*3)
-        var colours = world.palette
+        var colours = playback.world.palette
         colours.replaceSubrange(192 * 3..<256 * 3, with: file[16..<16 + 64 * 3])
         palette = colours
-        VisuWorld.setSceneWindow(engine)
         drawClassic()
     }
 
     func reset() {
-        world.restart()
-        ahead.restart()
-        // The engine remembers things from polygon to polygon (see docs/visu-engine.md, "Kept
-        // quirks"), so it has to go back to its start too for a restart to be exact.
-        engine.resetClipper()
+        playback.restart()
         step = 0
-        currentPose = VisuPose(items: [])
-        nextPose = currentPose
         drawClassic()
     }
 
@@ -78,22 +70,10 @@ final class ShipsFlybyModel {
             reset()
             return
         }
-        if step > Self.pauseSteps { world.advance() }
-        currentPose = world.pose()
-        // The step after this one shows the next animation frame, unless this is the pause or the
-        // last step of the loop.
-        if step >= Self.pauseSteps && step + 1 < Self.lengthInSteps {
-            ahead.advance()
-            // The look-ahead copy has its own objects; name each by its twin in `world`, because
-            // the blend pairs up "now" and "next" by which object it is.
-            nextPose = VisuPose(items: ahead.pose().items.compactMap { item in
-                guard let index = ahead.objects.firstIndex(where: { $0 === item.object }),
-                      let twin = world.objects[index] else { return nil }
-                return VisuPose.Item(object: twin, matrix: item.matrix)
-            })
-        } else {
-            nextPose = currentPose
-        }
+        // A new animation frame on every step after the pause. The step after this one shows the
+        // next animation frame, unless this is the pause or the last step of the loop.
+        playback.step(advancing: step > Self.pauseSteps,
+                      lookingAhead: step >= Self.pauseSteps && step + 1 < Self.lengthInSteps)
         // The 1993 picture is drawn on every step, in whichever look is showing, so that what the
         // engine carries from one picture to the next depends only on the step number.
         drawClassic()
@@ -110,16 +90,8 @@ final class ShipsFlybyModel {
 
     /// The pose to draw `alpha` (0...1) of the way from this step to the next. At 0 it is exactly
     /// what the 1993 look shows.
-    func pose(alpha: Float) -> VisuPose {
-        alpha <= 0 ? currentPose : currentPose.blended(to: nextPose, alpha: alpha)
-    }
+    func pose(alpha: Float) -> VisuPose { playback.pose(alpha: alpha) }
 
     /// The 1993 picture as red, green, blue bytes (0...255), for the self-test.
-    func classicReferenceFrame() -> [UInt8] {
-        var result = [UInt8](repeating: 0, count: Self.width * Self.height * 3)
-        for (i, colour) in engine.pixels.enumerated() {
-            for k in 0..<3 { result[i * 3 + k] = byteFromVGA(Int(palette[Int(colour) * 3 + k])) }
-        }
-        return result
-    }
+    func classicReferenceFrame() -> [UInt8] { VisuPlayback.rgb(engine.pixels, palette: palette) }
 }

@@ -29,6 +29,14 @@ struct VisuPose {
             return Item(object: item.object, matrix: m)
         })
     }
+
+    /// The same pose seen by a camera rolled by `angle` (radians) about its line of sight.
+    func rolled(by angle: Float) -> VisuPose {
+        if angle == 0 { return self }
+        let c = cos(angle), s = sin(angle)
+        let roll = simd_float4x4(columns: (SIMD4(c, s, 0, 0), SIMD4(-s, c, 0, 0), SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)))
+        return VisuPose(items: items.map { Item(object: $0.object, matrix: roll * $0.matrix) })
+    }
 }
 
 extension VisuMatrix {

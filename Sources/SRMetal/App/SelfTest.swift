@@ -275,7 +275,7 @@ enum SelfTest {
                   && glenz.classicReferenceFrame() == glenzStart)
 
 
-        // The VISU 3D engine by itself (the Ships Fly-by scene, further down, and the city are built on it).
+        // The VISU 3D engine by itself (the Ships Fly-by and 3D City scenes, further down, are built on it).
         // Expected numbers come from tools/visu_reference.py, which runs the original assembly.
         check("VISU sine table matches the original file", crc32(words16(VisuTables.sine)) == 2_483_307_983)
         check("VISU field-of-view table matches the original file",
@@ -421,6 +421,127 @@ enum SelfTest {
                   String(format: "average difference at most %.2f of 255", worst))
         } catch {
             check("Ships Fly-by scene could be set up", false, "\(error)")
+        }
+
+        // 3D City. Like the ships: the scene's 1993 pictures against the engine test pictures that
+        // match the original assembly (drawn there into an empty screen of colour 0 by a fresh
+        // engine; the scene clears to colour 255 and draws every frame with one engine).
+        do {
+            let city = try City3DModel()
+            let length = City3DModel.lengthInSteps
+            let firstPicture = city.screen
+            var expected: [Int: [UInt8]] = [:]
+            for test in VisuTestCases.all {
+                if case .frame(let scene, let frame) = test.kind, scene == "U2E" {
+                    expected[frame] = try VisuTest.classicPicture(test.kind).pixels
+                }
+            }
+            var differ: [Int] = []
+            var glideGap: Float = 0, halfwayGap: Float = 0, worstRoll: Float = 0
+            var glided = 0
+            var shipLast = 0, shipFrames = 0, groundFirst = true
+            var seconds = 0.0, slowest = 0.0
+            for step in 1..<length {
+                // Where the glide will have got to by the end of this step.
+                let predicted = city.pose(alpha: 1)
+                let start = DispatchTime.now().uptimeNanoseconds
+                city.tick()
+                let took = Double(DispatchTime.now().uptimeNanoseconds - start) / 1e9
+                seconds += took
+                slowest = max(slowest, took)
+                let frame = City3DModel.animationFrame(atStep: step)
+                let now = city.pose(alpha: 0)
+                // The glide must arrive exactly where the next step starts (else motion would jerk).
+                if predicted.items.count == now.items.count {
+                    for (a, b) in zip(predicted.items, now.items) where a.object === b.object {
+                        // Positions run to hundreds of thousands, so gaps are measured relative to size.
+                        for c in 0..<4 {
+                            let size = max(simd_reduce_max(simd_abs(b.matrix[c])), 1)
+                            glideGap = max(glideGap, simd_reduce_max(simd_abs(a.matrix[c] - b.matrix[c])) / size)
+                        }
+                    }
+                } else if !predicted.items.isEmpty && step > 2 && step < City3DModel.lastFrameStep {
+                    glideGap = .infinity
+                }
+                // On the second step of a frame the glide is half-way: every object must be at the
+                // middle of its two recorded places (turned by the camera-roll smoothing).
+                if step % 2 == 1 && step < City3DModel.lastFrameStep {
+                    let angle = city.roll(blend: 0.5)
+                    worstRoll = max(worstRoll, abs(angle))
+                    for item in now.items {
+                        guard let from = city.currentPose.items.first(where: { $0.object === item.object }),
+                              let to = city.nextPose.items.first(where: { $0.object === item.object }) else { continue }
+                        let middle = VisuPose(items: [VisuPose.Item(object: item.object, matrix: (from.matrix + to.matrix) * 0.5)])
+                            .rolled(by: angle).items[0].matrix
+                        for c in 0..<4 {
+                            let size = max(simd_reduce_max(simd_abs(middle[c])), 1)
+                            halfwayGap = max(halfwayGap, simd_reduce_max(simd_abs(item.matrix[c] - middle[c])) / size)
+                        }
+                        if from.matrix != to.matrix { glided += 1 }
+                    }
+                }
+                guard step % 2 == 0 && step <= City3DModel.lastFrameStep else { continue }
+                if let test = expected[frame] {
+                    let screen = city.screen
+                    let same = (0..<screen.count).allSatisfy { test[$0] != 0 ? screen[$0] == test[$0] : screen[$0] == 255 }
+                    if !same { differ.append(frame) }
+                }
+                // U2E.C's two ordering rules, as the scene applies them.
+                let order = city.world.prepareFrame()
+                if frame > 900 && frame < 1100, order.contains(where: { $0.mesh.name.hasPrefix("\"s01") }) {
+                    shipFrames += 1
+                    // "Last" as U2E.C does it: the ship counts as distance 1, so only objects whose
+                    // centre is BEHIND the camera (distance below 1) can still come after it.
+                    if let at = order.firstIndex(where: { $0.mesh.name.hasPrefix("\"s01") }),
+                       order[(at + 1)...].allSatisfy({ $0.distance <= 1 }) { shipLast += 1 }
+                }
+                var seenOther = false
+                for object in order {
+                    if object.mesh.name.hasPrefix("\"_") { if seenOther { groundFirst = false } } else { seenOther = true }
+                }
+            }
+            check("City pictures match the original assembly's at \(expected.count) animation frames (over colour 255)",
+                  expected.count == 31 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
+            check("City palette is the original file's with U2E.C's four changes; the screen starts black",
+                  crc32(city.palette) == 2_445_111_768, "checksum \(crc32(city.palette))")
+            check("City draws ground plates first always, and the ship last in frames 901...1099",
+                  groundFirst && shipFrames > 150 && shipLast == shipFrames,
+                  "after everything in front of the camera in \(shipLast) of the \(shipFrames) frames in which it is switched on")
+            check("City modern look ends each glide exactly where the next step starts", glideGap < 0.0001, "largest relative gap \(glideGap)")
+            check("City modern look is half-way between frames half-way through a frame",
+                  glided > 5000 && halfwayGap < 0.0001, "\(glided) object moves checked, largest relative gap \(halfwayGap)")
+            check("City camera-roll smoothing stays within half a degree of the recording",
+                  worstRoll > 0.001 && worstRoll <= Float(City3DModel.rollTolerance * .pi / 180) + 0.0001,
+                  String(format: "largest %.3f degrees", worstRoll * 180 / .pi))
+            check("City 1993 replay keeps up with 70 steps a second with room to spare",
+                  seconds / Double(length) < 0.002 && slowest < 0.010,
+                  String(format: "%.3f ms a step on average, %.3f ms at worst; a step is 14.286 ms", seconds / Double(length) * 1000, slowest * 1000))
+            let lastBrightness = City3DModel.brightness(atStep: Float(city.step))
+            city.tick()
+            check("City is black at both ends and loops after \(length) steps",
+                  city.step == 0 && city.screen == firstPicture && !firstPicture.contains { $0 != 255 }
+                      && lastBrightness == 0 && City3DModel.brightness(atStep: 0) == 0
+                      && !city.classicReferenceFrame().contains { $0 != 0 })
+
+            func picture(_ look: Look, _ step: Int) throws -> [UInt8] {
+                guard let entry = SceneCatalog.all.first(where: { $0.id == "city-3d" }),
+                      let data = try Snapshot.render(entry: entry, look: look, step: step, width: 960, height: 720)
+                        .dataProvider?.data as Data? else { throw Snapshot.Failure.couldNotDraw }
+                return [UInt8](data)
+            }
+            var worst = 0.0
+            for step in [40, 660, 1600, 2000, 2920, 3560] {
+                let a = try picture(.classic, step), b = try picture(.modern, step)
+                var total = 0
+                for i in stride(from: 0, to: a.count, by: 4) {
+                    total += abs(Int(a[i]) - Int(b[i])) + abs(Int(a[i + 1]) - Int(b[i + 1])) + abs(Int(a[i + 2]) - Int(b[i + 2]))
+                }
+                worst = max(worst, Double(total) / Double(a.count / 4 * 3))
+            }
+            check("City modern look stays close to the 1993 picture at 6 steps", worst < 8,
+                  String(format: "average difference at most %.2f of 255", worst))
+        } catch {
+            check("3D City scene could be set up", false, "\(error)")
         }
 
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
