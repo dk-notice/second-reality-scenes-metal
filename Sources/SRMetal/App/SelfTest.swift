@@ -335,6 +335,49 @@ enum SelfTest {
               cube.ticks == 0 && !cubeStart.contains { $0 != 0 } && !cubeEnd.contains { $0 != 0 }
                   && cube.classicReferenceFrame() == cubeStart)
 
+        // Plasma Cube, modern look against the 1993 replay, at every step of the loop (code review,
+        // 2026-11-14). The modern look works the path, the turn and the light out again in floating
+        // point, so this is the check that it is the same cube: the same faces drawn, every corner
+        // within 5 units of where the 1993 whole-number arithmetic puts it (the cube is 250 units
+        // across; that arithmetic cuts the path's angles to whole 1/1024ths of a turn and its nine
+        // turn numbers to 1/256, and is measured to be up to 4.3 units out), and each face's light
+        // within 2 of the 64 levels. A face seen almost exactly
+        // edge-on may be drawn by one look and not the other; those steps are counted and must be rare.
+        do {
+            var model = PlasmaCubeModel()
+            var worstCorner = 0.0, worstLight = 0.0
+            var differentFaces = 0, lightChecked = 0
+            for _ in 0..<PlasmaCubeModel.lengthInTicks {
+                let modern = model.modernState(alpha: 0)
+                let classicFaces = model.visibleFaces.map { PlasmaCubeModel.faces[$0] }
+                if modern.faces.count != classicFaces.count
+                    || zip(modern.faces, classicFaces).contains(where: { $0.group != $1.group }) {
+                    differentFaces += 1
+                } else {
+                    for (face, classic) in zip(modern.faces, classicFaces) {
+                        for (corner, index) in zip(face.corners, classic.corners) {
+                            let off = SIMD3<Double>(corner) - SIMD3<Double>(model.turned[index])
+                            worstCorner = max(worstCorner, simd_reduce_max(abs(off)))
+                        }
+                    }
+                    // The 1993 light level, read back from the brightest colour of each colour range,
+                    // where exactly one face of that range is drawn.
+                    for face in modern.faces where modern.faces.filter({ $0.group == face.group }).count == 1 {
+                        let brightest = face.group * 192 + 63 * 3 + [2, 0, 1][face.group]
+                        let base = Double(PlasmaCubeModel.basePalette[brightest])
+                        let level = Double(model.palette[brightest]) * 64 / base
+                        worstLight = max(worstLight, abs(Double(face.light) * 64 - level))
+                        lightChecked += 1
+                    }
+                }
+                model.tick()
+            }
+            check("Cube modern look is the same cube as the 1993 look at every step",
+                  worstCorner <= 5 && worstLight <= 2 && differentFaces <= 20 && lightChecked > 1000,
+                  "worst corner \(worstCorner) units, worst light \(worstLight) of 64 (\(lightChecked) checked), "
+                      + "\(differentFaces) steps with a different set of faces")
+        }
+
         // Glenz Vectors. The 3600-step sine table against a checksum of MATHSIN.INC; the plate
         // picture (original artwork, kept as data) against checksums of FC.UH, which is byte for
         // byte what the program linked in as _FC.OBK.

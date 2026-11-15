@@ -218,13 +218,66 @@ one fades in over the earlier one, so there is no dark seam.
 - **By eye.** Pictures of both looks at steps 60, 416, 800 and 1600 show the same cube in the same
   place with the same pattern and colours. The modern pattern sits slightly differently across a
   steeply angled face, which is the perspective correction.
+- **The modern look is the same cube, by program** (added by the code review below). At every one of
+  the 2048 steps the self-test compares the modern look's cube with the 1993 replay's: the same faces
+  are drawn (except at 16 steps where a face is almost exactly edge-on and one look draws it a step
+  before the other), every corner is within 4.3 units of the 1993 position (the cube is 250 across;
+  the difference is the 1993 arithmetic cutting angles and turn numbers to whole steps), and each
+  face's light is within 2 of the 64 levels (3632 comparisons).
+- **Motion, by program.** `--motion-check plasma-cube modern` over the whole loop and across the loop
+  point (steps 1990 to 2100) finds no jumps; the most pixels that appear for one picture only is 58
+  of 172,800, along thin edges while the cube rises into view.
+
+## Code review (2026-11-14)
+
+Both looks were reviewed: the automatic `/code-review` over the scene's four files, and a second,
+independent reading of the two C files that had only ever been ported by reading (`VECT.C` and
+`PLZFILL.C`), line by line against `PlasmaCubeModel.swift` and `PlasmaCubeFiller.swift`.
+
+**Found and fixed**
+
+- **Nothing wrong was found in the scene itself.** No picture changed.
+- **The reference tool's `--src` option did not work.** `tools/plasmacube_reference.py` read the
+  original's tables as the file loaded, before it looked at its options, so it only ran when the
+  original source sat in one particular place next to the project. Fixed (for this tool only; the
+  shared interpreter was not touched). With that, the tool was run again from scratch for steps 16, 60
+  and 416: the original assembly gives the same screen and palette checksums the self-test expects.
+
+**Confirmed correct, by the second reading**
+
+- `VECT.C`: the order of the eight path values; the light direction; the nine turn numbers, including
+  C's rule that `>>15+7` means "shift by 22" and where the 32-bit and 16-bit cut-offs fall; the corner
+  arithmetic and the two divides; the face test and its sign; the light level and the
+  remember-by-drawing-position rule; the page counter, which page is drawn and which shown, and that
+  the 2-pixel offset of a drawn page matches the 2-pixel slide when that page is shown.
+- `PLZFILL.C`: the wave table, texture, shift table and three colour ranges; finding the top corner;
+  the edge set-up (16.16 numbers, the +0.5 start, "a height of 0 counts as 1"); the order in which the
+  two edges are replaced; the eraser's choice of "three frames ago".
+- The cosine table: the original reads cosines 256 entries further along its sine table, past entry
+  1023. `SINIT.INC` holds 1287 entries and they repeat exactly from 1024 on, so wrapping the index, as
+  this version does, reads the same numbers.
+- **Motion in the modern look.** It has no state of its own: every picture is worked out from "step
+  plus fraction", so nothing can be glided across a jump. The pattern's scroll wraps from 64 to 0, where
+  the wave it drives repeats exactly. At the loop point both looks are black. (The modern cube's last
+  steps are 1 brightness level out of 255 above black, because its light is not rounded down to a
+  whole level as the 1993 one is.)
+
+**Possible tidy-ups** (left for a later clean-up pass, nothing wrong with the picture)
+
+- The 1993 look rebuilds its two 320x400 pictures and its palette on every drawn frame, though they
+  only change once per step.
+- `setEdge` in `PlasmaCubeFiller.swift` repeats the same six lines for each of the two edges.
+- Each loop and reset builds a whole new model, including two 256 KB copies of the card's memory.
+- The guards that return colour 0 for a texture read past the tables, and the "distance at least 1"
+  guard, never run on this path; a comment says so, but nothing would report it if they did.
 
 ## What was not checked
 
 - Nothing was compared with the original program running, or with a recording. The interpreter proves
-  the assembly is replayed correctly. The C code around it (`VECT.C`, `PLZFILL.C`) was ported twice by
-  reading, once into the Python tool and once into Swift, by the same author; the two agree, but a
-  misreading of the C made both times would not show up.
+  the assembly is replayed correctly. The C code around it (`VECT.C`, `PLZFILL.C`) was ported by
+  reading, into the Python tool and into Swift by one author, and then read a third time by the code
+  review, which found no difference. That is three readings and no running original: a misreading
+  shared by all of them would still not show up.
 - The texture and shift tables were calculated by the original at start-up, so there is no file to
   compare with. They depend on the 1993 compiler's `sin()` agreeing with today's to within rounding
   to a whole number, which is very likely but not proven.
@@ -232,8 +285,8 @@ one fades in over the earlier one, so there is no dark seam.
   system). Whether viewers in 1993 saw the cube go fully dark, or the cut came a little earlier, is
   therefore not known.
 - Which moment of the refresh the palette and the page flip took effect was not modelled (see below).
-- The modern look was checked by eye only, in still pictures. Its motion and edge smoothing were not
-  inspected frame by frame.
+- The modern look's texture (the pattern on the faces) and its edge smoothing were checked by eye only,
+  in still pictures. Its geometry, light and motion are now checked by program (see above).
 - That the PC kept up with 70 pictures a second is an assumption; on a slower PC the original showed
   fewer pictures of the same motion.
 

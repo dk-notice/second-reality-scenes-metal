@@ -303,7 +303,14 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Kept quirks: light level remembered per drawing position, not per face (stale colours now and then); two
   register accidents in the filler; signed shift read as unsigned.
 - Not verified: against a running original or a recording; when the music cut the part; the C compiler's
-  `sin()` for the start-up tables; the modern look beyond still pictures.
+  `sin()` for the start-up tables; the modern look's texture and edge smoothing beyond still pictures.
+- Code review 2026-11-14 (branch `claude/review-plasma-1872aa`): no fault found in the scene; no picture
+  changed. VECT.C and PLZFILL.C read again independently against the Swift, no difference. New self-test
+  check compares the modern cube with the 1993 replay at all 2048 steps (same faces bar 16 edge-on steps,
+  corners within 4.3 units of 250, light within 2 of 64). `--motion-check` on the modern look: no jumps,
+  whole loop and across the loop point. One tool fix: `tools/plasmacube_reference.py --src` was ignored
+  for the tables (they were read before the options); it now works from a worktree, and re-running it
+  reproduced the stored checksums for steps 16, 60 and 416. Tidy-ups listed in the scene page.
 - For the later 3D scenes (glenz, ships, city):
   - `Core/Math3D.swift`: `perspective(focal:centre:canvasSize:near:far:)` gives the matrix for an original's
     "x*focal/z + centre" projection in canvas pixels (camera looks along +z, y down); it already spreads depth
