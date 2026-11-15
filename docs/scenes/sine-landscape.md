@@ -85,7 +85,7 @@ its 200 lines), the part where the skyline can be.
 
 **Start and end.** The picture is copied to the screen 160 lines too low at first and one line higher each
 frame, so the land rises from the bottom edge. Near the end of its music the original started sinking it
-again and, about 22 lines later, cut to the next part.
+again, and then cut to the next part.
 
 **Speed.** The camera moves once per drawn picture, not once per 1/70 second. A fast PC that could draw a
 picture every refresh flew at full speed; a slower one flew proportionally slower.
@@ -151,19 +151,24 @@ The camera glides between steps.
   is absent from `ASM.OBJ` and `C.EXE`.
 - **The display path.** The self-test draws the 1993 look on the graphics chip at eight moments and
   compares every pixel with the processor's version.
+- **Speed and pictures against a recording.** Four frames of a YouTube recording of the demo
+  (`youtu.be/iw17c70uJes`, at 446, 452, 458 and 464 seconds) were compared with 1,900 pictures from the
+  reference run. Each matched one picture clearly: numbers 223, 433, 643 and 854. That is 210 pictures
+  every 6 seconds, 35 a second, so one picture per two screen refreshes. It also shows the reference run
+  produces the pictures the real demo showed, in the same order.
 - **By eye.** Pictures of both looks at steps 60, 200, 700 and 1300 show the same hills in the same places.
 
 ## What was not checked
 
-- Nothing was compared with the original program actually running. The interpreter proves the inner loop
+- Apart from the four recording frames above, nothing was compared with the original program running. The interpreter proves the inner loop
   is replayed correctly; the code around it (`MAIN.C`, `docol`, `docopy`) was ported by reading.
 - The demo as released runs `3DSINFLD.EXE`, which is compressed. It was not unpacked, so it is an
   assumption that it is the same build as `C.EXE`. `C.EXE` itself is run-length packed by the linker, so
   the height tables could only be found in it in part (about 70% of 1 KB pieces match byte for byte).
 - How the original's two video pages behave was simplified (see below), on the strength of reasoning,
   not a test.
-- How fast the original flew on a typical 1993 PC has not been measured; half of full speed is a first
-  estimate.
+- The speed was measured from one recording only. What machine or emulator made that recording is not
+  known, and another PC could have run faster or slower.
 - The modern look was checked by eye only. It is a smooth re-drawing of the same landscape, not a
   pixel-exact one.
 
@@ -171,13 +176,15 @@ The camera glides between steps.
 
 - **Speed.** The original's speed depended on the PC. This version draws one picture every 2 steps (35 a
   second), as a PC that needed two screen refreshes per picture would have, and so flies at half the
-  speed a very fast PC would. One picture per step was tried first and was plainly faster than the demo
-  as people remember it (user, 2026-11-14). The number is `ticksPerPicture` in the model; it has not yet
-  been measured against a recording. The modern look glides between pictures, so it is smooth either way.
-- **The ending.** The original sank for about 22 lines and cut to the next part on a music cue. Here the
-  land sinks all the way out of sight (130 steps), then the scene starts again from a black screen. The
-  loop point is therefore invisible. The scene's length (2048 steps) is this version's choice; the
-  original's was set by the music.
+  speed a very fast PC would. This was measured against a recording of the demo (see "What was checked"):
+  the recording shows exactly 35 pictures a second. One picture per step was tried first and was plainly
+  too fast. The number is `ticksPerPicture` in the model. The modern look glides between pictures, so it
+  is smooth either way.
+- **The ending.** The original started sinking on a music cue; in the recording the land sinks nearly
+  out of sight before the next part cuts in (the source alone suggested it would be cut off sooner). Here
+  it always sinks all the way out of sight (130 steps), then the scene starts again from a black screen. The
+  loop point is therefore invisible. The scene's length (2048 steps, 29 seconds) is this version's choice; the
+  original's was set by the music and is about 28 seconds in the recording.
 - **The start** does not wait for the music as the original did.
 - **Video pages.** The original showed each picture one frame late (it drew into the hidden page) and
   relied on 18 cleared lines above the picture to wipe the previous one as it moved. This version simply

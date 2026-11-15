@@ -201,15 +201,18 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Speed: the original moved the camera once per drawn picture, so its speed depended on the PC. One move
   per step was first tried and the user found it significantly too fast (2026-11-14). Now one picture every
   `SineLandscapeModel.ticksPerPicture` = 2 steps (the rise/fall still moves one line per step, as in the
-  original). 2 is an estimate; the user offered a YouTube clip to measure the real speed. If the number
-  changes, change `EVERY` in `tools/landscape_reference.py` too, re-run it, and update the self-test sums.
+  original). Measured against the user's YouTube clip (youtu.be/iw17c70uJes, landscape at 441-467 s): clip frames at
+  446/452/458/464 s match reference pictures 223/433/643/854, i.e. exactly 35 pictures a second, so 2 is
+  right for that recording. If the number ever changes, change `EVERY` in `tools/landscape_reference.py` too, re-run it, and update the self-test sums.
 - Deliberate departures: the land sinks fully out of sight and the scene loops from black after 2048 steps (the
-  original sank about 22 lines and cut on a music cue); the two video pages and one-frame display lag are
+  original sank on a music cue; in the recording it gets nearly out of sight before the cut); the two video pages and one-frame display lag are
   not modelled.
 - Useful for the later 3D scenes: (1) read the MAKEFILE first, it settled which files and even which
   artwork were live; (2) check generated or built files against their generator source, they can differ;
   (3) when an inner loop is plain assembly text, interpreting that text in Python is a cheap, strong check
-  of a port (about 100 lines; see `tools/`); (4) C.EXE files linked with `/E` are run-length packed, so
+  of a port (about 100 lines; see `tools/`); (4) a YouTube recording can be measured: open it in the built-in browser, seek the video with JavaScript,
+  read small fingerprints of frames from a canvas, and match them to reference pictures (this gave the
+  speed above); (5) C.EXE files linked with `/E` are run-length packed, so
   data cannot be searched for in them reliably.
 
 ## Planned scenes (user's list, 2026-11-14), easiest first
