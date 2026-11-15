@@ -101,6 +101,15 @@ enum SceneCatalog {
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "plasma",
+            title: "Plasma",
+            credit: "Wildfire",
+            // The original ran in a 320x400 screen mode: twice the usual number of lines.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 2, 17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300, 2322],
+            make: { device, format in try PlasmaScene(device: device, pixelFormat: format) }
         )
     ]
 }

@@ -5,11 +5,11 @@ Last updated: 2026-11-14
 ## Goal
 A native macOS app that re-creates scenes from Second Reality (Future Crew, 1993) from scratch,
 drawn on the graphics chip with Metal. Each scene has two looks: Modern (full resolution, smooth)
-and 1993 (320x200 pixels, 70 steps per second). The original source is public domain and lives in
+and 1993 (original pixels, usually 320x200; 70 steps per second). The original source is public domain and lives in
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Five scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, and Bouncing Dots. (Rings and Interference were one
+- Six scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, and Plasma. (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
@@ -21,11 +21,11 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
-  dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300).
+  dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000).
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
@@ -122,11 +122,32 @@ and 1993 (320x200 pixels, 70 steps per second). The original source is public do
   to black (frames 2360-2424) and loops, starting again with the original's 130-step floor fade-in. The
   original's uninitialised re-drop counter starts at 0 here. The unused "face" data is not used.
 
+## Plasma notes
+- Source: PLZPART/PLZ.C, ASMYT.ASM (`plzline`, `setplzparas`), COPPER.ASM (`moveplz`, `pompota`, `do_drop`),
+  TWEAK.ASM (`tw_opengraph2`). Flat plasma only; the cube is a later scene.
+- Canvas is 320x400 (the first scene not 320x200): the original mode was 320x400 with 4 planes and 96 bytes
+  per row. The framework needed no changes for this.
+- The plasma is a 280-line band starting at screen line 61/62, placed with the VGA line-compare register.
+- Per-pixel rule (from the self-modifying `plzline`): value = psini[8c + lsini16[y + p2 + 4(80-c)] + p1]
+  + psini[2y + lsini4[y + p4 + 16c] + p3 + 4(80-c)], c = 0...83 (4 pixels each), y = 0...279.
+- Two plasmas (K and L parameters) are interleaved as a one-pixel chessboard; the original flipped the
+  chessboard every frame (line compare 60/61, 2-pixel pan on alternate frames) so the eye mixed them.
+- Tables are calculated: psini, lsini16 and ptau reproduce the .INC files exactly when the original's
+  11-digit pi is used; lsini4 needs two entries (3072, 7168) set by hand to 23. Checksums in the self-test.
+- Deliberate departures: the 1993 look shows the average of the two alternating frames (70 Hz alternation
+  flickers on a 60/120 Hz display); the opening fade from white is replaced by the same 31-step fade from
+  black the other sections use; the final fall loops back to section 0 (2323 steps); drawing is treated as
+  instant (the original's draw loop was not locked to the refresh).
+- Not verified against a running original: the plane/chessboard layout, the exact band line, which pan
+  value pairs with which line, and that timetable "music frames" are 1/70 s. See docs/scenes/plasma.md.
+- For the plasma cube later: the fifth palette (`pals[4]`, "white II") is built in PLZ.C but not in
+  `PlasmaModel.palettes`; the tables and `PlasmaModel.value` should be reusable.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
 1. Bouncing dots - DONE
-2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM)
+2. Plasma (PLZPART/PLZ.C + ASMYT.ASM, COPPER.ASM) - DONE
 3. Hidden starfield (DDSTARS)
 4. 3D sine landscape (COMAN) - a voxel landscape; has a background picture
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - needs plasma first
@@ -136,6 +157,6 @@ stills are out of scope.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: Plasma (rank 2 above).
+- Next scene: Hidden starfield (rank 3 above).
 - Build the sidebar scene picker when asked.
 - Later: music.

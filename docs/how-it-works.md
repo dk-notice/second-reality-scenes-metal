@@ -10,7 +10,8 @@ Some terms used throughout:
 - **Metal**: Apple's system for telling the graphics chip what to do.
 - **Shader**: a small program that runs on the graphics chip, once per corner of a shape or once per pixel.
 - **Step** (or "tick"): one beat of the scene's clock, 1/70 of a second.
-- **Canvas**: a scene's own coordinate system, 320 wide by 200 high, the size of the original screen.
+- **Canvas**: a scene's own coordinate system, the size of the original screen: 320 wide by 200 high for
+  most scenes (Plasma used a 320x400 screen mode, so its canvas is 320x400).
 - **Palette**: a table that says which colour each pixel number means. A VGA card stored pixels as small
   numbers and looked the colours up in this table.
 
@@ -69,7 +70,8 @@ step" number to glide between steps, so motion is smooth at any refresh rate.
 
 ### 1993 look
 
-The scene draws onto a tiny picture, 320x200 pixels, exactly the size of the original screen. That picture
+The scene draws onto a tiny picture exactly the size of the original screen (320x200 pixels for most
+scenes). That picture
 is then scaled up to the window with hard-edged pixels. Motion advances in whole steps only.
 
 A scene never has to know how either look reaches the screen. It is told which look is wanted and the size
@@ -88,8 +90,8 @@ round in pixels, so they appear as slightly tall ovals, exactly as they did in 1
 Scenes use one of two approaches, depending on what the original did.
 
 **Calculate it on the graphics chip.** Where the original's picture follows from a formula, the shader
-applies the same formula with the same whole-number rounding. Dot Tunnel, Rings and Interference work this
-way.
+applies the same formula with the same whole-number rounding. Dot Tunnel, Rings, Interference and Plasma
+work this way.
 
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
@@ -148,7 +150,7 @@ Useful shared pieces in `Core/`:
 
 ## House rules for scenes
 
-These came out of building the first five.
+These came out of building the first six.
 
 - **Calculate rather than copy.** If a table the original shipped as data follows a formula, find it,
   prove it reproduces the file exactly, and calculate the table.

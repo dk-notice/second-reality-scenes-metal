@@ -6,7 +6,8 @@ that draws on the graphics chip.
 Every scene can be shown two ways, switchable at any time:
 
 - **Modern look**: full display resolution, soft edges, smooth motion.
-- **1993 look**: the original 320x200 pixels and 70 steps per second, as on a 486 with a VGA card.
+- **1993 look**: the original pixels (320x200 for most scenes) and 70 steps per second, as on a 486 with a
+  VGA card.
 
 | | Modern look | 1993 look |
 |---|---|---|
@@ -15,6 +16,7 @@ Every scene can be shown two ways, switchable at any time:
 | Interference | ![](docs/images/interference-modern.png) | ![](docs/images/interference-classic.png) |
 | Techno Bars | ![](docs/images/techno-bars-modern.png) | ![](docs/images/techno-bars-classic.png) |
 | Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
+| Plasma | ![](docs/images/plasma-modern.png) | ![](docs/images/plasma-classic.png) |
 
 ## What this is, and is not
 
@@ -37,8 +39,9 @@ There is no music yet.
 | Rings, Interference | Psi | [docs/scenes/rings-and-interference.md](docs/scenes/rings-and-interference.md) |
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
+| Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
 
-Planned, roughly easiest first: plasma, hidden starfield, 3D sine landscape, plasma cube, glenz vectors,
+Planned, roughly easiest first: hidden starfield, 3D sine landscape, plasma cube, glenz vectors,
 ships fly-by, 3D city. Picture-based scenes, scrollers and stills are out of scope.
 
 ## Build and run
@@ -71,7 +74,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma` |
 | `--look modern` or `--look classic` | Start in that look |
 
 Two more are run directly on the program inside the app, and open no window:
@@ -103,6 +106,8 @@ It varies by scene, and each scene's page says exactly what was checked.
 - **Dot Tunnel, Rings, Interference**: the original's data tables turned out to follow exact formulas. Those
   formulas were checked against the original data files with zero differences, and the result is compared
   pixel by pixel with what the graphics chip draws.
+- **Plasma**: the same, except that 2 of one table's 8,192 values had to be set by hand, and the way the
+  original laid two plasmas over each other was worked out by reading its source, not by running it.
 - **Techno Bars, Bouncing Dots**: the original drawing code was ported step by step from the assembly.
   That port was checked by careful reading, not against a running copy of the original, so an
   off-by-one-pixel mistake is possible.

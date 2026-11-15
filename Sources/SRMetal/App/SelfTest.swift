@@ -28,6 +28,15 @@ enum SelfTest {
         check("interference stripe picture matches original file",
               crc32(quarter(of: InterferenceModel.stripePicture)) == 990_890_590)
 
+        // The plasma's four tables, against checksums of the original PSINI.INC, LSINI16.INC, LSINI4.INC
+        // and PTAU.INC (16-bit tables as low byte, high byte).
+        func words(_ table: [UInt16]) -> [UInt8] { table.flatMap { [UInt8($0 & 255), UInt8($0 >> 8)] } }
+        check("plasma sine table matches original file", crc32(PlasmaModel.psini) == 942_993_316)
+        check("plasma bend table 16 matches original file", crc32(words(PlasmaModel.lsini16)) == 3_664_524_141)
+        check("plasma bend table 4 matches original file", crc32(words(PlasmaModel.lsini4)) == 3_446_065_726)
+        check("plasma brightness ramp matches original file",
+              crc32(PlasmaModel.ptau.map { UInt8($0) }) == 404_302_250)
+
         // The bar-filling routine: a plain 40x20 rectangle must fill exactly 800 pixels,
         // left and top edges included, right and bottom edges not (the original's rule).
         var raster = BarRasteriser()
@@ -117,6 +126,17 @@ enum SelfTest {
         check("Interference loop point is no bigger a jump than an ordinary step",
               loopStep <= ordinaryStep * 11 / 10,
               "\(loopStep) pixels change across the loop, \(ordinaryStep) across an ordinary step")
+
+        // Plasma should loop exactly: any moment and the same moment one full run later look identical,
+        // and the loop point itself is black (the band has fallen away; the next palette has not begun).
+        var plasma = PlasmaModel()
+        for _ in 0..<400 { plasma.tick() }
+        let plasmaBefore = plasma.classicReferenceFrame()
+        for _ in 0..<(PlasmaModel.lengthInTicks - 400) { plasma.tick() }
+        check("Plasma is black at its loop point", !plasma.classicReferenceFrame().contains { $0 != 0 })
+        for _ in 0..<400 { plasma.tick() }
+        check("Plasma repeats exactly after \(PlasmaModel.lengthInTicks) steps",
+              plasma.classicReferenceFrame() == plasmaBefore && plasmaBefore.contains { $0 != 0 })
 
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok

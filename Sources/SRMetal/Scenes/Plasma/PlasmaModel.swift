@@ -1,0 +1,298 @@
+import Foundation
+import simd
+
+/// The state and rules of the Plasma scene, with no drawing code.
+///
+/// Based on Wildfire's original (PLZPART/PLZ.C, ASMYT.ASM and COPPER.ASM in the Second Reality source).
+/// The 1993 version worked like this:
+///
+///  - The screen was a 320x400 mode (twice the usual number of lines). The plasma is a band 280 lines
+///    tall in the middle of it.
+///  - A plasma value is the sum of two lookups in a wavy sine table, where the position looked up is
+///    itself bent by two more wavy sine tables. Four numbers ("parameters") slide the lookups along a
+///    little every frame, which is what makes the plasma flow.
+///  - Only 84 values are worked out per line: each is 4 screen pixels wide. But TWO plasmas with different
+///    parameters ("K" and "L") are drawn, interleaved like the squares of a chessboard, and the picture is
+///    nudged by one line on alternate frames so the squares swap. At 70 frames per second the eye sees
+///    the two mixed.
+///  - Colours come from a 256-colour palette. Four times in the scene the plasma band falls off the
+///    bottom of the screen, then reappears at once with a new palette fading up from black.
+struct PlasmaModel {
+    // MARK: - Tables
+
+    /// The original's own value of two pi (PLZ.C, `DPII`). Using exactly this constant, not the
+    /// processor's more precise pi, is what makes the tables below come out identical to the original files.
+    private static let twoPi: Double = 3.1415926535 * 2.0
+
+    /// PSINI.INC: 16384 entries, a big sine wave with two small faster ones riding on it. Values 2...125.
+    static let psini: [UInt8] = (0..<16384).map { (a: Int) -> UInt8 in
+        let t: Double = Double(a) * twoPi / 4096
+        let value: Double = sin(t) * 55 + sin(t * 6) * 5 + sin(t * 21) * 4 + 64
+        return UInt8(Int(value))
+    }
+
+    /// LSINI16.INC: 8192 entries, a similar wave, 16 times as tall. Used to bend the first lookup.
+    static let lsini16: [UInt16] = (0..<8192).map { (a: Int) -> UInt16 in
+        let t: Double = Double(a) * twoPi / 4096
+        let value: Double = (sin(t) * 55 + sin(t * 4) * 5 + sin(t * 17) * 3 + 64) * 16
+        return UInt16(Int(value))
+    }
+
+    /// LSINI4.INC: 8192 entries, 8 times as tall. Used to bend the second lookup.
+    ///
+    /// Two entries (3072 and 7168) are set by hand. There the true value is exactly 24, a whole number;
+    /// the 1993 maths library landed a hair under it and the file says 23. Every other entry follows
+    /// the formula.
+    static let lsini4: [UInt16] = {
+        var table: [UInt16] = (0..<8192).map { (a: Int) -> UInt16 in
+            let t: Double = Double(a) * twoPi / 4096
+            let value: Double = (sin(t) * 55 + sin(t * 5) * 8 + sin(t * 15) * 2 + 64) * 8
+            return UInt16(Int(value))
+        }
+        table[3072] = 23
+        table[7168] = 23
+        return table
+    }()
+
+    /// PTAU.INC: a smooth 0...63 brightness ramp (half a cosine wave), used to build the palettes.
+    static let ptau: [Int] = [0] + (1...128).map { (a: Int) -> Int in
+        Int(cos(Double(a) * twoPi / 128 + 3.1415926535) * 31 + 32)
+    }
+
+    /// The four palettes the plasma uses, in order: 256 colours each, red/green/blue 0...63.
+    /// (The original built a fifth, which only the plasma cube that followed ever showed.)
+    static let palettes: [[SIMD3<Int>]] = {
+        let p = ptau
+        var redBlue = [SIMD3<Int>(0, 0, 0)]
+        for a in 1..<64 { redBlue.append(SIMD3(p[a], 0, 0)) }
+        for a in 0..<64 { redBlue.append(SIMD3(p[63 - a], 0, 0)) }
+        for a in 0..<64 { redBlue.append(SIMD3(0, 0, p[a])) }
+        for a in 0..<64 { redBlue.append(SIMD3(p[a], 0, p[63 - a])) }
+
+        var rainbow = [SIMD3<Int>(0, 0, 0)]
+        for a in 1..<64 { rainbow.append(SIMD3(p[a], 0, 0)) }
+        for a in 0..<64 { rainbow.append(SIMD3(p[63 - a], 0, p[a])) }
+        for a in 0..<64 { rainbow.append(SIMD3(0, p[a], p[63 - a])) }
+        for a in 0..<64 { rainbow.append(SIMD3(p[a], p[63], p[a])) }
+
+        var grey = [SIMD3<Int>(0, 0, 0)]
+        for _ in 1..<64 { grey.append(SIMD3(0, 0, 0)) }
+        for a in 0..<64 { grey.append(SIMD3(repeating: p[a] / 2)) }
+        for a in 0..<64 { grey.append(SIMD3(repeating: p[63 - a] / 2)) }
+        for _ in 0..<64 { grey.append(SIMD3(0, 0, 0)) }
+
+        var pastel = [SIMD3<Int>(0, 0, 0)]
+        for a in 1..<64 { pastel.append(SIMD3(p[a], 0, 0)) }
+        for a in 0..<64 { pastel.append(SIMD3(p[63], p[a], p[a])) }
+        for a in 0..<64 { pastel.append(SIMD3(p[63 - a], p[63 - a], p[63])) }
+        for _ in 0..<64 { pastel.append(SIMD3(0, 0, p[63])) }
+
+        return [redBlue, rainbow, grey, pastel]
+    }()
+
+    /// Starting parameters for each of the four sections: L plasma, then K plasma (PLZ.C `inittable`).
+    static let startParameters: [(l: SIMD4<Int32>, k: SIMD4<Int32>)] = [
+        (SIMD4(1000, 2000, 3000, 4000), SIMD4(3500, 2300, 3900, 3670)),
+        (SIMD4(1000, 2000, 4000, 4000), SIMD4(1500, 2300, 3900, 1670)),
+        (SIMD4(3500, 1000, 3000, 1000), SIMD4(3500, 3300, 2900, 2670)),
+        (SIMD4(1000, 2000, 3000, 4000), SIMD4(3500, 2300, 3900, 3670))
+    ]
+    /// How far each parameter moves per step (COPPER.ASM `moveplz`).
+    static let kSpeed = SIMD4<Int32>(-3, -2, 1, 2)
+    static let lSpeed = SIMD4<Int32>(-1, -2, 2, 3)
+
+    /// The steps at which the band starts to fall, and which section follows. From the original's
+    /// `timetable` (723, 1491, 1875, 2259 frames, plus 2 because this scene starts two steps earlier in
+    /// the fall-and-return cycle). The last entry is the original's ending; here it leads back to section 0.
+    static let drops: [(step: Int, nextSection: Int)] = [(725, 1), (1493, 2), (1877, 3), (2261, 0)]
+    /// The scene repeats after this many steps (about 33 seconds).
+    static let lengthInTicks = 2323
+
+    static let canvasWidth = 320
+    static let canvasHeight = 400
+    /// Lines of plasma drawn.
+    static let bandHeight = 280
+    /// Number of steps a new palette takes to fade up from black.
+    static let fadeSteps = 31
+
+    /// Where the band's top edge is while it falls, by step of the fall (COPPER.ASM `dtau`): 60 plus
+    /// a distance that grows with the square of time, as a falling object's does.
+    static func lineCompare(fallStep: Int) -> Int {
+        fallStep * fallStep / 4 * 43 / 128 + 60
+    }
+
+    // MARK: - State
+
+    private(set) var ticks = 0
+    private(set) var section = 0
+    private(set) var k = startParameters[0].k
+    private(set) var l = startParameters[0].l
+    /// The original's `cop_drop` counter: 0 = plasma flowing normally, 1...64 = band falling,
+    /// 65 = hidden while the parameters are reset, 66...96 = new palette fading in.
+    private(set) var dropCounter = 64
+    /// The palette being faded: each colour part as a 16-bit number whose top 8 bits are the VGA value.
+    private var fadePalette = [UInt16](repeating: 0, count: 768)
+    /// The palette the video card currently has (0...63 per part). It lags `fadePalette` by one step,
+    /// because the original sent it to the card at the start of the following frame.
+    private(set) var shownPalette = [UInt8](repeating: 0, count: 768)
+    private var paletteWaiting = false
+
+    mutating func reset() { self = PlasmaModel() }
+
+    mutating func tick() {
+        ticks += 1
+        if ticks == Self.lengthInTicks {
+            reset()
+            return
+        }
+
+        if paletteWaiting {
+            shownPalette = fadePalette.map { UInt8($0 >> 8) }
+            paletteWaiting = false
+        }
+
+        k = (k &+ Self.kSpeed) & 4095
+        l = (l &+ Self.lSpeed) & 4095
+
+        if let drop = Self.drops.first(where: { $0.step == ticks }) {
+            // The main program notices it is time: clear the fade and start the fall.
+            for i in 0..<768 { fadePalette[i] &= 0x00FF }
+            dropCounter = 1
+            section = drop.nextSection
+        }
+
+        guard dropCounter != 0 else { return }
+        dropCounter += 1
+        if dropCounter <= 64 {
+            return                      // falling; `fields` works out where the band is
+        }
+        if dropCounter > 64 + 32 {
+            dropCounter = 0             // fade finished
+            return
+        }
+        paletteWaiting = true
+        if dropCounter == 65 {
+            k = Self.startParameters[section].k
+            l = Self.startParameters[section].l
+        } else {
+            let target = Self.palettes[section]
+            for i in 0..<256 {
+                for part in 0..<3 {
+                    fadePalette[i * 3 + part] &+= UInt16(Self.fadeIncrement(section: section, value: target[i][part]))
+                }
+            }
+        }
+    }
+
+    /// How much one fade step adds, in 1/256ths of a VGA level.
+    ///
+    /// The original added value x 8 for 31 steps, which stops at 31/32 of full brightness. Sections 1-3
+    /// do exactly that. Section 0 in the original faded down from white instead and ended on the exact
+    /// palette, so here it gets the smallest increment that reaches the exact value in 31 steps from black.
+    private static func fadeIncrement(section: Int, value: Int) -> Int {
+        section == 0 ? (value * 256 + fadeSteps - 1) / fadeSteps : value * 8
+    }
+
+    // MARK: - The 1993 look
+
+    /// One of the two alternating frames ("fields") the original showed.
+    struct Field {
+        /// Screen line of the band's first row.
+        var top: Int
+        /// How many pixels the picture is shifted left.
+        var pan: Int
+    }
+
+    /// The two fields for the current state. Normally the video card was told to start the band at line
+    /// 60 with a 2-pixel sideways shift on one frame, and at line 61 with no shift on the next. While the
+    /// band falls or a palette fades in, both frames use the same line.
+    var fields: [Field] {
+        let fixedLine: Int?
+        switch dropCounter {
+        case 0: fixedLine = nil
+        case 1...64: fixedLine = Self.lineCompare(fallStep: dropCounter)
+        case 65: fixedLine = 400                 // below the last screen line: nothing shows
+        default: fixedLine = 60
+        }
+        // The band begins on the line after the one the card was given.
+        return [Field(top: (fixedLine ?? 60) + 1, pan: 2), Field(top: (fixedLine ?? 61) + 1, pan: 0)]
+    }
+
+    /// The plasma value (a palette number) for one 4-pixel-wide column of one band row.
+    /// This is `plzline` from ASMYT.ASM: two lookups in `psini`, each bent by another table.
+    static func value(column c: Int, row y: Int, _ p: SIMD4<Int32>) -> Int {
+        let bend1 = Int(lsini16[y + Int(p.y) + 4 * (80 - c)])
+        let first = Int(psini[c * 8 + bend1 + Int(p.x)])
+        let bend2 = Int(lsini4[y + Int(p.w) + 16 * c])
+        let second = Int(psini[2 * y + bend2 + Int(p.z) + 4 * (80 - c)])
+        return (first + second) & 255
+    }
+
+    /// The palette number at one screen pixel in one field. 0 (black) outside the band.
+    func colourNumber(x: Int, line: Int, field: Field) -> Int {
+        let row = line - field.top
+        guard row >= 0, row < Self.bandHeight else { return 0 }
+        let memoryX = x + field.pan
+        // Chessboard: which of the two plasmas owns this pixel.
+        let parameters = (memoryX + row) & 1 == 1 ? k : l
+        return Self.value(column: memoryX >> 2, row: row, parameters)
+    }
+
+    /// The 1993 picture for the current state: red, green, blue bytes for each of 320x400 pixels.
+    /// It is the average of the two fields, which is what a monitor's glow and the eye made of them.
+    func classicReferenceFrame() -> [UInt8] {
+        let bothFields = fields
+        var result = [UInt8]()
+        result.reserveCapacity(Self.canvasWidth * Self.canvasHeight * 3)
+        for line in 0..<Self.canvasHeight {
+            for x in 0..<Self.canvasWidth {
+                let a = colourNumber(x: x, line: line, field: bothFields[0]) * 3
+                let b = colourNumber(x: x, line: line, field: bothFields[1]) * 3
+                for part in 0..<3 {
+                    let sum = Int(shownPalette[a + part]) + Int(shownPalette[b + part])
+                    result.append(UInt8((Double(sum) * 255 / 126).rounded()))
+                }
+            }
+        }
+        return result
+    }
+
+    // MARK: - The modern look
+
+    struct ModernParameters {
+        var k: SIMD4<Float>
+        var l: SIMD4<Float>
+        /// 256 colours, each part 0...1.
+        var palette: [SIMD4<Float>]
+        /// Canvas line of the band's top edge.
+        var top: Float
+        var hidden: Bool
+    }
+
+    /// The state for the modern look, `alpha` (0..<1) of the way towards the next step.
+    func modernParameters(alpha: Float) -> ModernParameters {
+        // The palette the next step will show, so the fade can glide.
+        let next: [UInt8] = paletteWaiting ? fadePalette.map { UInt8($0 >> 8) } : shownPalette
+        var palette = [SIMD4<Float>]()
+        palette.reserveCapacity(256)
+        for i in 0..<256 {
+            let now = SIMD3<Float>(Float(shownPalette[i * 3]), Float(shownPalette[i * 3 + 1]), Float(shownPalette[i * 3 + 2]))
+            let then = SIMD3<Float>(Float(next[i * 3]), Float(next[i * 3 + 1]), Float(next[i * 3 + 2]))
+            palette.append(SIMD4((now + (then - now) * alpha) / 63, 1))
+        }
+
+        // The band rests midway between its two alternating positions (lines 61 and 62),
+        // and falls by the same square-of-time rule, without the whole-number rounding.
+        var top: Float = 61.5
+        if (1..<64).contains(dropCounter) {
+            let t = Float(dropCounter) + alpha
+            top += t * t * 43 / 512
+        }
+        return ModernParameters(
+            k: SIMD4<Float>(k) + SIMD4<Float>(Self.kSpeed) * alpha,
+            l: SIMD4<Float>(l) + SIMD4<Float>(Self.lSpeed) * alpha,
+            palette: palette,
+            top: top,
+            hidden: dropCounter == 64 || dropCounter == 65)
+    }
+}
