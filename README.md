@@ -109,6 +109,9 @@ Put these after `--args` when starting the app, for example
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
+A mistyped option or scene name is reported (run the program directly to see the message) and the app
+does not start.
+
 Two more are run directly on the program inside the app, and open no window:
 
 ```bash

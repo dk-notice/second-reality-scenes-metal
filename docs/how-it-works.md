@@ -57,8 +57,13 @@ counts frames, so "one step" and "one frame" were the same thing.
 
 Mac displays refresh at 60 or 120 times per second, not 70. So the core (`Core/Renderer.swift`) keeps its
 own clock: each time the display wants a new picture, it runs however many 1/70-second steps real time
-calls for, then draws. It also works out how far it is towards the next step, a number from 0 to 1, and
-passes that to the scene.
+calls for, then draws. It also works out how far it is towards the next step, a number from 0 up to
+(but never reaching) 1, and passes that to the scene.
+
+The sums are kept in a small piece of their own, `StepClock`, apart from the real time source. That lets
+the self-test feed it made-up times: ten seconds of a 60 Hz display, of a 120 Hz one, an hour's pause.
+After a pause (window hidden, Mac asleep) the clock catches up on a quarter of a second at most, so a
+scene never races through minutes of steps.
 
 ## The two looks
 
@@ -151,7 +156,12 @@ the project builds with Apple's small Command Line Tools alone.
 build/SRMetal.app/Contents/MacOS/SRMetal --selftest
 ```
 
-The test opens no window. It checks three kinds of thing.
+The test opens no window. It checks these kinds of thing.
+
+**The shared code and the command line.** These run first and live in `App/CoreChecks.swift`: the scene
+list, the clock, the 4:3 picture area, the start-up options and the `--snapshot` and `--motion-check`
+command lines, the 3D helpers, smooth triangles, the palette picture, and the sidebar pictures drawn on
+two threads at once. They were added by the code review described at the end of this page.
 
 **Tables and pictures against the original's data.** Several tables that the original loaded from data
 files are calculated here instead. The test compares them with values taken from the original files, and
@@ -161,7 +171,7 @@ changes).
 **The graphics chip against the processor.** For every scene, at several moments, the test draws the 1993
 look on the graphics chip, reads the picture back, and compares every pixel with the same frame worked out
 on the processor (`classicReferenceFrame()`). Each scene lists its own moments ("checkpoints") in the scene
-list.
+list. Two black pictures match each other, so at least half of a scene's checkpoints must show a picture.
 
 **Scene behaviour.** For example, that Dot Tunnel loops back to an empty tunnel, and that Interference
 returns to its exact first frame after one full run.
@@ -227,3 +237,94 @@ These came out of building the first scenes.
   painting behind them, kept as data files in `Data/Visu/`).
 - **Make each scene work on its own.** Scenes loop cleanly. Full-screen white flashes and lead-ins to other
   scenes are left out. Straying from the original for this is fine, as long as the scene's page says so.
+
+## Code review of the core and the app (2026-11-14)
+
+The code in `Core/` (except the 3D engine in `Core/Visu/`, reviewed separately), in `App/` (except
+`VisuTestCommand.swift`), `build.sh` and `Package.swift` was reviewed after all twelve scenes were done:
+once with Claude Code's `/code-review` command and once by hand, concentrating on the clock, threads, the
+two looks, the palette picture, the layouts shared between Swift and shaders, the 3D helpers, the window,
+the command line, the self-test itself and the build script. A finding was only acted on once it had
+been shown to be real, by a command or by a new self-test check that fails on the old code.
+
+### Found and fixed
+
+| What was wrong | How it was shown | Fix |
+|---|---|---|
+| The clock's "how far into the next step" number could be exactly 1, though scenes are promised it stays below 1. (The sum is right in 64-bit numbers; squeezing it into 32 bits rounds it up.) | New check fed the old code ten seconds of a steady 60 Hz and 120 Hz display: it happened both times | The number is held just under 1. No visible effect was ever likely: a picture drawn at 1 is where the next step starts anyway |
+| `IndexedCanvas`: a colour number beyond the end of a short palette showed a colour left behind by an earlier frame (the three palette buffers are reused and were never blanked) | New check: 24 of 32 test pixels wrong on the old code | The rest of the buffer is blanked: such pixels are black. No scene's 1993 picture changed |
+| `--snapshot` and `--motion-check` crashed on a negative step number | Run: no message, crash exit code 133 | Usage message, exit code 1 |
+| `--motion-check` with one number, a mistyped number or a backwards range ignored it and checked the whole loop; a failed `--csv` still ended "successfully" | Run: `... rings classic 100` checked 20,000 steps; `--csv /no/such/x.csv` exited 0 | Usage message, or exit code 1 |
+| A mistyped `--scene`, `--look` or `--sidebar` value, or an unknown `--option` (such as `--selftests`), was ignored and the first scene opened | Run | The problem is printed with the list of options and scenes; exit code 2, no window |
+| `--snapshot`'s 1993 look chose the canvas pixel under each output pixel's top-left corner; the window uses its centre. Rows and columns could be one output pixel off | New check: 8,658 pixels wrong for Dot Tunnel at 960x720 on the old code | Uses the centre. Pictures in `docs/images/` were not remade (the difference is at most one pixel at block edges) |
+| A failed compile left the previous build's app in `build/`, looking like the new one | Ran `build.sh` with a compiler that always fails: the old app survived and ran | `build.sh` removes the old app before compiling |
+| Holding the L key flipped the look at the keyboard's repeat rate (R already ignored repeats) | Reasoned from the code only: keys cannot be sent to the app by program | L ignores repeats too. **Not tried by hand** |
+
+### Confirmed sound
+
+- **Clock.** 700 steps in ten seconds (give or take one) at 50, 60, 70, 100, 120 and 144 Hz; never more
+  steps in one frame than the display's speed needs (two at 60 Hz, one at 120 Hz); steps plus fraction
+  move on by the same amount every frame; 17 steps after an hour's pause; a new scene or a restart begins
+  with a frame at step 0 and no carried-over time (read from the code).
+- **Threads.** The sidebar's background thread makes its own scenes and its own graphics queue, and the
+  only things shared with the main thread are tables that never change after they are first worked out
+  (Swift makes that first working-out safe). Pictures reach the window on the main thread. A new check
+  draws all twelve sidebar pictures on two threads at once and requires identical results. The app was also
+  run under Apple's thread sanitizer (a build that reports two threads touching the same data unsafely):
+  100 seconds from launch with the 3D City showing while the sidebar pictures were drawn, and then the
+  whole self-test. It reported nothing either time. (Under the sanitizer the self-test's stopwatch check,
+  "City 1993 replay keeps up", fails, because the sanitizer makes everything several times slower; the
+  other 234 checks pass.) A sanitizer only sees what actually ran, so this is good evidence, not proof.
+- **The two looks.** The 4:3 area is the largest centred one for exact, wide and tall windows (new check).
+  A 320x400 canvas (Plasma) in the 1993 look was seen centred at 4:3 in a capture of the app's window.
+  `--snapshot` works from another folder.
+- **Layouts shared with shaders.** `SmoothTriangles.Vertex` is 48 bytes with fields at 0, 16 and 32, as
+  Metal lays out `float2, float3, float4`; palettes are `float4`, 16 bytes each (new checks, and a drawn
+  test of each).
+- **`Math3D`.** The two perspective matrices put a point at centre + focal x (x, y) / z with y downwards
+  and give the documented depth values; quarter turns go the documented way; the original's combined turn
+  `rotationYXZ` equals turn-about-y x turn-about-x x turn-about-z with each angle the OPPOSITE way round
+  from the single-axis helpers (now noted here; found by trying every order); the 3D and on-screen
+  "faces the camera" tests agree on 500 triangles.
+- **`SmoothTriangles`.** Triangles with no area add nothing; either corner order gives true edge
+  distances and a one-pixel margin; two triangles sharing an edge draw as one even square of the right area.
+- **`build.sh`.** Stops on any failed step; copies all 52 data files; the signature verifies.
+
+### Weak self-test checks
+
+- *Graphics chip against reference* passed when both pictures were black (21 of the 124 checkpoints are),
+  and skipped a checkpoint without failing if it could not draw. Now: a failure if it cannot draw, and at
+  least half of each scene's checkpoints must show a picture.
+- *Dot Tunnel loops* only checked a counter that the model sets to 0 itself. Now it also checks that the
+  tunnel is empty on the last step and that the picture after the loop is the first picture.
+- Checkpoints out of order would have been compared at the wrong step: now checked.
+- The self-test now prints how many checks ran, so a block of checks going missing shows.
+- Left as they are, reported to the sessions that own them: *VISU modern look stays close in 7 test
+  cases* skips any case it cannot find by name, so it could pass having compared fewer than seven (or
+  none); *City 1993 replay keeps up* is a stopwatch test and can fail on a busy Mac with nothing wrong.
+
+### Known limits, not changed
+
+- `byteFromVGA` stops the program if given a value outside 0...63. No scene does; clamping instead would
+  hide a scene's mistake.
+- `Math3D.project` has no guard for points at or behind the camera. Its one user (Plasma Cube) never has any.
+- `SmoothTriangles` draws a triangle much thinner than a pixel too bright (about a quarter of a pixel
+  wide however thin it is). Only matters for faces seen almost exactly edge-on.
+- If the 1993 look's small picture cannot be created (out of graphics memory) the window shows an
+  undefined picture rather than black. Could not be made to happen, so not touched.
+- The clock reads the time when the display asks for a picture, not the time the picture will appear.
+  Using the display's own timestamp might make Modern motion a touch more even; a proposal, not a fault.
+
+### Not verified
+
+- Anything that needs a person at the keyboard: L, R and the arrow keys with the sidebar focused, holding
+  L down, the toolbar, fullscreen in and out (and the sidebar coming back), resizing, moving the window
+  between a Retina and an ordinary display, sleep and wake, quitting while the sidebar pictures are still
+  being drawn, and what macOS restores at the next launch.
+- A 60 Hz display: this Mac's is 120 Hz, so 60 Hz was checked with made-up times only.
+- The window's own scaling-up of the 1993 picture is checked by eye in a capture, not pixel by pixel
+  (the self-test checks the small picture, and `--snapshot`'s scaling, exactly).
+- Macs with Intel graphics.
+- Whether all twelve sidebar pictures had finished within the sanitizer's 100 seconds was not observed
+  (drawn one after another by themselves under the sanitizer they take about 50 seconds).
+
