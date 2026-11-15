@@ -283,5 +283,8 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 - Next scene: glenz vectors (rank 6 above). Read "For the later 3D scenes" in the Plasma Cube notes first.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
+- Undecided idea: a third "Reimagined" look per scene using present-day graphics features. First thoughts and
+  cautions are in `docs/future-ideas.md`. The user will consider each scene on its merits; do not start it
+  unasked.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
   paying most attention to what the scene pages list under "What was not checked".
