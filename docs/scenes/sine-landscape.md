@@ -156,12 +156,16 @@ The camera glides between steps.
   reference run. Each matched one picture clearly: numbers 223, 433, 643 and 854. That is 210 pictures
   every 6 seconds, 35 a second, so one picture per two screen refreshes. It also shows the reference run
   produces the pictures the real demo showed, in the same order.
+- **The modern look's motion (2026-11-14 review).** `--motion-check sine-landscape modern` over the whole
+  loop found no jumps. A self-test follows the camera through one loop and into the next: every glide starts
+  exactly where the last one ended, except at the restart, where the land is out of sight on both sides.
 - **By eye.** Pictures of both looks at steps 60, 200, 700 and 1300 show the same hills in the same places.
 
 ## What was not checked
 
 - Apart from the four recording frames above, nothing was compared with the original program running. The interpreter proves the inner loop
-  is replayed correctly; the code around it (`MAIN.C`, `docol`, `docopy`) was ported by reading.
+  is replayed correctly; the code around it (`MAIN.C`, `docol`, `docopy`) was ported by reading, and read
+  again line by line in the 2026-11-14 review (below), which found no difference. It has still not been run.
 - The demo as released runs `3DSINFLD.EXE`, which is compressed. It was not unpacked, so it is an
   assumption that it is the same build as `C.EXE`. `C.EXE` itself is run-length packed by the linker, so
   the height tables could only be found in it in part (about 70% of 1 KB pieces match byte for byte).
@@ -203,3 +207,43 @@ The camera glides between steps.
 - The bottom 10 lines of every column are calculated and never shown.
 - The lowest 8 colours are black, and heights are wrapped into 8 bits before being halved, so a hilltop
   tall enough and near enough would turn black at its peak.
+
+## Code review (2026-11-14)
+
+**What was reviewed.** Both Swift files against `COMAN/MAIN.C` (`doit` and the palette loop in `main`),
+`ASM.ASM` (`docol`, `docopy`) and the start, middle and end of `THELOOP.INC`; `tools/landscape_reference.py`
+against the same; a general code review of the folder; and the modern look in motion.
+
+**Found and fixed: nothing.** No difference from the original was found that is not already listed under
+"Deliberate differences", and no fault in motion.
+
+**Confirmed correct, by reading:**
+- The rise: one line per screen refresh, only while it has not finished (the original also stops it at
+  frame 400, long after it has finished).
+- The heading: `rot2` first, then `rot`, with C's rounding towards zero, then `rot >> 3`. None of the
+  16-bit numbers can overflow over this scene's length, so the larger numbers used here give the same results.
+- The column directions and the 16-bit wrap of the position; the camera moving along column 80's ray,
+  after that column is drawn.
+- `docol`: all four numbers have their lowest bit cleared before the loop.
+- `docopy`: column-buffer lines 60-199 go to screen lines 70 + rise and down (the original clears 18 lines
+  above them: lines 52-69), anything past line 199 lands in unseen video memory, and lines 68-97 of the
+  column buffer are cleared afterwards.
+- The palette loop, including which later entries overwrite earlier ones.
+- The modern look's shader uses the same geometry as the loop: where the ground is sampled (one step
+  ahead, two in the far half), the ray's drop of one unit per step, the slope per pixel, the ripple, and
+  the colour offset.
+- The glide: one picture is made every two steps and the camera glides across exactly those two steps.
+  To have somewhere to glide to, the modern look runs one picture (1/35 second) behind the 1993 look.
+  At the end it is fully out of sight from step 2046, two steps before the restart.
+
+**Looked at and left alone.** In the modern look the eight lowest colour numbers are not black as they are
+in the 1993 palette, so the "hilltop turns black" quirk does not appear there. It was not seen in any frame.
+
+**Still unverified:** everything under "What was not checked" except as noted there.
+
+**Possible tidy-ups** (not done; for a later `/simplify` pass): `classicReferenceFrame()` converts every
+pixel's colour each call instead of converting the 256 palette entries once; `copyToScreen()` clears the
+whole screen before overwriting most of it; `tools/landscape_reference.py` has its own small interpreter
+instead of the shared `tools/x86interp.py`, and its default folder path does not work from a git worktree
+(pass the `COMAN` folder as the first argument).
+

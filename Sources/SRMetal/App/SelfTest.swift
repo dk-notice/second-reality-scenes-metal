@@ -252,6 +252,35 @@ enum SelfTest {
         landscape.tick()
         check("Landscape loops from black after \(SineLandscapeModel.lengthInTicks) steps",
               landscape.ticks == 0 && !landscape.classicIndices().contains { $0 != 0 })
+        // Landscape, modern look, over one whole loop and into the next: the camera's glide must be
+        // continuous. Where one step's glide ends, the next one's must begin (a picture is drawn only every
+        // second step, so each glide spans two steps). The one place the camera may jump is the restart,
+        // and there the land must be out of sight on both sides (pushed down 130 lines or more).
+        do {
+            var land = SineLandscapeModel()
+            var breaks: [String] = []
+            var visibleJump = false
+            var worstMove = 0.0, worstTurn = 0.0
+            for step in 1...(SineLandscapeModel.lengthInTicks + 40) {
+                let before = land.camera(alpha: 1)
+                land.tick()
+                let after = land.camera(alpha: 0)
+                let moved = simd_length(after.position - before.position)
+                let same = moved < 1e-9 && abs(after.heading - before.heading) < 1e-9
+                    && abs(after.startRise - before.startRise) < 1e-9
+                if !same {
+                    if before.startRise >= 130 && after.startRise >= 130 { continue }
+                    visibleJump = true
+                    if breaks.count < 5 { breaks.append("step \(step)") }
+                }
+                let end = land.camera(alpha: 1)
+                worstMove = max(worstMove, simd_length(end.position - after.position))
+                worstTurn = max(worstTurn, abs(end.heading - after.heading))
+            }
+            check("Landscape modern camera glides without a break over one loop and into the next",
+                  !visibleJump && worstMove < 600 && worstTurn < 2,
+                  breaks.isEmpty ? "per step: moves up to \(String(format: "%.0f", worstMove)) units, turns up to \(String(format: "%.2f", worstTurn))/1024" : breaks.joined(separator: ", "))
+        }
 
         // Plasma Cube. Two tables are the original's own numbers (no formula reproduces them), checked
         // here against checksums of SINIT.INC and SPLINE.INC; the path points against RATA.INC as the

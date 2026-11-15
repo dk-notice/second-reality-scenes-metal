@@ -253,6 +253,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Deliberate departures: the land sinks fully out of sight and the scene loops from black after 2048 steps (the
   original sank on a music cue; in the recording it gets nearly out of sight before the cut); the two video pages and one-frame display lag are
   not modelled.
+- Code review 2026-11-14: Swift re-read against MAIN.C, `docol`, `docopy` and THELOOP.INC; no bug found,
+  nothing changed in the scene. Modern look in motion: no jumps (`--motion-check`), and a new self-test checks
+  the camera glide is unbroken over a loop and into the next. MAIN.C/docol/docopy are still verified by
+  reading only (now twice), not by running them.
 - Useful for the later 3D scenes: (1) read the MAKEFILE first, it settled which files and even which
   artwork were live; (2) check generated or built files against their generator source, they can differ;
   (3) when an inner loop is plain assembly text, interpreting that text in Python is a cheap, strong check
