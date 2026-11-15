@@ -10,6 +10,10 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 cp .build/release/SRMetal "$APP/Contents/MacOS/SRMetal"
 
+# Original 3D data (models and animation) for the VISU engine: see Data/Visu/README.md.
+mkdir -p "$APP/Contents/Resources/Visu"
+cp Data/Visu/U2* "$APP/Contents/Resources/Visu/"
+
 cat > "$APP/Contents/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

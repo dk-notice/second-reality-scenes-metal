@@ -35,6 +35,8 @@ Usage:
   python3 tools/visu_reference.py --check-exe     check instruction sizes and constants in U2A.EXE / U2E.EXE
   python3 tools/visu_reference.py --info          sizes, objects and animation lengths of both scenes
   python3 tools/visu_reference.py --trace NAME    one case, printing what each object and polygon did
+  python3 tools/visu_reference.py --coverage      also count how often each filler / clipper / branch was reached
+  python3 tools/visu_reference.py --swift         prints Core/Visu/VisuTestCases.swift (cases + expected checksums)
 
 The test cases are listed in CASES below; App/SelfTest.swift (through Core/Visu/VisuTestCases.swift)
 runs the same list through the Swift replay and expects the same numbers.
@@ -712,6 +714,14 @@ for f in (1, 30, 75, 100, 170, 200, 260, 330, 400, 480, 560, 600, 680, 760, 800,
           1101, 1180, 1260, 1340, 1420, 1460, 1500, 1580, 1660, 1740, 1800):
     case('city-%04d' % f, 'frame', 'U2E', f)
 
+# Runs of consecutive pictures WITHOUT starting the engine afresh in between, so that whatever the
+# engine leaves behind from one polygon or picture to the next (see `reset_engine`) is part of the test.
+#   ('run', scene, first frame, last frame, every)   checksum = CRC-32 over all the pictures in turn
+case('ships-run', 'run', 'U2A', 240, 400, 4)
+case('city-run-a', 'run', 'U2E', 1, 300, 7)
+case('city-run-b', 'run', 'U2E', 540, 1120, 9)
+case('city-run-c', 'run', 'U2E', 1400, 1800, 8)
+
 # One object alone. Position = where the object's centre vertex lands in front of the camera.
 def obj(name, scene, number, fov, rot, pos, window=0):
     case(name, 'object', scene, number, fov, rot, pos, window)
@@ -762,6 +772,7 @@ obj('ground-under', 'U2E', 15, 7168, (48000, 3000, 0), (0, 2000, 12000))
 WINDOWS = [WINDOW, (0, 319, 0, 199, 256, 1000000000)]
 
 scenes = {}
+run_crc = [0]
 def scene_objects(name):
     if name not in scenes: scenes[name] = Scene(name)
     return scenes[name]
@@ -776,6 +787,18 @@ def run_case(c):
         for _ in range(c[3]):
             if not sc.step(): raise RuntimeError('%s: the animation ends before frame %d' % (c[0], c[3]))
         return sc.draw()
+    if kind == 'run':
+        start_video(WINDOW)
+        sc = Scene(c[2])
+        crc = 0
+        while sc.frame < c[4]:
+            if not sc.step(): raise RuntimeError('%s: the animation ends early' % c[0])
+            if sc.frame >= c[3] and (sc.frame - c[3]) % c[5] == 0:
+                clear(0)
+                sc.draw()
+                crc = zlib.crc32(bytes(screen()), crc)
+        run_crc[0] = crc
+        return []
     if kind == 'object':
         _, _, scene_name, number, fov, rot, pos, window = c
         start_video(WINDOWS[window])
@@ -864,9 +887,66 @@ def info():
             print('   co[%2d] file %03d %-12s vertices %3d normals %3d (%3d face) order lists %d  first shown at frame %s' % (
                 i, sc.index[i], o.name, o.vnum, o.nnum, o.nnum1, o.plnum, first_on.get(i)))
 
+COVERAGE = ['drawfill_nrm', 'drawfill_grd', 'gouraud1', 'gouraud2', 'gouraud4', 'clipnear', 'newclipup', 'newclipdown',
+            'newclipleft', 'newclipright', 'newclip_grd', '_draw_polylist__cull', '_draw_polylist__cl0',
+            '_draw_polylist__2side', 'calclight__nc', 'gouraud4__f3', 'gouraud4__f5', 'drawfill_nrm__29',
+            'poly_nrm__d0', 'poly_grd__d0']
+coverage = {}
+def watch_coverage():
+    """Counts how often the listed routines and branches are reached, to show what the cases exercise."""
+    for name in COVERAGE:
+        index = pc.code_labels[name]
+        original = pc.code[index]
+        coverage[name] = 0
+        def counted(original=original, name=name):
+            coverage[name] += 1
+            return original()
+        pc.code[index] = counted
+
+def emit_swift(results):
+    lines = []
+    for c in CASES:
+        crc = results[c[0]]
+        if c[1] == 'frame':
+            what = '.frame(scene: "%s", frame: %d)' % (c[2], c[3])
+        elif c[1] == 'run':
+            what = '.run(scene: "%s", first: %d, last: %d, every: %d)' % (c[2], c[3], c[4], c[5])
+        else:
+            _, _, scene, number, fov, rot, pos, window = c
+            what = '.object(scene: "%s", file: %d, fieldOfView: %d, turn: (%d, %d, %d), position: (%d, %d, %d), window: %d)' % (
+                scene, number, fov, rot[0], rot[1], rot[2], pos[0], pos[1], pos[2], window)
+        lines.append('        ("%s", %s, %d),' % (c[0], what, crc))
+    print('''// Made by tools/visu_reference.py --swift. Do not edit by hand: change the list in the tool and run it again.
+//
+// Test cases for the VISU engine replay. Each has a name, what to draw, and the CRC-32 checksum of
+// the 320x200 picture (colour numbers) that the ORIGINAL assembly produced for it, run by the tool.
+// App/SelfTest.swift draws every case with the Swift replay and expects the same checksum.
+
+enum VisuTestCases {
+    enum Kind {
+        /// A whole picture of a scene ("U2A" ships, "U2E" city) after `frame` animation frames,
+        /// drawn into an empty (colour 0) screen through the scenes' window.
+        case frame(scene: String, frame: Int)
+        /// Pictures of frames `first`, `first + every`, ... up to `last`, drawn one after another by
+        /// ONE engine that is not started afresh in between (so what it leaves behind from picture
+        /// to picture is tested too). The checksum runs over all the pictures in turn.
+        case run(scene: String, first: Int, last: Int, every: Int)
+        /// One object alone: turned by the engine's Y-X-Z rotation (angles 0...65535 = one turn),
+        /// with its centre point placed at `position` in front of a camera at the origin.
+        /// `window` 0 = the scenes' window (320x150 band, near plane 512), 1 = the whole
+        /// 320x200 screen with near plane 256.
+        case object(scene: String, file: Int, fieldOfView: UInt16, turn: (UInt16, UInt16, UInt16),
+                    position: (Int32, Int32, Int32), window: Int)
+    }
+
+    static let all: [(name: String, kind: Kind, checksum: UInt32)] = [
+%s
+    ]
+}''' % '\n'.join(lines))
+
 if __name__ == '__main__':
     args = sys.argv[1:]
-    out_dir, only, tracing = None, [], False
+    out_dir, only, tracing, swift, results = None, [], False, False, {}
     load()
     while args:
         a = args.pop(0)
@@ -876,6 +956,8 @@ if __name__ == '__main__':
         elif a == '--png': out_dir = args.pop(0)
         elif a == '--case': only.append(args.pop(0))
         elif a == '--trace': only.append(args.pop(0)); tracing = True
+        elif a == '--swift': swift = True
+        elif a == '--coverage': watch_coverage()
     for c in CASES:
         if only and c[0] not in only: continue
         heap[0] = HEAP0
@@ -883,10 +965,15 @@ if __name__ == '__main__':
         if tracing: trace[0] = []
         log = run_case(c)
         pixels = screen()
-        print('%-22s %10d' % (c[0], zlib.crc32(bytes(pixels))), flush=True)
+        results[c[0]] = run_crc[0] if c[1] == 'run' else zlib.crc32(bytes(pixels))
+        if not swift: print('%-26s %10d' % (c[0], results[c[0]]), flush=True)
         if tracing:
             for entry in log: print('   ', entry)
             print('    polygons past the hidden-face test: %d, filled: %d' % (
                 sum(1 for t in trace[0] if t[0] == 'poly'), sum(1 for t in trace[0] if t[0] == 'fill')))
         if out_dir:
             png(os.path.join(out_dir, c[0] + '.png'), pixels, case_palette(c))
+    if swift: emit_swift(results)
+    if coverage:
+        print('times reached, over the cases run:')
+        for name in COVERAGE: print('   %-24s %d' % (name, coverage[name]))

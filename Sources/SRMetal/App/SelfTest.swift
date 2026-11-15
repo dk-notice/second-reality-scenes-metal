@@ -274,6 +274,29 @@ enum SelfTest {
                   && glenz.classicReferenceFrame() == glenzStart)
 
 
+        // The VISU 3D engine (groundwork for the ships and city scenes; no scene uses it yet).
+        // Expected numbers come from tools/visu_reference.py, which runs the original assembly.
+        check("VISU sine table matches the original file", crc32(words16(VisuTables.sine)) == 2_483_307_983)
+        check("VISU field-of-view table matches the original file",
+              crc32(words(VisuTables.tangent)) == 2_796_670_327)
+        check("VISU fill-division table matches the original file",
+              crc32(words(VisuTables.fillDivide)) == 1_375_704_783)
+        do {
+            var wrong: [String] = []
+            var faults = 0
+            for test in VisuTestCases.all {
+                let result = try VisuTest.classicPicture(test.kind)
+                faults += result.faults
+                if crc32(result.pixels) != test.checksum { wrong.append(test.name) }
+            }
+            check("VISU engine replay matches the original assembly in \(VisuTestCases.all.count) test pictures",
+                  wrong.isEmpty, wrong.isEmpty ? "" : "differ: \(wrong.joined(separator: " "))")
+            check("VISU engine replay met nothing the original would have crashed on", faults == 0,
+                  faults == 0 ? "" : "\(faults) faults")
+        } catch {
+            check("VISU engine test cases could be set up", false, "\(error)")
+        }
+
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
         if let device = MTLCreateSystemDefaultDevice() {
             for entry in SceneCatalog.all {
