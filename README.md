@@ -20,6 +20,7 @@ Every scene can be shown two ways, switchable at any time:
 | Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 | 3D Sine Landscape | ![](docs/images/sine-landscape-modern.png) | ![](docs/images/sine-landscape-classic.png) |
 | Plasma Cube | ![](docs/images/plasma-cube-modern.png) | ![](docs/images/plasma-cube-classic.png) |
+| Glenz Vectors | ![](docs/images/glenz-vectors-modern.png) | ![](docs/images/glenz-vectors-classic.png) |
 
 ## What this is, and is not
 
@@ -46,9 +47,13 @@ There is no music yet.
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 | 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 | Plasma Cube | Wildfire | [docs/scenes/plasma-cube.md](docs/scenes/plasma-cube.md) |
+| Glenz Vectors | Psi | [docs/scenes/glenz-vectors.md](docs/scenes/glenz-vectors.md) |
 
-Planned, roughly easiest first: glenz vectors, ships fly-by, 3D city.
+Planned, roughly easiest first: ships fly-by, 3D city.
 Picture-based scenes, scrollers and stills are out of scope.
+
+Everything on screen is calculated, with one exception: Glenz Vectors includes the original's hand-drawn
+chequered plate (public domain, like the rest of the original), because the scene cannot do without it.
 
 ## Build and run
 
@@ -90,7 +95,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors` |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -128,7 +133,7 @@ It varies by scene, and each scene's page says exactly what was checked.
 - **Techno Bars, Bouncing Dots**: the original drawing code was ported step by step from the assembly.
   That port was checked by careful reading, not against a running copy of the original, so an
   off-by-one-pixel mistake is possible.
-- **3D Sine Landscape, Plasma Cube**: ported from the assembly too, but then checked against the
+- **3D Sine Landscape, Plasma Cube, Glenz Vectors**: ported from the assembly too, but then checked against the
   original's own assembly text run instruction by instruction in a small interpreter (`tools/`). The
   pictures match exactly. The C code around the assembly was still ported by reading.
 

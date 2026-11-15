@@ -9,8 +9,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Nine scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
-  Hidden Starfield, 3D Sine Landscape and Plasma Cube (both added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+- Ten scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
+  Hidden Starfield, 3D Sine Landscape, Plasma Cube and Glenz Vectors (the last three added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
   own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
@@ -28,21 +28,23 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
   dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
-  starfield 1700, sine-landscape 700, plasma-cube 416).
+  starfield 1700, sine-landscape 700, plasma-cube 416, glenz-vectors 1300 and, for the squash picture, 365).
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
 - `Sources/SRMetal/Core/` shared by all scenes: `DemoScene.swift` (the scene contract and the scene list),
-  `Renderer.swift` (clock and the two looks), `Shaders.swift`, `Math3D.swift` (3D helpers, see Plasma Cube notes).
+  `Renderer.swift` (clock and the two looks), `Shaders.swift`, `Math3D.swift` (3D helpers, see Plasma Cube notes),
+  `SmoothTriangles.swift` (smooth-edged flat triangles, see Glenz Vectors notes).
 - `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
   the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
-- `tools/` development-only scripts (not part of the app): `landscape_reference.py`, `plasmacube_reference.py`.
+- `tools/` development-only scripts (not part of the app): `landscape_reference.py`, `plasmacube_reference.py`,
+  `glenz_reference.py` (imports the interpreter from the plasma cube tool and extends it).
 - `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
   (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
 
@@ -266,6 +268,57 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   - A C expression trap met here: `a>>15+7` means `a>>22`.
   - Check what a path really shows before designing a loop: this scene already ended in black by itself.
 
+## Glenz Vectors notes
+- Source: GLENZ/MAIN.C (script), MATH.ASM + MATHSIN.INC (turn matrix), VEC.ASM (rotlist, cliplist, projlist,
+  ceasypolylist, checkhiddenbx, demo_glz, demo_glz2), NEW.ASM (filler; included by VIDPOLY.ASM), VID.ASM
+  `init320x200` (projection numbers), FC.UH = linked _FC.OBK (plate picture). MAKEFILE and V.MAP settle what
+  is live; most of VID*.ASM, ZOOM.ASM, `zoomer1`, `cpolylist`, `cclipedges` are linked but never called.
+- USES ORIGINAL ARTWORK (user's rule applied): the chequered plate is a hand-drawn 16-colour picture, no
+  formula. Its 108 rows and 16 colours are in `GlenzFloorArt.swift` (made by `tools/glenz_reference.py --art`).
+- What the shipped program does (differs from the team's SCRIPT notes): no picture tipping over (`zoomer1`
+  is dead code); the plate itself drops in and bounces; a blue-and-white glenz falls on it three times with
+  a jelly squash (pressed flat against the floor by clamping corners); plate fades; a LARGER red glenz
+  grows around the first; both wander; the first flies out of the top; both shrink; fade.
+- Mode 13h (320x200, 256 colours, one page). Transparency = colour numbers + XOR + palette: first-glenz
+  front faces get their own multiple of 16 (16 palette entries each, rewritten every frame with the face's
+  light plus a quarter of colours 0-15); back blue faces are 4; the second glenz uses bits 1, 2, 4; the
+  filler XORs the numbers of all faces over a pixel and ORs in the floor picture's pixel. Light = the
+  face's area on screen.
+- Classic look: `GlenzModel` + `GlenzScript` + `GlenzFiller`, shown through `IndexedCanvas`. Verified
+  against `tools/glenz_reference.py` (MATH.ASM, VEC.ASM, NEW.ASM run as text): screen and all 256 colours
+  identical at 26 steps. MAIN.C ported by reading (Python and Swift); the 16-bit bounce overflow was also
+  confirmed in the compiled MAIN.OBJ.
+- Modern look: corners in decimals, faces as smooth-edged triangles, mixed by blending that follows the
+  original's rule (add the reds; XOR the "4" bit in the alpha channel; front faces = own colour + a
+  quarter of what is behind). Uses the drawable's alpha channel as scratch and sets it back to 1.
+- Timing: plate 177 steps, pause 35 (our choice; the original waited for the music), original frame =
+  step - 212, black from step 2345, loop at 2360.
+- Deliberate departures: lead-in (`zoomer2`, wipes the previous scene's picture) left out; the pause; the
+  loop; one picture per step. Kept quirks are listed in docs/scenes/glenz-vectors.md (the third bounce
+  sticks for four frames because of 16-bit overflow; blue faces' red is a leftover register; a face is
+  unlit on its first frame; the plate does not fade under the glenz).
+- Not verified: against a running original or a recording; the music timings; the modern look in motion.
+- For the two remaining 3D scenes (ships, city; VISU engine):
+  - `tools/glenz_reference.py` shows how to reuse the interpreter: `import plasmacube_reference as pc`,
+    replace `pc.compile_instruction` / `pc.parse_operand` with wrappers that add instructions, and feed
+    it text first turned from MASM style into its dialect (`translate`, `expand_all` with MACRO/LOCAL/REPT/
+    dup, "label: ENDM"). It now covers near and indirect calls, 32-bit imul, shrd, sbb, neg, xchg, string
+    moves and the VGA colour ports. Unsupported instructions only fail if they are actually run.
+  - Self-modifying code (numbers patched into instructions) needs a small text rewrite before interpreting.
+  - A reference run found a real port mistake here that reading had missed (a register overwritten on one
+    path). Compare palettes as well as screens.
+  - GLENZ's MATH.ASM / VEC.ASM look like an early relative of the VISU engine (same list formats as in
+    GLENZ/DOC). Check whether VISU has the same habits: 3600-step sine table with the +0.5 rounding (two
+    entries off), `rotlist` returning y and z swapped, angles handed over crossed, projection
+    "centre + mul * x / z" with z held to at least 128, 16.16 edge slopes.
+  - `Math3D.rotationYXZ`, `canvasPosition`, `screenFacing` are in Core for this. `Core/SmoothTriangles.swift`
+    gives seam-free smooth edges for flat triangles when the blending adds coverage up; with ordinary
+    "over" blending a faint seam would show, and solid sorted polygons (ships, city) still need either
+    a depth buffer or far-to-near order. There is still NO depth buffer in the three render passes.
+  - `setVertexBytes` holds at most 4 KB: fine for 24 triangles of 48 bytes a corner, not for a ship. Use
+    a vertex buffer for bigger shapes.
+  - Compiled .OBJ files can settle questions about the C code: search for the instruction bytes.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
@@ -274,13 +327,14 @@ stills are out of scope.
 3. Hidden starfield (DDSTARS) - DONE
 4. 3D sine landscape (COMAN) - DONE (the background picture turned out to be unused)
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - DONE (it shares nothing with the plasma after all)
-6. Glenz vectors (GLENZ)
+6. Glenz vectors (GLENZ) - DONE (the floor is a hand-drawn picture, included as data)
 7. Ships fly-by (VISU engine + U2A data)
 8. 3D city (VISU engine + U2E data)
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: glenz vectors (rank 6 above). Read "For the later 3D scenes" in the Plasma Cube notes first.
+- Next scene: ships fly-by (rank 7 above: VISU engine + U2A data). Read "For the later 3D scenes" in the
+  Plasma Cube notes and "For the two remaining 3D scenes" in the Glenz Vectors notes first.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Undecided idea: a third "Reimagined" look per scene using present-day graphics features. First thoughts and

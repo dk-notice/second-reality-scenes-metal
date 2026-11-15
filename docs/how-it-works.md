@@ -97,7 +97,7 @@ work this way.
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
 palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars,
-Bouncing Dots, Hidden Starfield, 3D Sine Landscape and Plasma Cube work this way.
+Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube and Glenz Vectors work this way.
 
 Some originals showed two slightly different pictures on alternate frames and let the eye mix them.
 `IndexedCanvas` can be given both pictures and shows their even mix (Plasma Cube does this).
@@ -189,7 +189,8 @@ Useful shared pieces in `Core/`:
 | `Shaders.swift` | Shader compiling, and a ready-made first half for any shader that paints the whole canvas |
 | `SinTable.swift` | The 1024-entry sine table several original parts share |
 | `IndexedCanvas.swift` | Shows a picture of pixel numbers through a palette of up to 256 colours, or the even mix of two such pictures |
-| `Math3D.swift` | For scenes made of 3D shapes: the matrix that reproduces an original's perspective, turns about each axis, and the "does this face point at the camera" test |
+| `Math3D.swift` | For scenes made of 3D shapes: the matrix that reproduces an original's perspective, turns about each axis, the original engine's combined turn matrix, placing a point on the canvas, and the "does this face point at the camera" test (in 3D and on the screen) |
+| `SmoothTriangles.swift` | Flat-coloured triangles with smooth edges that meet without seams, for scenes made of polygons |
 
 ## House rules for scenes
 
@@ -199,5 +200,8 @@ These came out of building the first scenes.
   prove it reproduces the file exactly, and calculate the table.
 - **Keep the 1993 look pixel-faithful in how things are drawn**, including the original's quirks where they
   affect pixels.
+- **No original artwork unless a scene cannot do without it.** Glenz Vectors is the one exception so
+  far (its chequered plate is a hand-drawn picture); it is kept as a Swift source file and the scene's
+  page says so.
 - **Make each scene work on its own.** Scenes loop cleanly. Full-screen white flashes and lead-ins to other
   scenes are left out. Straying from the original for this is fine, as long as the scene's page says so.
