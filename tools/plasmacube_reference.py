@@ -29,6 +29,11 @@ import re, sys, os, struct, zlib
 LEAD = 16            # must match PlasmaCubeModel.leadIn
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', 'secondreality', 'PLZPART')
+# --src has to be known here, before the tables further down are read (that happens as this file
+# loads, long before the options are gone through at the bottom). Only when run as the tool itself:
+# other tools import this file and have a --src of their own.
+if __name__ == '__main__' and '--src' in sys.argv[1:-1]:
+    SRC = sys.argv[sys.argv.index('--src') + 1]
 sys.path.insert(0, HERE)
 import x86interp
 # The machine (1 MB of memory, the VGA's four planes, registers, flags) and the small assembler

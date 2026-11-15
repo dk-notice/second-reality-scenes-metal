@@ -269,6 +269,54 @@ enum SelfTest {
         check("Plasma repeats exactly after \(PlasmaModel.lengthInTicks) steps",
               plasma.classicReferenceFrame() == plasmaBefore && plasmaBefore.contains { $0 != 0 })
 
+        // Plasma, 1993 look: which sideways shift goes with which line (code review, 2026-11-14). The
+        // original chose line and shift together but the shift reached the video card one frame late
+        // (DIS/DISINT.ASM, MAIN/COPPER.ASM), so line 60 is seen with no shift and line 61 with 2 pixels.
+        // `plasma` is at step 400 here: flowing normally. Step 10 of a fresh run is mid-fade, where
+        // both alternating frames use line 60.
+        var fadingPlasma = PlasmaModel()
+        for _ in 0..<10 { fadingPlasma.tick() }
+        check("Plasma pairs line 60 with no shift and line 61 with the 2-pixel shift",
+              plasma.fields.map { [$0.top, $0.pan] } == [[61, 0], [62, 2]]
+                  && fadingPlasma.fields.map { [$0.top, $0.pan] } == [[61, 0], [61, 2]],
+              "flowing \(plasma.fields.map { [$0.top, $0.pan] }), fading \(fadingPlasma.fields.map { [$0.top, $0.pan] })")
+
+        // Plasma, modern look, over one whole loop and into the next: the end of every step's glide must
+        // be where the next step starts (band position, the eight plasma numbers, the palette). The only
+        // places allowed to differ are where nothing can be seen: the band hidden or wholly below the
+        // screen on one side, and hidden or black on the other.
+        do {
+            var model = PlasmaModel()
+            var worstTop: Float = 0, worstNumber: Float = 0, worstColour: Float = 0
+            var broken: [String] = []
+            func invisible(_ p: PlasmaModel.ModernParameters) -> Bool {
+                p.hidden || p.top >= Float(PlasmaModel.canvasHeight)
+                    || !p.palette.contains { $0.x > 0 || $0.y > 0 || $0.z > 0 }
+            }
+            func wrapped(_ difference: SIMD4<Float>) -> Float {
+                // The plasma numbers go round every 4096.
+                (0..<4).map { abs(difference[$0] - 4096 * (difference[$0] / 4096).rounded()) }.max() ?? 0
+            }
+            for step in 0..<(PlasmaModel.lengthInTicks + 40) {
+                let end = model.modernParameters(alpha: 1)
+                model.tick()
+                let start = model.modernParameters(alpha: 0)
+                if invisible(end) && invisible(start) { continue }
+                let top = abs(end.top - start.top)
+                let number = max(wrapped(end.k - start.k), wrapped(end.l - start.l))
+                let colour = zip(end.palette, start.palette).map { simd_reduce_max(abs($0 - $1)) }.max() ?? 0
+                worstTop = max(worstTop, top)
+                worstNumber = max(worstNumber, number)
+                worstColour = max(worstColour, colour)
+                if (invisible(end) != invisible(start) || top > 0.01 || number > 0.01 || colour > 0.001)
+                    && broken.count < 5 {
+                    broken.append("into step \(step + 1)")
+                }
+            }
+            check("Plasma modern look glides without a jump through the whole loop", broken.isEmpty,
+                  "worst: band \(worstTop) lines, numbers \(worstNumber), colour \(worstColour); \(broken.joined(separator: ", "))")
+        }
+
         // Hidden Starfield. The original worked its tables out when it started, so there is no data file
         // to compare with; the expected numbers here come from a separate re-run of the assembly's rules
         // (written independently in Python while studying STARS.ASM).
@@ -370,6 +418,49 @@ enum SelfTest {
         check("Cube is black at both ends and loops after \(PlasmaCubeModel.lengthInTicks) steps",
               cube.ticks == 0 && !cubeStart.contains { $0 != 0 } && !cubeEnd.contains { $0 != 0 }
                   && cube.classicReferenceFrame() == cubeStart)
+
+        // Plasma Cube, modern look against the 1993 replay, at every step of the loop (code review,
+        // 2026-11-14). The modern look works the path, the turn and the light out again in floating
+        // point, so this is the check that it is the same cube: the same faces drawn, every corner
+        // within 5 units of where the 1993 whole-number arithmetic puts it (the cube is 250 units
+        // across; that arithmetic cuts the path's angles to whole 1/1024ths of a turn and its nine
+        // turn numbers to 1/256, and is measured to be up to 4.3 units out), and each face's light
+        // within 2 of the 64 levels. A face seen almost exactly
+        // edge-on may be drawn by one look and not the other; those steps are counted and must be rare.
+        do {
+            var model = PlasmaCubeModel()
+            var worstCorner = 0.0, worstLight = 0.0
+            var differentFaces = 0, lightChecked = 0
+            for _ in 0..<PlasmaCubeModel.lengthInTicks {
+                let modern = model.modernState(alpha: 0)
+                let classicFaces = model.visibleFaces.map { PlasmaCubeModel.faces[$0] }
+                if modern.faces.count != classicFaces.count
+                    || zip(modern.faces, classicFaces).contains(where: { $0.group != $1.group }) {
+                    differentFaces += 1
+                } else {
+                    for (face, classic) in zip(modern.faces, classicFaces) {
+                        for (corner, index) in zip(face.corners, classic.corners) {
+                            let off = SIMD3<Double>(corner) - SIMD3<Double>(model.turned[index])
+                            worstCorner = max(worstCorner, simd_reduce_max(abs(off)))
+                        }
+                    }
+                    // The 1993 light level, read back from the brightest colour of each colour range,
+                    // where exactly one face of that range is drawn.
+                    for face in modern.faces where modern.faces.filter({ $0.group == face.group }).count == 1 {
+                        let brightest = face.group * 192 + 63 * 3 + [2, 0, 1][face.group]
+                        let base = Double(PlasmaCubeModel.basePalette[brightest])
+                        let level = Double(model.palette[brightest]) * 64 / base
+                        worstLight = max(worstLight, abs(Double(face.light) * 64 - level))
+                        lightChecked += 1
+                    }
+                }
+                model.tick()
+            }
+            check("Cube modern look is the same cube as the 1993 look at every step",
+                  worstCorner <= 5 && worstLight <= 2 && differentFaces <= 20 && lightChecked > 1000,
+                  "worst corner \(worstCorner) units, worst light \(worstLight) of 64 (\(lightChecked) checked), "
+                      + "\(differentFaces) steps with a different set of faces")
+        }
 
         // Glenz Vectors. The 3600-step sine table against a checksum of MATHSIN.INC; the plate
         // picture (original artwork, kept as data) against checksums of FC.UH, which is byte for

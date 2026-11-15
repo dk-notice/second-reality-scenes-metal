@@ -255,8 +255,24 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   flickers on a 60/120 Hz display); the opening fade from white is replaced by the same 31-step fade from
   black the other sections use; the final fall loops back to section 0 (2323 steps); drawing is treated as
   instant (the original's draw loop was not locked to the refresh).
-- Not verified against a running original: the plane/chessboard layout, the exact band line, which pan
-  value pairs with which line, and that timetable "music frames" are 1/70 s. See docs/scenes/plasma.md.
+- Code review 2026-11-14 (branch `claude/review-plasma-1872aa`), two fixes, each with a self-test check:
+  (1) 1993 look: the 2-pixel pan was paired with the wrong line. The original picks line and pan together
+  in the retrace routine but the pan is written to the card by `copper1` just before the NEXT retrace
+  (order of calls is in MAIN/COPPER.ASM `copper_end`; routine numbers in DIS/DISINT.ASM), so line 60 shows
+  with pan 0 and line 61 with pan 2. Flowing-plasma pictures change at pixel level; fall and fade pictures
+  do not. (2) Modern look: the band hopped 0.34 line on the first step of each fall (counter goes 0 to 2);
+  it now glides in.
+- Settled by that review: the per-pixel formula (checked against the machine code in ASMYT.OBJ: the whole
+  16-bit address in each instruction is overwritten); the plane/chessboard layout (second reading; the C++
+  port agrees); the pan/line pairing. The real interrupt server IS in the source release (DIS/DISINT.ASM
+  plus MAIN/COPPER.ASM); only DIS/DIS.ASM is the stub.
+- Still not verified: the exact band line (rests on the VGA rule "split starts on the line after").
+- OPEN, needs the user's decision: timetable "music frames" are probably music ticks (about 52 a second at
+  the tune's starting tempo 130), not 1/70 s. The C++ port counts them per music tick. If so the original
+  sections were about a third longer (scene about 43 s, not 32). Not proven (the player is a compiled
+  library); nothing changed. See docs/scenes/plasma.md "What was not checked".
+- `--motion-check plasma classic` reports big flicker during each fall and a jump at step 33: that is the
+  original's behaviour (K and L are not mixed while falling or fading), not a fault.
 - For the plasma cube later: the fifth palette (`pals[4]`, "white II") is built in PLZ.C but not in
   `PlasmaModel.palettes`; the tables and `PlasmaModel.value` should be reusable.
 
@@ -346,7 +362,14 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Kept quirks: light level remembered per drawing position, not per face (stale colours now and then); two
   register accidents in the filler; signed shift read as unsigned.
 - Not verified: against a running original or a recording; when the music cut the part; the C compiler's
-  `sin()` for the start-up tables; the modern look beyond still pictures.
+  `sin()` for the start-up tables; the modern look's texture and edge smoothing beyond still pictures.
+- Code review 2026-11-14 (branch `claude/review-plasma-1872aa`): no fault found in the scene; no picture
+  changed. VECT.C and PLZFILL.C read again independently against the Swift, no difference. New self-test
+  check compares the modern cube with the 1993 replay at all 2048 steps (same faces bar 16 edge-on steps,
+  corners within 4.3 units of 250, light within 2 of 64). `--motion-check` on the modern look: no jumps,
+  whole loop and across the loop point. One tool fix: `tools/plasmacube_reference.py --src` was ignored
+  for the tables (they were read before the options); it now works from a worktree, and re-running it
+  reproduced the stored checksums for steps 16, 60 and 416. Tidy-ups listed in the scene page.
 - For the later 3D scenes (glenz, ships, city):
   - `Core/Math3D.swift`: `perspective(focal:centre:canvasSize:near:far:)` gives the matrix for an original's
     "x*focal/z + centre" projection in canvas pixels (camera looks along +z, y down); it already spreads depth
