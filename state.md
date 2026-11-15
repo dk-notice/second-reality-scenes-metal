@@ -160,3 +160,5 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 - Next scene: Hidden starfield (rank 3 above).
 - Build the sidebar scene picker when asked.
 - Later: music.
+- Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
+  paying most attention to what the scene pages list under "What was not checked".
