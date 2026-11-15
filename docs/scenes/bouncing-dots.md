@@ -75,7 +75,9 @@ full resolution.
 
 - Nearer dots are larger. The original's were the same 4x3 pixels at any distance.
 - Dots are sorted so that nearer ones are drawn over further ones.
-- Dots glide between steps, except on the step a dot is re-dropped, when it jumps to its new place.
+- Dots glide between steps, with three exceptions where a dot jumps to its new place instead: on the
+  step it is re-dropped; on the first step with dots (there is nowhere earlier to glide from); and when
+  its height "wraps round" (see "Code review" below).
 - The floor is a smooth gradient instead of 100 bands.
 
 | | 1993 | This version (modern look) |
@@ -88,11 +90,83 @@ full resolution.
 ## What was checked
 
 - **The graphics chip matches the processor** pixel for pixel at eleven moments (self-test).
+- **The modern look never glides a dot between two places it was never between** (self-test, one whole
+  loop and 300 steps of the next). In ordinary motion no dot or shadow moves more than 27 canvas pixels in
+  a step; the check fails on any glide over 50. With the fixes below removed it fails at step 131.
+- **The modern look's fade stays between black and full brightness and never snaps** (self-test).
+- **Motion, by program** (`--motion-check`, both looks, the whole loop): after the fixes, no jumps in
+  either look. Many pictures near the end have pixels seen for one picture only; that is the cloud
+  spinning fast (small dots moving further than their own width per step), in both looks.
 
 ### What was not checked
 
-As with the techno bars, the 1993 look depends on the port of the assembly being right, and that was
-verified by careful reading, not against a running original.
+The 1993 look depends on the port of the assembly being right. That has now been checked twice by
+reading (once when it was written, once in the review below, in a separate session), but never against a
+running copy of the original, and unlike the tunnel there is no second program to compare with. The
+self-test cannot catch a mistake there, because the processor does all the work and the graphics chip
+only looks up colours.
+
+Two things cannot be known from the source:
+
+- The saved background is exactly 64,000 bytes, and on the "off the side" path the original can read two
+  bytes past its end (for a dot last drawn on the bottom two rows). What was there depended on the PC's
+  memory. This version reads zeros. The effect is at most two pixels of floor restored a frame later.
+- How often the original skipped steps on a slow PC (it could run several steps per picture).
+
+The modern look was checked by program and in still pictures, not by eye in the running app.
+
+## Code review (2026-11-14)
+
+Reviewed line by line against `DOTS/MAIN.C` and `DOTS/ASM.ASM` (`drawdots`), in a separate session from
+the one that wrote the port, and with `/code-review`.
+
+**The port of the drawing routine was found to match the original.** Checked instruction by instruction:
+
+- The distance: the top halves of two products, subtracted, plus 9000. (The original's `mov ax,ax` typo
+  means a leftover value is subtracted from the low half, which is then thrown away; no effect.)
+- The sideways position: the 32-bit sum, shifted right 8, plus the same shifted right 3 more, divided by
+  the distance with rounding towards zero, plus 160; the unsigned "off the side" test.
+- The shadow row (524288 / distance + 100) and the same unsigned test on it.
+- The order: restore old shadow, draw shadow, gravity, bounce, restore old dot, draw dot.
+- Gravity and bounce in 16 bits: speed + gravity, height + speed, a signed compare with the floor (8105),
+  then speed = low 16 bits of (-speed x 13), shifted right 4, and added once more.
+- The dot's row (height x 64 / distance + 100); the three paths (off the side, off the top or bottom,
+  drawn) and what each restores and remembers, including the leftover value on the first.
+- The shade table (index = distance / 256), its rounding towards zero, and the byte patterns of the three
+  rows of a dot; shadow colour 87.
+- `MAIN.C`: the two shuffles and the number of random numbers they use; the four drop rules and their
+  frame limits; `f` reset at frame 500; the dropper; the view angle taken before it is updated; the spin
+  after frame 1900; gravity falling at frames 1920, 1952 and 1984; the palette and the 130-step fade-in.
+- Ranges: the distance stays within 808...17192, so no division can overflow or divide by zero, and every
+  write stays inside the 65,544-byte picture.
+
+**Found and fixed, all in the modern look** (the 1993 pictures are unchanged):
+
+- **Dots streaked in from the top-left corner on the first step with dots.** Before any dot has been
+  drawn, the "previous place" of each is a placeholder at (0, 0). On step 131 the modern look glided
+  511 dots and their shadows from there to their real places. Half-way through that step all the shadows
+  sat in the black sky at about (81, 79). Now nothing glides on that step.
+- **A dot could streak down the screen.** Once gravity is off, a rising dot keeps rising. The original
+  held heights in 16 bits, so after -32768 the height becomes +32767: far above the screen one step, far
+  below it the next, and usually back again the step after. The 1993 look never shows either place. The
+  modern look glided between them, straight across the screen: dot 419 at steps 2383 and 2384, dot 332
+  at 2492 and 2493, and six more glides of 300 to 400 rows. Now a dot whose height wraps jumps instead of
+  gliding.
+- **The fade-in overshot.** The original's fade reaches full brightness two steps before it ends. The
+  modern look's smooth version carried on past it, making the whole picture (black sky included) up to
+  1/63 too bright, then snapped back at step 130. Now it stops at full brightness.
+
+**Noted, not changed:**
+
+- A dot the 1993 look hides because it is off the side, or so near that its shadow would fall below the
+  screen (the first kept quirk below), is still drawn by the modern look when its own place is on screen.
+  Such a dot does not fall while hidden, so in the modern look a few near dots of the cloud hang still
+  for a moment. Hiding them would make dots blink out in mid-air; left as it is.
+
+**Possible tidy-ups** (left for a later pass): `floorGrey` is never used; the floor and dot colour
+formulas are written two or three times (palette, modern colours, shader); the shade rule is written out
+again in the scene; the 1993 look copies the 64,000-byte picture and rebuilds the palette on every draw;
+320, 200, 160 and 100 are literal numbers throughout.
 
 ## Differences from the original, on purpose
 

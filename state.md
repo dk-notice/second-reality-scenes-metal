@@ -133,9 +133,22 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
   so it moves the same way. It adds gliding between steps, round dots, and larger dots when nearer.
 - Modern look does not blank the ring in slot 5 as the original palette did.
-- Known small difference: the original erased dots individually and could leave a few stale dots on
-  screen while the tunnel emptied at the end. This version clears the screen every frame.
 - The scene loops after 1060 steps (about 15 seconds), the original's length.
+- Code review (2026-11-14), against TUNNELI/TUN10.PAS; see docs/scenes/dot-tunnel.md:
+  - FIXED, 1993 look: it cleared and redrew every frame, showing every dot. The original never clears:
+    each dot blanks the old pixel of the dot in its place in the drawing order just before it is drawn,
+    and that often lands on a dot a further ring has just drawn. Roughly one dot in twenty is missing each
+    frame (163-296 pixels' difference at steps 100-900). The classic look is now a processor replay of that
+    loop (`DotTunnelModel.drawClassic`, shown through `IndexedCanvas`), no longer calculated in the shader.
+    Every 1993 picture with dots changed; `docs/images/dot-tunnel-classic.png` was remade.
+  - The old note here about "stale dots at the end" was wrong and is gone: the original leaves none (the
+    one ring never erased, slot 4, is always off screen).
+  - Verified against a Python re-run of TUN10.PAS reading the original TUNNEL.DAT / SINIT.DAT: same
+    checksums at steps 60, 250, 500, 777, 900, 1000 (in the self-test). Same reviewer wrote both.
+  - Modern look: no fault found; `--motion-check` shows no jumps, loop point included.
+  - `docs/how-it-works.md` still lists Dot Tunnel under "calculate it on the graphics chip"; it now
+    belongs under "replay it on the processor" (not edited by the review session, by its brief).
+  - Tidy-ups left: modern look repeats the size/brightness formulas; literal 320/200/160/100.
 
 ## Rings and Interference notes
 - Both scenes live in `Scenes/Interference/` and share one model, one shader and the ring pictures; a `part`
@@ -157,6 +170,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Modern look: rings calculated per screen pixel with soft edges; colours, scrolling and the row wobble glide
   between steps. Ring shades stay as 8 distinct bands, as in the original.
 - Circles are round in pixels, so on the 4:3 display they are slightly tall ovals, as on a real VGA monitor.
+- Code review (2026-11-14), against TECHNO/KOEB.ASM and KOEA.ASM (+ KOE.C's wobble table); see
+  docs/scenes/rings-and-interference.md. NO bugs found, no code changed. Frame-by-frame timing of the
+  original's loop (which position, wave and palette are on screen in which frame) matches the model;
+  `--motion-check` shows no jumps in either look, loop points included. Not reproduced, on purpose: the
+  original's very first frame (window at the picture's top-left corner for one frame). Tidy-ups left:
+  formulas written twice (whole numbers / decimals), wobble list rebuilt every draw, `Phase` duplicates
+  `part`, `SceneError` lives in `InterferenceScene.swift` though other scenes use it.
 
 ## Techno Bars notes
 - Source: TECHNO/KOE.C `doit1` (420 steps), `doit2` (840), `doit3` (up to 980, sliding off right near the end),
@@ -204,6 +224,20 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Deliberate departures: the original ended with a flash to white and then a fade to black; this fades straight
   to black (frames 2360-2424) and loops, starting again with the original's 130-step floor fade-in. The
   original's uninitialised re-drop counter starts at 0 here. The unused "face" data is not used.
+- Code review (2026-11-14), against DOTS/MAIN.C and ASM.ASM; see docs/scenes/bouncing-dots.md:
+  - The port of `drawdots` and of MAIN.C's script was re-read instruction by instruction in a separate
+    session and found to match. Still never compared with a running original. 1993 pictures unchanged.
+  - FIXED, modern look: (1) on the first step with dots (131) all dots and shadows glided in from a
+    placeholder at the top-left corner; (2) once gravity is off, a rising dot's 16-bit height wraps
+    (-32768 -> +32767 and usually back), and the modern look glided it across the screen (e.g. dot 419,
+    steps 2383-2384); (3) the smooth fade-in went below 0 for two steps and snapped back at step 130.
+    `Projected.jumped` now also covers (1) and (2).
+  - New self-test checks: no glide longer than 50 canvas pixels over a loop and a bit (normal maximum
+    27; confirmed to fail without the fixes); the smooth fade stays in 0...64 without snapping.
+  - Noted, not changed: dots the 1993 look hides (off the side, or shadow below the screen) are still
+    drawn by the modern look, and do not fall while hidden.
+  - Tidy-ups left: unused `floorGrey`; colour formulas written 2-3 times; per-draw 64 KB copy and
+    palette rebuild; literal screen numbers.
 
 ## Plasma notes
 - Source: PLZPART/PLZ.C, ASMYT.ASM (`plzline`, `setplzparas`), COPPER.ASM (`moveplz`, `pompota`, `do_drop`),

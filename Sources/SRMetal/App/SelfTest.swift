@@ -125,6 +125,31 @@ enum SelfTest {
         check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0
               && !tunnelEnd.contains { $0 != 0 } && tunnel.classicReferenceFrame() == tunnelStart)
 
+        // Dot Tunnel, 1993 look, against a separate re-run of the original's loop (TUN10.PAS: each dot
+        // blanks its old pixel just before it is drawn, with the screen never cleared), written in
+        // Python and reading the original TUNNEL.DAT and SINIT.DAT. The sums are of the screen's colour
+        // numbers. Clearing and redrawing instead (as this scene did before its code review) gives
+        // different pictures at every one of these steps: the original loses about one dot in twenty.
+        do {
+            let table = DotTunnelModel.circleTable
+            check("tunnel circle table matches original spot values",
+                  table.count == 138 && table[0][0] == SIMD2(160, 110) && table[0][16] == SIMD2(177, 100)
+                      && table[137][5] == SIMD2(278, 230) && table[100][40] == SIMD2(28, 22))
+            var replay = DotTunnelModel()
+            var sums: [UInt32] = []
+            var litNearEnd = 0
+            for step in 1..<DotTunnelModel.lengthInTicks {
+                replay.tick()
+                if [60, 250, 500, 777, 900, 1000].contains(step) { sums.append(crc32(replay.classicIndices())) }
+                if step >= 1054 { litNearEnd += replay.classicReferenceFrame().reduce(0) { $0 + ($1 != 0 ? 1 : 0) } }
+            }
+            check("Dot Tunnel pictures match the re-run of the original's erase-and-draw loop at steps 60, 250, 500, 777, 900, 1000",
+                  sums == [2_581_361_537, 231_369_616, 2_597_006_008, 2_878_197_779, 1_960_365_762, 637_159_662],
+                  "\(sums)")
+            check("Dot Tunnel leaves no dots behind when it empties (steps 1054...1059)", litNearEnd == 0,
+                  "\(litNearEnd) lit pixels")
+        }
+
         // Techno Bars, modern look, over one whole loop and into the next. Within a section the bars only
         // spin forwards, by at most about 85/1024 of a turn per step, and their thickness by under
         // about a pixel. At a section change they jump (by 833/1024 of a turn backwards into section two).
@@ -194,6 +219,44 @@ enum SelfTest {
         check("Interference loop point is no bigger a jump than an ordinary step",
               loopStep <= ordinaryStep * 11 / 10,
               "\(loopStep) pixels change across the loop, \(ordinaryStep) across an ordinary step")
+
+        // Bouncing Dots, modern look, over one whole loop and into the next. A dot glides from where it
+        // was a step ago to where it is now, unless it is marked as jumping. In ordinary motion no dot
+        // or shadow moves more than about 27 canvas pixels in a step. A longer glide means the dot has
+        // been slid between two places it was never between: from a placeholder on the first step with
+        // dots (511 dots, 164 pixels, before the code review), or across the screen when its 16-bit
+        // height wraps round (up to 718 pixels). Also: the smooth fade must stay within 0...64 and must
+        // not snap at a step boundary (it used to dip below 0 at the end of the fade-in).
+        do {
+            var dots = BouncingDotsModel()
+            var longest = 0.0
+            var longGlides: [String] = []
+            var fadeLow = 64.0, fadeHigh = 0.0, fadeSnap = 0.0
+            let steps = BouncingDotsModel.fadeInTicks + BouncingDotsModel.mainTicks + 300
+            for step in 1...steps {
+                let fadeBefore = dots.smoothFade(alpha: 0.999)
+                dots.tick()
+                fadeSnap = max(fadeSnap, abs(dots.smoothFade(alpha: 0) - fadeBefore))
+                for alpha in [0, 0.5, 0.999] {
+                    fadeLow = min(fadeLow, dots.smoothFade(alpha: alpha))
+                    fadeHigh = max(fadeHigh, dots.smoothFade(alpha: alpha))
+                }
+                guard dots.ticks > BouncingDotsModel.fadeInTicks else { continue }
+                for i in 0..<BouncingDotsModel.dotCount where !dots.current[i].jumped {
+                    let now = dots.current[i], before = dots.previous[i]
+                    let glide = max(abs(now.position.x - before.position.x), abs(now.position.y - before.position.y),
+                                    abs(now.shadowY - before.shadowY))
+                    longest = max(longest, glide)
+                    if glide > 50 && longGlides.count < 5 { longGlides.append("step \(step) dot \(i): \(Int(glide))") }
+                }
+            }
+            check("Bouncing Dots modern look never glides a dot from a placeholder or across a height wrap (\(steps) steps)",
+                  longGlides.isEmpty && longest > 5,
+                  longGlides.isEmpty ? String(format: "longest glide %.1f canvas pixels", longest) : longGlides.joined(separator: ", "))
+            check("Bouncing Dots modern fade stays within 0...64 and does not snap between steps",
+                  fadeLow >= 0 && fadeHigh <= 64 && fadeSnap < 0.6,
+                  String(format: "range %.2f...%.2f, largest change across a step boundary %.3f", fadeLow, fadeHigh, fadeSnap))
+        }
 
         // Plasma should loop exactly: any moment and the same moment one full run later look identical,
         // and the loop point itself is black (the band has fallen away; the next palette has not begun).
