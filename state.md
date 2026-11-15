@@ -211,8 +211,16 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   gets denser for ever. Bottom half of the screen = the picture 32 places round the ring, upside down.
   512 stars to step 900, nothing 901-1200, then 1024 stars each also drawn 17 pictures ahead.
 - Classic look: `StarfieldModel` replays that on the processor (own random generator: Microsoft's constants
-  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Checked by reading
-  the assembly plus an independent Python re-run with matching checksums; NOT compared with a running original.
+  but bits 32-47 of the product; integer perspective tables) and `IndexedCanvas` shows it. Since the
+  2026-11-14 review it is checked against the original's own routines run in the x86 interpreter
+  (`tools/starfield_reference.py <DDSTARS folder> <steps>`): whole screens match at 15 steps. The frame
+  logic around those routines (step marks, picture ring, mirror, fade) is still from reading only, and
+  nothing was compared with a running original.
+- Code review 2026-11-14: one real bug fixed. Dots were placed with the star's depth from before the step;
+  the original uses the depth after it (`movzx bx,[si]` / `sub bl,2`). All 1993 pictures changed slightly and
+  the self-test checksums were replaced with the original's. The earlier Python "independent re-run" shared
+  the misreading. Modern look in motion: no jumps found over the whole loop. Minor items left alone are
+  listed in docs/scenes/starfield.md.
 - Modern look: the model also records each star's "flight"; the shader works out which dots of each flight are
   in the picture now showing and draws soft round stars, bigger and brighter when nearer, gliding between steps.
 - Deliberate departures: the two text panels (a picture) are left out; the original never ended, this stops

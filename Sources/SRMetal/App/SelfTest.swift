@@ -186,8 +186,10 @@ enum SelfTest {
               plasma.classicReferenceFrame() == plasmaBefore && plasmaBefore.contains { $0 != 0 })
 
         // Hidden Starfield. The original worked its tables out when it started, so there is no data file
-        // to compare with; the expected numbers here come from a separate re-run of the assembly's rules
-        // (written independently in Python while studying STARS.ASM).
+        // to compare with. The expected numbers here come from running the original's own routines
+        // (random, the table set-up, staradd, staradd2 in STARS.ASM) one instruction at a time in a small
+        // interpreter (tools/starfield_reference.py). Until the 2026-11-14 review they came from a Python
+        // re-write that shared a misreading with the Swift (see docs/scenes/starfield.md).
         check("Starfield scale tables match the assembly's formula",
               Array(StarfieldModel.scaleY[0...2]) == [23592, 22980, 22398] && StarfieldModel.scaleY[255] == 3024
                   && Array(StarfieldModel.scaleX[0...2]) == [31457, 30640, 29864] && StarfieldModel.scaleX[255] == 4032)
@@ -197,12 +199,23 @@ enum SelfTest {
                   == [[55, -512, -386], [54, 120, -278], [53, 278, 244], [52, 125, 182]])
         let starfieldStart = starfield.classicIndices()
         var starfieldSums: [UInt32] = []
+        var starfieldScreens: [UInt32] = []
+        let starfieldSteps = [1, 2, 33, 64, 500, 900, 901, 1200, 1201, 1217, 1499, 1500, 1501, 1700, 1984]
         for step in 1...StarfieldModel.lengthInTicks {
             starfield.tick()
             if [1, 900, 1200, 1500].contains(step) { starfieldSums.append(crc32(starfield.currentPicture)) }
+            if starfieldSteps.contains(step) { starfieldScreens.append(crc32(starfield.classicIndices())) }
         }
-        check("Starfield pictures match the independent re-run at steps 1, 900, 1200, 1500",
-              starfieldSums == [2_529_779_785, 1_705_863_020, 2_791_989_969, 907_008_394])
+        check("Starfield pictures match the original assembly at steps 1, 900, 1200, 1500",
+              starfieldSums == [3_540_269_994, 2_667_235_922, 2_123_349_935, 3_777_362_598], "\(starfieldSums)")
+        // The whole 320x400 screen (both halves, so two pictures of the ring at once), at more steps:
+        // either side of every mark in the timetable. This is the check that catches a dot placed with
+        // the wrong depth: with the old "depth before the step" rule every one of these differs.
+        check("Starfield screens match the original assembly at steps \(starfieldSteps)",
+              starfieldScreens == [2_333_570_087, 2_924_147_294, 3_046_112_483, 1_249_645_176, 1_714_077_540,
+                                   2_633_477_184, 2_714_334_314, 1_125_324_415, 3_486_042_079, 854_166_899,
+                                   739_869_190, 902_598_680, 1_200_130_203, 2_883_636_437, 1_268_624_448],
+              "\(starfieldScreens)")
         check("Starfield loops after \(StarfieldModel.lengthInTicks) steps",
               starfield.ticks == 0 && starfield.classicIndices() == starfieldStart
                   && StarfieldModel.fadeLevel(tick: StarfieldModel.lengthInTicks - 1) == 1)
