@@ -242,8 +242,8 @@ and the chip is handed triangles already placed on the screen; nothing here need
 
 - **The 1993 pictures, against the original's own assembly.** `tools/glenz_reference.py` reads
   `MATH.ASM`, `VEC.ASM` and `NEW.ASM` as text and carries their instructions out one at a time in the
-  small x86 interpreter from the Plasma Cube tool (extended with 20 or so more instructions, near
-  calls and the colour ports). `MAIN.C` is re-written in Python. At 26 steps spread over the whole
+  small x86 interpreter first written for the Plasma Cube tool (extended with 20 or so more
+  instructions, near calls and the colour ports; both layers now live in `tools/x86interp.py`). `MAIN.C` is re-written in Python. At 26 steps spread over the whole
   scene (1, 100, 177, 214, 330, 420, 440, 600, 800, 925, 960, 980, 1000, 1014, 1100, 1300, 1500, 1700,
   1900, 2050, 2100, 2200, 2250, 2300, 2340, 2359) the screen's colour numbers and all 256 palette
   colours are identical to the Swift model's. The self-test repeats this comparison by checksum. Since

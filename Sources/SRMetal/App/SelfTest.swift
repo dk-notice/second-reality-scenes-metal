@@ -293,6 +293,11 @@ enum SelfTest {
                   wrong.isEmpty, wrong.isEmpty ? "" : "differ: \(wrong.joined(separator: " "))")
             check("VISU engine replay met nothing the original would have crashed on", faults == 0,
                   faults == 0 ? "" : "\(faults) faults")
+            let ships = try VisuWorld(name: "U2A"), city = try VisuWorld(name: "U2E")
+            check("VISU scene data loads: ships 5 objects and 521 frames, city 57 objects and 1801 frames",
+                  ships.objects.count == 6 && ships.frameCount == 521 && city.objects.count == 58 && city.frameCount == 1801,
+                  "\(ships.objects.count - 1) / \(ships.frameCount), \(city.objects.count - 1) / \(city.frameCount)")
+
             // The modern look of the engine (triangles on the graphics chip) has no exact reference,
             // so it is held to the 1993 picture loosely: the average difference per colour channel
             // must stay small. (Measured over all cases when written: 5.0 at most, out of 255.)

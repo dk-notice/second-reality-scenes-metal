@@ -23,6 +23,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   The user tried it by hand and reported it "working perfectly" (2026-11-14); which interactions they tried
   was not itemised. Seen in window captures: sidebar open and hidden, both looks, row highlight, pictures,
   4:3 letterbox, window title.
+- The original's shared 3D engine ("VISU") is built and verified as groundwork, with NO scene yet
+  (2026-11-14): `Core/Visu/`, original data in `Data/Visu/`, `tools/visu_reference.py`, and
+  `docs/visu-engine.md`. The Ships fly-by and 3D city scenes are to be built on it. See "VISU engine notes"
+  and "How to build the Ships and City scenes" below.
 - No music.
 
 ## How to build and run
@@ -34,6 +38,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
   dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
   starfield 1700, sine-landscape 700, plasma-cube 416, glenz-vectors 1300 and, for the squash picture, 365).
+- `build/SRMetal.app/Contents/MacOS/SRMetal --visu-test list` names the 3D engine's 109 test cases;
+  `--visu-test <case> <modern|classic> <file.png> [blend]` saves a 960x720 picture of one;
+  `--visu-test compare` prints how far the modern look is from the 1993 one for each case.
+- `./build.sh` also copies `Data/Visu/` (original 3D models and animation) into the app's `Resources/Visu/`.
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
 ## Layout
@@ -43,8 +51,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
   the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
+- `Core/Visu/` the original's 3D engine for the ships and city scenes (see "VISU engine notes").
+- `Data/Visu/` original data files the 3D engine loads (52 files, 257 KB; has its own README).
 - `tools/` development-only scripts (not part of the app): `landscape_reference.py`, `plasmacube_reference.py`,
-  `glenz_reference.py` (imports the interpreter from the plasma cube tool and extends it).
+  `glenz_reference.py`, `visu_reference.py`, and `x86interp.py`, the small x86 interpreter the last three share
+  (moved out of the plasma cube tool unchanged on 2026-11-14; both older tools print the same as before).
 - `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
   (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
 
@@ -77,6 +88,12 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   ships only with full Xcode and the build fails with Command Line Tools. Keep view state in `AppModel`.
   Xcode 27.2 is installed on this Mac (not the active toolchain) and does build the project, but the user
   chose to keep the project Command-Line-Tools-only (2026-11-14).
+- Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
+  engine, 2026-11-14): kept in `Data/`, copied into the app by `build.sh`, found at run time by
+  `VisuData`. Still no new build tools or dependencies.
+- Scenes may implement `prepare(commands:frame:)` (empty by default) to draw into a picture of their own
+  before the main pass. Added for the 3D engine's depth buffer, so the main pass and the other scenes'
+  pipelines did not have to change.
 - `docs/images/window.png` is a capture of the app's window only (`screencapture -l <window id>`), never
   the desktop.
 
@@ -315,9 +332,87 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
     gives seam-free smooth edges for flat triangles when the blending adds coverage up; with ordinary
     "over" blending a faint seam would show, and solid sorted polygons (ships, city) still need either
     a depth buffer or far-to-near order. There is still NO depth buffer in the three render passes.
+    (Later the same day: still true of the main passes. The VISU renderer brings its own depth buffer in
+    a pre-pass; see "VISU engine notes".)
   - `setVertexBytes` holds at most 4 KB: fine for 24 triangles of 48 bytes a corner, not for a ship. Use
     a vertex buffer for bigger shapes.
   - Compiled .OBJ files can settle questions about the C code: search for the instruction bytes.
+
+## VISU engine notes
+Full write-up: `docs/visu-engine.md` (formats byte by byte, the pipeline, what was checked). Short version:
+- Source: `VISU/` ACALC.ASM, ADRAW.ASM + ADRAWCLP.ASM, AVID.ASM + AVIDM1.ASM + AVIDFILL.ASM, ADATA.ASM (three
+  tables), VISU.C; scene programs `VISU/C/U2A.C` (ships) and `U2E.C` (city), which differ only in start, end,
+  clearing, pacing and a few ordering rules. MAKEFILE and VISU.LST settle what is live. The data in
+  `VISU/C/SCENE/` and both EXEs are identical to the shipped copies in `MAIN/DATA/`.
+- Mode X 320x200, window `vid_window(0,319,25,174,512,9999999)` (a 320x150 band), oversampling off, 640x400
+  mode unused. Field of view fixed: 8704 ships, 7168 city.
+- Data used in the files: flat and Gouraud polygons with 16 or 32 shades, 3 to 12 corners. No two-sided,
+  unshaded, 8-shade or textured polygons exist in the data (ported, untested).
+- All three tables are calculated from DOSIN.C / DOTAN.C / DOFILL.C and equal the files.
+- Classic: `VisuEngine` (one object to pixels) + `VisuWorld` (scene files, animation stream, object order),
+  ported step for step. Verified against `tools/visu_reference.py`, which runs the assembly as text: 109 test
+  pictures identical (15 ships frames, 31 city frames, 4 multi-frame runs, 59 single-object and clipping
+  cases), no faults. The C parts were ported by reading (Python and Swift, same author).
+- Modern: `VisuModernRenderer`: triangles into an off-screen picture with a depth buffer and 4 samples per
+  pixel, composited over the scene's background. Depth buffer BETWEEN objects; the original's order lists
+  WITHIN an object (tried a plain depth buffer first: the big ship's hull panels half vanished, because they
+  float just off the hull and partly dip inside it). Light by the original's rule per corner, colour blended
+  between palette entries. Depth stored as near/z (`Math3D.perspectiveNearOverZ`).
+- Kept quirks: wrong Gouraud colours on polygons cut by the near plane (the original's TODO says "ZCLIP /
+  gouraud"); `clipvisfl` is never cleared; the `calc_setrmatrix_rot*` routines cross the y and z angles
+  (used only by test cases); 16-bit screen positions.
+- Interpreter additions worth knowing (in `visu_reference.py`, a third layer): word operators in constants
+  (`and`, `shr`, `not`), `REPT` with `LOCAL` and "label: REPT", nested PROCs (labels made unique per procedure
+  before assembling), 16-bit idiv with overflow detection, mul, sar/sal/rcl/cmc/cwd/lea/lfs, the VGA plane
+  mask through ports 3C4/3C5, calls through a register, and a computed jump into unrolled code done by
+  counting instruction pairs. Each test case starts with heap memory filled with 0xCC, so a result cannot
+  quietly depend on an earlier case (this caught the camera matrix not being zeroed).
+- Not verified: against a running original or a recording; the scenes' starts, ends, fades and music timing
+  (read from U2A.C / U2E.C only); the modern look in motion.
+
+## How to build the Ships and City scenes with this
+Read `docs/visu-engine.md` first ("The two scenes" table has each scene's parameters). Then, per scene:
+
+1. Load: `let world = try VisuWorld(name: "U2A")` (ships) or `"U2E"` (city). For the city also set
+   `world.distanceRule = VisuWorld.cityOrdering`. Make ONE `VisuEngine` and call
+   `VisuWorld.setSceneWindow(engine)`.
+2. Stepping: the app steps 70 times a second. Ships: `world.advance()` every step (521 frames, 7.4 s).
+   City: every SECOND step (1801 frames, 51.5 s). `advance()` returns false at the end of the animation.
+   After each advance keep two poses for the modern look: `previous = current; current = world.pose()`.
+3. 1993 look: put the background into `engine.pixels` (ships: the 64,000 pixel bytes of `U2ABG.UH` after its
+   784-byte header; city: `engine.clear(to: 255)`), call `world.draw(with: engine)`, and show
+   `engine.pixels` with `IndexedCanvas`. Palette: `VisuTest.palette(for: world)` gives the ships palette
+   (scene colours + the background's 64 colours at 192...255); for the city use `world.palette` with colours
+   252 and 255 set to black and 253, 254 to white (U2E.C). Values are 0...63.
+4. Modern look: in `prepare(commands:frame:)` call `engine.setCameraAngle(world.fieldOfView)` and
+   `renderer.render(previous.blended(to: current, alpha: frame.alpha), view: engine.view, palette: ...,
+   targetSize: frame.targetSize, commands: commands)`; in `draw` draw the background first with an ordinary
+   pipeline, then `renderer.composite(into: encoder)`. For the city, whose animation frame lasts two steps,
+   the blend factor is `(stepWithinFrame + frame.alpha) / 2`.
+5. `App/VisuTestCommand.swift` is a complete worked example of both looks without a scene.
+
+Pitfalls found:
+- `reset()` must call `world.restart()` AND `engine.resetClipper()` (or make a new engine): the engine carries
+  state from polygon to polygon (the never-cleared clip flag, leftover bytes in its polygon records), and the
+  self-test's "restarts from its first frame" check compares pictures exactly.
+- `world.pose()` and `world.draw(with:)` both recompute the objects' camera matrices, so they can be called
+  in any order, but `draw` sets the engine's field of view and `pose` does not.
+- Object names include their quote marks (`"s01"`), which is why U2E.C tests `name[1]`.
+- The first pictures are empty: no object is on until frame 17 (ships) / frame 1 (city). Before any
+  `advance()` the field of view is 0, which the engine clamps; nothing is drawn anyway.
+- The original showed only a 320x150 band (rows 25-174). The modern renderer clips to the same band.
+- Scenes are created on background threads for the sidebar pictures; `VisuWorld` loads files in its
+  initialiser, which is fine, but do not share one `VisuWorld` between scene instances.
+- For the scenes' self-test checkpoints, `classicReferenceFrame()` is just `engine.pixels` through the
+  palette. Whole-frame checksums that already match the original are in `VisuTestCases.swift` (drawn into
+  an empty screen of colour 0, from a fresh engine); reuse those frames as a scene-level cross-check.
+- Known gaps to watch in motion (modern look): objects lying almost on top of each other (roads are 10 units
+  above ground plates; fine in stills), and city frames 901-1099, where the original forced the ship to be
+  drawn last and the modern look trusts the depth buffer instead. If flicker shows, a small depth bias in
+  favour of later-drawn objects is the first thing to try.
+- Decisions the scenes still need (ask the user or follow the house rules): how to start and end without
+  the music cues and white fades, how to loop, and the ships' 7.4 s length (the original waited on the music
+  before and after).
 
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
@@ -328,13 +423,14 @@ stills are out of scope.
 4. 3D sine landscape (COMAN) - DONE (the background picture turned out to be unused)
 5. Plasma cube (PLZPART/VECT.C, PLZFILL.C) - DONE (it shares nothing with the plasma after all)
 6. Glenz vectors (GLENZ) - DONE (the floor is a hand-drawn picture, included as data)
-7. Ships fly-by (VISU engine + U2A data)
+-  The shared 3D engine for 7 and 8 (VISU) - DONE as groundwork, verified, no scene (2026-11-14)
+7. Ships fly-by (VISU engine + U2A data) - NEXT
 8. 3D city (VISU engine + U2E data)
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: ships fly-by (rank 7 above: VISU engine + U2A data). Read "For the later 3D scenes" in the
-  Plasma Cube notes and "For the two remaining 3D scenes" in the Glenz Vectors notes first.
+- Next scene: ships fly-by (rank 7 above), built on the finished engine. Read "How to build the Ships and
+  City scenes with this" above and `docs/visu-engine.md` first. Then the 3D city the same way.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Undecided idea: a third "Reimagined" look per scene using present-day graphics features. First thoughts and

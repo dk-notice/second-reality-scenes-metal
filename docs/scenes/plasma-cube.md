@@ -200,7 +200,8 @@ one fades in over the earlier one, so there is no dark seam.
 
 - **The picture against the original's own code.** `tools/plasmacube_reference.py` (Python) reads
   `PLZA.ASM` and `SPLINE.ASM` as text, expands their macros, and carries out the instructions one at a
-  time in a small x86 interpreter with a model of the card's planes. That covers the line filler, the
+  time in a small x86 interpreter with a model of the card's planes (since moved, unchanged, to
+  `tools/x86interp.py`, which the later tools share). That covers the line filler, the
   eraser, the palette dimming and the path blending, with the original `RATA.INC`, `SPLINE.INC` and
   `SINIT.INC`. The C parts are re-written in Python in the tool. The Swift replay produces **identical
   screens (every colour number) and identical palettes** at steps 16, 60, 100, 416, 800, 1200, 1600,

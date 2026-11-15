@@ -166,6 +166,12 @@ list.
 **Scene behaviour.** For example, that Dot Tunnel loops back to an empty tunnel, and that Interference
 returns to its exact first frame after one full run.
 
+**The 3D engine against the original's code.** The engine in `Core/Visu/` has no scene yet, so it is
+tested by itself: 109 test pictures (single objects, clipping cases, whole frames of the ships and city
+animations) are drawn and their checksums compared with those from the original assembly, run by
+`tools/visu_reference.py`. Its modern look is held loosely to the 1993 pictures. See
+[visu-engine.md](visu-engine.md).
+
 ### What the self-test cannot prove
 
 For scenes that replay the original on the processor, the processor does all the real work and the
@@ -191,6 +197,13 @@ Useful shared pieces in `Core/`:
 | `IndexedCanvas.swift` | Shows a picture of pixel numbers through a palette of up to 256 colours, or the even mix of two such pictures |
 | `Math3D.swift` | For scenes made of 3D shapes: the matrix that reproduces an original's perspective, turns about each axis, the original engine's combined turn matrix, placing a point on the canvas, and the "does this face point at the camera" test (in 3D and on the screen) |
 | `SmoothTriangles.swift` | Flat-coloured triangles with smooth edges that meet without seams, for scenes made of polygons |
+| `Visu/` | The original demo's 3D engine, for the ships and city scenes: loads the original models and animation, replays the 1993 engine into a picture of pixel numbers, and draws the same objects as real triangles with a depth buffer for the modern look. See [visu-engine.md](visu-engine.md) |
+
+A scene may also implement `prepare(commands:frame:)`. It is called just before `draw`, while no
+drawing pass is open, and is for scenes that must first draw into a picture of their own. The 3D engine's
+modern look needs this: it uses a depth buffer (a per-pixel record of distance, so that near things cover
+far things) and four samples per pixel for smooth edges, and the app's main drawing pass has neither.
+Most scenes leave it out.
 
 ## House rules for scenes
 
