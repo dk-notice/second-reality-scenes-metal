@@ -91,7 +91,7 @@ final class City3DModel {
 
     /// The recording stores the camera's ROLL (its tilt about the line of sight) only to the
     /// nearest whole degree. Whenever the roll changes, the camera therefore snaps by one degree
-    /// from one frame to the next, about 190 times during the flight, instead of turning evenly.
+    /// from one frame to the next, hundreds of times during the flight, instead of turning evenly.
     /// At 320x200 that is the original's look; in the smooth modern look it shows as a twitch.
     ///
     /// This works out, for each frame, a small extra roll that turns the staircase back into a

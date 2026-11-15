@@ -172,6 +172,14 @@ animations) are drawn and their checksums compared with those from the original 
 `tools/visu_reference.py`. Its modern look is held loosely to the 1993 pictures. See
 [visu-engine.md](visu-engine.md).
 
+### Checking motion
+
+The self-test looks at single pictures, and a still picture cannot show a jump or a flicker. For that
+there is a separate option, `--motion-check <scene-id> <modern|classic>`, which draws every step of a
+scene's loop (the Modern look also half-way between steps), compares each picture with its neighbours
+and lists the moments that stand out. It was written for the 3D City, where it found that the recorded
+camera rolls in whole-degree steps (see [scenes/city-3d.md](scenes/city-3d.md)).
+
 ### What the self-test cannot prove
 
 For scenes that replay the original on the processor, the processor does all the real work and the

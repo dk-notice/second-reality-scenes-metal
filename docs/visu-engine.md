@@ -12,8 +12,8 @@ small 3D engine its author (Psi) called **VISU**, about 4,000 lines of assembly 
 
 This page describes that engine, the data it reads, and this project's version of it. The engine was
 built and checked by itself first, so that when the two scenes were added, a wrong picture could be
-traced to either the engine or the scene. The ships scene now exists
-([scenes/ships-flyby.md](scenes/ships-flyby.md)); the city is still to come. What the engine consists of:
+traced to either the engine or the scene. Both scenes now exist
+([scenes/ships-flyby.md](scenes/ships-flyby.md), [scenes/city-3d.md](scenes/city-3d.md)). What the engine consists of:
 
 - `Sources/SRMetal/Core/Visu/`: the engine, for both looks.
 - `Data/Visu/`: the original models and animation, 52 files, 257 KB (see "The data" below).
@@ -267,7 +267,7 @@ including the larger.
 - **Palette.** Ships: the scene file's 256 colours with the background's 64 copied into 192...255.
   City: the scene file's colours with 255 and 252 set to black and 253 and 254 to white.
 
-## The two scenes (for the sessions that will build them)
+## The two scenes
 
 | | Ships fly-by | 3D city |
 |---|---|---|
@@ -295,6 +295,7 @@ third at 271. City: the first building at frame 1, the ship at 14, the logo at 1
 | `VisuObject.swift` | an object file parsed (`VisuMesh`), and an object in a scene (`VisuObject`) |
 | `VisuWorld.swift` | a scene: object list, the animation stream, ordering the objects (`U2A.C` / `U2E.C`) |
 | `VisuEngine.swift` | one object to pixels: turn, project, hidden faces, light, clip, edge lists, fill |
+| `VisuPlayback.swift` | what the two scenes share: playing the recording, a second copy kept one frame ahead for the modern look's glide, restarting |
 | `VisuTest.swift`, `VisuTestCases.swift` | the test cases (the list is written by the reference tool) |
 
 `VisuEngine` draws into a plain 320x200 array of colour numbers, which `IndexedCanvas` can show
@@ -398,19 +399,20 @@ between the two looks stays under 8 out of 255 in seven cases (measured over all
   same way in both would not show. (The pictures are recognisably right, which limits how wrong
   they can be.)
 - **Whole scenes.** Nothing on this page covers how the scenes start, end, fade, or keep time with
-  the music; the table above is from reading `U2A.C` and `U2E.C`. The ships scene's own page says what
-  was checked for it ([scenes/ships-flyby.md](scenes/ships-flyby.md)).
+  the music; the table above is from reading `U2A.C` and `U2E.C`. Each scene's own page says what was
+  checked for it ([scenes/ships-flyby.md](scenes/ships-flyby.md), [scenes/city-3d.md](scenes/city-3d.md)).
 - **Paths the data never takes:** two-sided polygons, polygons with no shading, 8-shade ranges.
   They are ported but no test reaches them.
 - **Mode X page flipping and the screen-refresh queue**: not modelled at all.
 - **Which pictures a real PC drew.** A 1993 PC skipped animation frames when it was slow; this
   engine can draw every one. Because of the never-cleared flag above, the exact pixels of a frame
   can depend on which frames were drawn before it. Each single-frame test starts from a fresh engine.
-- **The modern look in motion**, for the city: only still pictures and one blended picture were
-  looked at. (For the ships, every step of the scene was rendered and compared with its neighbours:
-  see the scene's page.) Two things to watch when the city is built: objects that sit almost exactly on top of each other
-  (roads on ground plates are 10 units apart, which the depth buffer handles in the stills), and the
-  city frames 901...1099 where the original forced the ship to be drawn last.
+- **The modern look in motion by eye.** For both scenes every step was rendered and compared with
+  its neighbours by program (see the scenes' pages). The two things this page used to warn about
+  for the city did not happen: objects that sit almost on top of each other (roads on ground plates,
+  10 units apart) and frames 901...1099, where the original forced the ship to be drawn last. Drawing
+  every city frame with its objects in reverse order changes at most 2 pixels, so the depth buffer
+  separates all objects cleanly and the modern picture does not depend on drawing order.
 
 ## Not ported
 

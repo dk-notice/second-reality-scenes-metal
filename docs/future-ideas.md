@@ -56,7 +56,7 @@ most other scenes. Best done after the remaining planned scenes and the code rev
 
 ## The whole demo, in the modern look
 
-Raised 2026-11-14. Once the ships and the city are done, the app will hold 12 of the demo's roughly 23
+Raised 2026-11-14. With the ships and the city done (2026-11-14), the app holds 12 of the demo's roughly 23
 effects. The user's view: the existing complete port is the original code at the original resolution, so
 the whole demo redrawn in the modern look, with music, would be something that does not yet exist.
 

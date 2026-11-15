@@ -22,6 +22,7 @@ Every scene can be shown two ways, switchable at any time:
 | Plasma Cube | ![](docs/images/plasma-cube-modern.png) | ![](docs/images/plasma-cube-classic.png) |
 | Glenz Vectors | ![](docs/images/glenz-vectors-modern.png) | ![](docs/images/glenz-vectors-classic.png) |
 | Ships Fly-by | ![](docs/images/ships-flyby-modern.png) | ![](docs/images/ships-flyby-classic.png) |
+| 3D City | ![](docs/images/city-3d-modern.png) | ![](docs/images/city-3d-classic.png) |
 
 ## What this is, and is not
 
@@ -50,16 +51,19 @@ There is no music yet.
 | Plasma Cube | Wildfire | [docs/scenes/plasma-cube.md](docs/scenes/plasma-cube.md) |
 | Glenz Vectors | Psi | [docs/scenes/glenz-vectors.md](docs/scenes/glenz-vectors.md) |
 | Ships Fly-by | Psi | [docs/scenes/ships-flyby.md](docs/scenes/ships-flyby.md) |
+| 3D City | Psi | [docs/scenes/city-3d.md](docs/scenes/city-3d.md) |
 
-Planned: the 3D city. It uses the same original 3D engine as Ships Fly-by, which is built and checked
-against the original's code: see [docs/visu-engine.md](docs/visu-engine.md).
-Picture-based scenes, scrollers and stills are out of scope.
+All twelve planned scenes are done: the purely calculated scenes and the 3D scenes. The last two, Ships
+Fly-by and the 3D City, share the original's 3D engine, which was built and checked against the original's
+code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
+out of scope. What might come next is undecided; the ideas are in [docs/future-ideas.md](docs/future-ideas.md).
 
-Everything on screen is calculated, with two exceptions (both public domain, like the rest of the
+Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
 original). Glenz Vectors includes the original's hand-drawn chequered plate, because the scene cannot do
 without it. And Ships Fly-by is made of original material: the ships are the original's 3D models and
 recorded camera moves, read from [Data/Visu/](Data/Visu/README.md) (models and animation cannot be
-calculated), and they fly over the original's hand-painted horizon picture, kept at the user's request.
+calculated), and they fly over the original's hand-painted horizon picture, kept at the user's request. The 3D City
+is likewise the original's models and recorded flight, with no picture.
 
 ## Build and run
 
@@ -101,7 +105,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `city-3d` |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -127,14 +131,22 @@ build/SRMetal.app/Contents/MacOS/SRMetal --visu-test city-0800 modern picture.pn
 
 saves a picture of one of the 3D engine's test cases, in either look (`--visu-test list` names them).
 
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --motion-check city-3d modern
+```
+
+checks a scene's motion: it draws every step of the scene's loop (the Modern look also half-way between
+steps), compares each picture with its neighbours, and lists jumps and pixels that show for one picture
+only. It also reports how long one step takes. (`classic` checks the 1993 look.)
+
 ## Documentation
 
 - [docs/how-it-works.md](docs/how-it-works.md): how the app is put together, the two looks, the self-test,
   and how to add a scene.
 - [docs/original-demo.md](docs/original-demo.md): how the 1993 demo was built, and the tricks its scenes share.
 - [docs/scenes/](docs/scenes/): one page per scene, original versus new.
-- [docs/visu-engine.md](docs/visu-engine.md): the original's 3D engine (used by Ships Fly-by, and by the 3D
-  city still to come): how it worked, its data formats, this project's version of it, and what was checked.
+- [docs/visu-engine.md](docs/visu-engine.md): the original's 3D engine (used by Ships Fly-by and the 3D
+  City): how it worked, its data formats, this project's version of it, and what was checked.
 - [state.md](state.md): working notes: current status, decisions, and what is next.
 
 ## How faithful is the 1993 look?
@@ -153,10 +165,10 @@ It varies by scene, and each scene's page says exactly what was checked.
   original's own assembly text run instruction by instruction in a small interpreter (`tools/`). The
   pictures match exactly. The C code around the assembly was still ported by reading.
 
-- **Ships Fly-by and the 3D engine under it**: the engine was ported from the assembly and checked the same
-  way, on 109 test pictures made from the original's models and animation. All match exactly, and the
-  scene's pictures agree with the 15 of them that are frames of its animation. The small scene program
-  around the engine was ported by reading.
+- **Ships Fly-by, 3D City and the 3D engine under them**: the engine was ported from the assembly and checked
+  the same way, on 109 test pictures made from the original's models and animation. All match exactly, and
+  the scenes' pictures agree with the 15 and 31 of them that are frames of their animations. The small scene
+  programs around the engine were ported by reading.
 
 Some scenes also differ from the original on purpose, so that each works as a standalone, looping scene:
 for example there are no full-screen white flashes, and Interference loops seamlessly. Every such change is

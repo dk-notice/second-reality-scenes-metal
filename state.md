@@ -9,8 +9,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 `../secondreality` for reference; the existing complete port is in `../SecondRealityPlusPlus`.
 
 ## Status
-- Eleven scenes work in both looks: Dot Tunnel, Rings, Interference, Techno Bars, Bouncing Dots, Plasma,
-  Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors and Ships Fly-by (the last four added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
+- ALL TWELVE PLANNED SCENES ARE DONE (2026-11-14). Twelve scenes work in both looks: Dot Tunnel, Rings,
+  Interference, Techno Bars, Bouncing Dots, Plasma, Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz
+  Vectors, Ships Fly-by and 3D City (the last five added 2026-11-14). (Plasma and Hidden Starfield were built in parallel by two sessions, the starfield in its
   own worktree, and merged on 2026-11-14.) (Rings and Interference were one
   back-to-back sequence in the original; split into two scenes at the user's request, 2026-11-14.)
 - The scene framework has now carried a second, different kind of scene (full-canvas shader) without changes
@@ -24,22 +25,26 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   was not itemised. Seen in window captures: sidebar open and hidden, both looks, row highlight, pictures,
   4:3 letterbox, window title.
 - The original's shared 3D engine ("VISU") is built and verified (2026-11-14): `Core/Visu/`, original data
-  in `Data/Visu/`, `tools/visu_reference.py`, and `docs/visu-engine.md`. Ships Fly-by is built on it
-  (2026-11-14, see "Ships Fly-by notes"); the 3D city is to be built on it next. See "VISU engine notes"
-  and "How to build the Ships and City scenes" below.
+  in `Data/Visu/`, `tools/visu_reference.py`, and `docs/visu-engine.md`. Ships Fly-by and the 3D City are
+  built on it (2026-11-14, see their notes below); what the two scenes share is `Core/Visu/VisuPlayback.swift`.
 - No music.
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|city-3d`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png> [blend]` saves a
   960x720 picture without opening a window. `blend` (0...1, optional, modern look) draws that far on towards
   the next step, for checking motion (added with Ships Fly-by). The pictures in `docs/images/` were made this way (steps:
   dot-tunnel 500, rings 300, interference 700, techno-bars 310, bouncing-dots 1300, plasma 1000,
   starfield 1700, sine-landscape 700, plasma-cube 416, glenz-vectors 1300 and, for the squash picture, 365;
-  ships-flyby 350, and 170 and 345 for its "bigship" and "near" pictures).
+  ships-flyby 350, and 170 and 345 for its "bigship" and "near" pictures; city-3d 1600, and 660 and 3400
+  for its "trees" and "logo" pictures).
+- `build/SRMetal.app/Contents/MacOS/SRMetal --motion-check <scene-id> <modern|classic> [first last] [--csv file]`
+  checks MOTION by program (added with the 3D City): draws every step of the loop (modern look also
+  half-way between steps), compares neighbouring pictures, lists jumps and one-picture-only pixels, and
+  times the scene's steps. The city's whole loop takes about 8 seconds.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --visu-test list` names the 3D engine's 109 test cases;
   `--visu-test <case> <modern|classic> <file.png> [blend]` saves a 960x720 picture of one;
   `--visu-test compare` prints how far the modern look is from the 1993 one for each case.
@@ -412,9 +417,8 @@ Pitfalls found:
   above ground plates; fine in stills), and city frames 901-1099, where the original forced the ship to be
   drawn last and the modern look trusts the depth buffer instead. If flicker shows, a small depth bias in
   favour of later-drawn objects is the first thing to try.
-- Decisions the CITY still needs (ask the user or follow the house rules): how to start and end without
-  the music cues and white fades, and how to loop. (For the ships these were settled by the user: see
-  "Ships Fly-by notes".)
+- (Both scenes are now built. The two "known gaps" above did not show in the city: see "3D City notes".
+  Both scenes use `VisuPlayback`, which wraps steps 1, 2 and the pose handling of step 4.)
 
 ## Ships Fly-by notes
 Full write-up: `docs/scenes/ships-flyby.md`.
@@ -483,6 +487,49 @@ Full write-up: `docs/scenes/ships-flyby.md`.
   - The Swift compiler gives up ("unable to type-check in reasonable time") on a closure that builds a
     SIMD4 from several `Float(...)` conversions and divides; write the parts out as separate `let`s.
 
+## 3D City notes
+Full write-up: `docs/scenes/city-3d.md`.
+- Source: `VISU/C/U2E.C` (scene program) + the VISU engine + `U2E.*` data. Files in `Scenes/City3D/`:
+  `City3DModel.swift` (palette, timetable, fades, roll smoothing; no graphics code) and `City3DScene.swift`.
+- USES ORIGINAL 3D DATA (accepted by the user): 57 objects from 42 model files, one 1,801-frame recorded
+  flight. NO picture (background is black, colour 255). Declared at the top of the scene's page and in the README.
+- What U2E.C adds to the engine: clear to colour 255; palette with 252, 255 black and 253, 254 white; two
+  ordering rules (underscore names = ground, drawn first; ship drawn "last" in frames 901...1099, which
+  really means distance 1, so objects whose centre is BEHIND the camera can still follow it); no text or
+  overlay; white fades at both ends (left out).
+- Speed: NOT PC-dependent. Confirmed in U2E.C: it counts screen refreshes and reads (late + 1) / 2 frames,
+  so exactly one animation frame per two refreshes (35 a second, 51.5 s).
+- Timetable: steps 0, 1 black; steps 2...3603 = frames 1...1801, two steps each; fade up over
+  `fadeInSteps` = 70 from step 2; fade down over the LAST `fadeOutSteps` = 105 steps of the animation;
+  `darkSteps` = 35 black; loop at 3639 (52 s). Those three constants are the ones to change by eye.
+  The opening frame is a white wall filling the band, which slides away (the original's hand-over from a
+  white screen); the fade-in keeps it dim while it fills the picture, so there is no full white screen.
+- Classic look: every animation frame drawn once, in order, by one engine. Matches all 31
+  assembly-verified city frames (self-test), so the engine's carried-over state changes nothing there.
+- SPEED of the 1993 replay, measured: 0.25 ms a step on average, about 1 ms at worst (budget 14.3 ms).
+  Nothing needed optimising. The self-test measures it every run. Whole self-test: about 10 s.
+- Modern look: `VisuModernRenderer`, blend = (step within frame + alpha) / 2.
+- CAMERA ROLL SMOOTHING (modern look only, our addition): the recording holds the camera's roll only in
+  whole degrees, so the camera snapped 1 degree hundreds of times; the motion check showed it as
+  one-picture-only pixels on every edge at once. `City3DModel.rollCorrections` finds the smoothest roll
+  within half a degree of the recorded one (blur, clamp to the band, repeat 100 times) and the modern pose
+  is rolled by the difference (`VisuPose.rolled`). `smoothCameraRoll` switches it off. So the modern
+  picture can be tilted up to 0.5 degrees from the 1993 one.
+- MOTION CHECK results: the predicted depth trouble did NOT happen. Drawing every frame with objects in
+  reverse order changed at most 2 pixels, so no depth bias and no forced ship order are needed in the
+  modern look. After the roll fix: spikes of one-picture-only pixels 213 -> 53, uneven changes 111 -> 19.
+  What is left: thin ship outlines at moments the ship's recorded motion changes direction, objects
+  switching on or off, and the ship flying past the camera at steps 3516...3526 (the recording's own).
+- Shared code moved to `Core/Visu/VisuPlayback.swift` (world + look-ahead world + engine, restart, pose
+  re-labelling, palette helpers); `ShipsFlybyModel` now uses it and all its checks pass unchanged.
+  Other engine additions: `VisuWorld.cameraTrack()`, `VisuPose.rolled(by:)`. No engine behaviour changed.
+- Not checked: a running original or recording; U2E.C's start and end as shown; that the roll steps are
+  an export artefact rather than intent (a judgement); the cause of the leftover ship-outline spikes
+  (judged from where the pixels are); the ship's visibility in the forced-order stretch beyond 8 samples;
+  the modern look by eye in the running app.
+- Trap met while testing: "ship drawn last" is not literally last (see above); a check that expected the
+  ship at the end of the order failed in 17 frames for that reason.
+
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
 stills are out of scope.
@@ -494,19 +541,20 @@ stills are out of scope.
 6. Glenz vectors (GLENZ) - DONE (the floor is a hand-drawn picture, included as data)
 -  The shared 3D engine for 7 and 8 (VISU) - DONE as groundwork, verified, no scene (2026-11-14)
 7. Ships fly-by (VISU engine + U2A data) - DONE (original background picture kept, user's decision)
-8. 3D city (VISU engine + U2E data) - NEXT
+8. 3D city (VISU engine + U2E data) - DONE (no picture; modern look evens out the camera roll)
+All planned scenes are done.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- Next scene: the 3D city (rank 8 above), built on the engine the same way Ships Fly-by was. Read "How to
-  build the Ships and City scenes with this" and "Ships Fly-by notes" (especially "For the city session")
-  above, and `docs/visu-engine.md`, first. `Scenes/ShipsFlyby/` is the pattern to copy.
-- Waiting on the user: watch Ships Fly-by in the app and judge the pause between passes
-  (`ShipsFlybyModel.pauseSteps`, now 70 = one second) and the look of the scaled-up background by eye.
+The planned list of scenes is complete (2026-11-14).
+- NEXT: the user's planned code review. Run `/code-review` over the scene code and `Core/`, paying most
+  attention to what each scene page lists under "What was not checked" (ports checked by reading only:
+  Techno Bars, Bouncing Dots, the C parts of the 3D scenes; the plasma's plane layout; the VISU scene
+  programs' ordering and pacing) and to the code shared between scenes.
+- Waiting on the user, by eye in the running app: the 3D City's fades (`City3DModel.fadeInSteps`,
+  `fadeOutSteps`, `darkSteps`) and whether the evened-out camera roll looks right
+  (`City3DModel.smoothCameraRoll`); Ships Fly-by's pause (`ShipsFlybyModel.pauseSteps`) and scaled-up background.
+- After the review: the undecided ideas in `docs/future-ideas.md` (a third "Reimagined" look per scene;
+  the whole demo with music and upscaled artwork). The user will decide; do not start them unasked.
 - Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
-- Later: music.
-- Undecided idea: a third "Reimagined" look per scene using present-day graphics features. First thoughts and
-  cautions are in `docs/future-ideas.md`. The user will consider each scene on its merits; do not start it
-  unasked.
-- Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
-  paying most attention to what the scene pages list under "What was not checked".
+- `--motion-check` now exists for every scene; only Ships Fly-by and the 3D City have been through it.
