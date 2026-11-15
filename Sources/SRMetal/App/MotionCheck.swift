@@ -24,15 +24,18 @@ enum MotionCheck {
     static let height = 360
 
     static func run(arguments: [String]) -> Bool {
+        let csvFlag = arguments.firstIndex(of: "--csv")
+        let csv = csvFlag.flatMap { $0 + 1 < arguments.count ? arguments[$0 + 1] : nil }
         guard let flag = arguments.firstIndex(of: "--motion-check"), arguments.count >= flag + 3,
               let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] }),
-              let look = Look(rawValue: arguments[flag + 2]) else {
+              let look = Look(rawValue: arguments[flag + 2]),
+              let range = stepRange(from: Array(arguments.dropFirst(flag + 3).prefix { !$0.hasPrefix("--") })),
+              csvFlag == nil || csv != nil else {
             print("Usage: SRMetal --motion-check <scene-id> <modern|classic> [first-step last-step] [--csv file]")
+            print("(first-step and last-step: whole numbers, 0 or more, first not after last; leave both out for the whole loop)")
             print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", "))
             return false
         }
-        let numbers = arguments.dropFirst(flag + 3).prefix { !$0.hasPrefix("--") }.compactMap { Int($0) }
-        let csv = arguments.firstIndex(of: "--csv").flatMap { $0 + 1 < arguments.count ? arguments[$0 + 1] : nil }
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue(),
               let scene = try? entry.make(device, Renderer.pixelFormat) else {
             print("Could not set up \(entry.title)")
@@ -42,9 +45,9 @@ enum MotionCheck {
         // The scene's length is not part of the scene contract, so without a range the run goes on
         // until the scene's 1993 picture has come back to its first one after a spell of
         // differing (a loop), or 20,000 steps.
-        let first = numbers.count >= 2 ? numbers[0] : 0
-        let last = numbers.count >= 2 ? numbers[1] : 20_000
-        let wholeLoop = numbers.count < 2
+        let first = range?.first ?? 0
+        let last = range?.last ?? 20_000
+        let wholeLoop = range == nil
 
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: Renderer.pixelFormat, width: width, height: height, mipmapped: false)
@@ -162,8 +165,21 @@ enum MotionCheck {
         if let csv {
             var text = "step,alpha,change,flicker\n"
             for row in rows { text += String(format: "%d,%.1f,%.4f,%d\n", row.step, row.alpha, row.change, row.flicker) }
-            do { try text.write(toFile: csv, atomically: true, encoding: .utf8) } catch { print("Could not write \(csv)") }
+            do { try text.write(toFile: csv, atomically: true, encoding: .utf8) } catch {
+                print("Could not write \(csv)")
+                return false
+            }
         }
         return true
+    }
+
+    /// The optional "first-step last-step" words of the command line. No words at all means the
+    /// whole loop (the inner nil). Anything else must be exactly two whole numbers, 0 or more, the
+    /// first not after the last; if not, the answer is the outer nil: the command line is wrong.
+    static func stepRange(from words: [String]) -> (first: Int, last: Int)?? {
+        if words.isEmpty { return .some(nil) }
+        guard words.count == 2, let first = Int(words[0]), let last = Int(words[1]),
+              first >= 0, first <= last else { return nil }
+        return (first, last)
     }
 }

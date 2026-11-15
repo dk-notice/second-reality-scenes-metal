@@ -32,24 +32,45 @@ enum Snapshot {
 
     /// The command-line option: works out what was asked for, renders it and writes the PNG file.
     static func run(arguments: [String]) -> Bool {
-        guard let flag = arguments.firstIndex(of: "--snapshot"), arguments.count >= flag + 5,
-              let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] }),
-              let look = Look(rawValue: arguments[flag + 2]),
-              let step = Int(arguments[flag + 3]) else {
+        guard let request = request(from: arguments) else {
             print("Usage: SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png> [blend 0...1]")
+            print("(step: a whole number, 0 or more)")
             print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", "))
             return false
         }
-        let output = URL(fileURLWithPath: arguments[flag + 4])
-        let blend = arguments.count > flag + 5 ? min(max(Float(arguments[flag + 5]) ?? 0, 0), 1) : 0
-
         do {
-            let image = try render(entry: entry, look: look, step: step, width: width, height: height, alpha: blend)
-            return writePNG(image, to: output)
+            let image = try render(entry: request.entry, look: request.look, step: request.step,
+                                   width: width, height: height, alpha: request.blend)
+            return writePNG(image, to: URL(fileURLWithPath: request.output))
         } catch {
-            print("Could not draw scene \(entry.title): \(error)")
+            print("Could not draw scene \(request.entry.title): \(error)")
             return false
         }
+    }
+
+    /// What a `--snapshot` command line asks for.
+    struct Request {
+        var entry: SceneEntry
+        var look: Look
+        var step: Int
+        var output: String
+        var blend: Float
+    }
+
+    /// Reads the command line; nil if it does not make sense (unknown scene or look, a step that
+    /// is not a whole number of 0 or more, a blend that is not a number). A blend outside 0...1 is
+    /// brought to the nearer end.
+    static func request(from arguments: [String]) -> Request? {
+        guard let flag = arguments.firstIndex(of: "--snapshot"), arguments.count >= flag + 5,
+              let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] }),
+              let look = Look(rawValue: arguments[flag + 2]),
+              let step = Int(arguments[flag + 3]), step >= 0 else { return nil }
+        var blend: Float = 0
+        if arguments.count > flag + 5 {
+            guard let given = Float(arguments[flag + 5]), given.isFinite else { return nil }
+            blend = min(max(given, 0), 1)
+        }
+        return Request(entry: entry, look: look, step: step, output: arguments[flag + 4], blend: blend)
     }
 
     /// Starts a fresh copy of a scene, runs it for `step` steps and returns a picture of what it then
@@ -99,11 +120,12 @@ enum Snapshot {
             var small = [UInt8](repeating: 0, count: smallWidth * smallHeight * 4)
             texture.getBytes(&small, bytesPerRow: smallWidth * 4,
                              from: MTLRegionMake2D(0, 0, smallWidth, smallHeight), mipmapLevel: 0)
-            // Scale up with hard-edged pixels, as the app does.
+            // Scale up with hard-edged pixels, as the app does: each picture pixel takes the canvas
+            // pixel under its CENTRE (hence the "2 * ... + 1": the centre of pixel y is at y + 1/2).
             for y in 0..<height {
-                let sourceY = y * smallHeight / height
+                let sourceY = (2 * y + 1) * smallHeight / (2 * height)
                 for x in 0..<width {
-                    let source = (sourceY * smallWidth + x * smallWidth / width) * 4
+                    let source = (sourceY * smallWidth + (2 * x + 1) * smallWidth / (2 * width)) * 4
                     let target = (y * width + x) * 4
                     pixels[target] = small[source]
                     pixels[target + 1] = small[source + 1]

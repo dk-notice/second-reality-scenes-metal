@@ -9,10 +9,17 @@ import simd
 enum SelfTest {
     static func run() -> Bool {
         var ok = true
+        var checksRun = 0
         func check(_ name: String, _ passed: Bool, _ detail: String = "") {
             print("\(passed ? "PASS" : "FAIL")  \(name)\(detail.isEmpty ? "" : "  (\(detail))")")
+            checksRun += 1
             if !passed { ok = false }
         }
+
+        // ===== CORE AND APP CHECKS (code review, 2026-11-14): see CoreChecks.swift. =====
+        // Checks of the shared code and the command line go there, not among the scenes' checks below.
+        CoreChecks.run { name, passed, detail in check(name, passed, detail) }
+        // ===== END OF CORE AND APP CHECKS =====
 
         // Tables and pictures that replace the original's data files. The expected values were taken
         // from those files (SINIT.DAT, SIN1024.INC, _CIRCLE.OBK, _CIRCLE2.OBK).
@@ -64,12 +71,16 @@ enum SelfTest {
                 }
 
                 var tick = 0
+                var litCheckpoints = 0
                 for target in entry.checkpoints {
                     while tick < target {
                         scene.tick()
                         tick += 1
                     }
-                    guard let commands = queue.makeCommandBuffer() else { continue }
+                    guard let commands = queue.makeCommandBuffer() else {
+                        check("\(entry.title), step \(target): graphics chip matches 1993 reference", false, "no command buffer")
+                        continue
+                    }
                     Renderer.drawClassic(scene: scene, canvasSize: entry.canvasSize, into: texture, commands: commands)
                     commands.commit()
                     commands.waitUntilCompleted()
@@ -93,7 +104,13 @@ enum SelfTest {
                     }
                     check("\(entry.title), step \(target): graphics chip matches 1993 reference", wrong == 0,
                           "\(lit) lit pixels, \(wrong) wrong")
+                    if lit > 0 { litCheckpoints += 1 }
                 }
+                // Two all-black pictures match each other, so a scene that drew nothing and whose
+                // reference was empty would pass every line above. At least half of a scene's
+                // checkpoints must show a picture.
+                check("\(entry.title): at least half of its checkpoints show a picture (not black against black)",
+                      litCheckpoints * 2 >= entry.checkpoints.count, "\(litCheckpoints) of \(entry.checkpoints.count)")
             } catch {
                 check("\(entry.title) starts", false, "\(error)")
             }
@@ -101,8 +118,12 @@ enum SelfTest {
 
         // The tunnel should loop back to an empty tunnel after its full run.
         var tunnel = DotTunnelModel()
-        for _ in 0..<DotTunnelModel.lengthInTicks { tunnel.tick() }
-        check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0)
+        let tunnelStart = tunnel.classicReferenceFrame()
+        for _ in 0..<(DotTunnelModel.lengthInTicks - 1) { tunnel.tick() }
+        let tunnelEnd = tunnel.classicReferenceFrame()
+        tunnel.tick()
+        check("Dot Tunnel loops after \(DotTunnelModel.lengthInTicks) steps", tunnel.tickCount == 0
+              && !tunnelEnd.contains { $0 != 0 } && tunnel.classicReferenceFrame() == tunnelStart)
 
         // Techno Bars, modern look, over one whole loop and into the next. Within a section the bars only
         // spin forwards, by at most about 85/1024 of a turn per step, and their thickness by under
@@ -610,6 +631,7 @@ enum SelfTest {
             }
         }
 
+        print("\(checksRun) checks run.")
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok
     }

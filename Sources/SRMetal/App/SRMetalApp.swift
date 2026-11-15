@@ -19,7 +19,67 @@ enum Main {
         if CommandLine.arguments.contains("--motion-check") {
             exit(MotionCheck.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        // A mistyped option must not quietly open the first scene (or, for a mistyped command such
+        // as `--selftests`, quietly open a window): say what is wrong and stop.
+        let options = StartupOptions(arguments: CommandLine.arguments)
+        if !options.problems.isEmpty {
+            for problem in options.problems { FileHandle.standardError.write(Data((problem + "\n").utf8)) }
+            FileHandle.standardError.write(Data((StartupOptions.usage + "\n").utf8))
+            exit(2)
+        }
         SRMetalApp.main()
+    }
+}
+
+/// The start-up choices given on the command line: `--look classic|modern`, `--scene <id>`
+/// (e.g. `--scene interference`) and `--sidebar hidden|shown`.
+struct StartupOptions {
+    var look: Look?
+    var sceneIndex: Int?
+    var sidebarHidden = false
+    /// What is wrong with the options, in words. Empty when all is well.
+    var problems: [String] = []
+
+    static var usage: String {
+        """
+        Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
+        Commands: --selftest, --snapshot, --motion-check, --visu-test (run one without arguments for its usage)
+        Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", "))
+        """
+    }
+
+    /// `arguments` as the system gives them: the program's own path first.
+    init(arguments: [String]) {
+        var index = 1
+        while index < arguments.count {
+            let option = arguments[index]
+            index += 1
+            // Only options starting with two dashes are ours. macOS adds single-dash ones of its
+            // own (with values) when it starts an app in some ways; those are left alone.
+            guard option.hasPrefix("--") else { continue }
+            guard ["--look", "--scene", "--sidebar"].contains(option) else {
+                problems.append("Unknown option \(option)")
+                continue
+            }
+            guard index < arguments.count, !arguments[index].hasPrefix("--") else {
+                problems.append("\(option) needs a value")
+                continue
+            }
+            let value = arguments[index]
+            index += 1
+            switch option {
+            case "--look":
+                if let chosen = Look(rawValue: value) { look = chosen }
+                else { problems.append("Unknown look \"\(value)\" (use modern or classic)") }
+            case "--scene":
+                if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
+                else { problems.append("Unknown scene \"\(value)\"") }
+            default:
+                if value == "hidden" { sidebarHidden = true }
+                else if value == "shown" { sidebarHidden = false }
+                else { problems.append("Unknown sidebar setting \"\(value)\" (use hidden or shown)") }
+            }
+        }
     }
 }
 
@@ -39,20 +99,15 @@ final class AppModel: ObservableObject {
     private var keyMonitor: Any?
 
     init() {
-        // Optional start-up choices: `--look classic|modern`, `--scene <id>` (e.g. `--scene interference`)
-        // and `--sidebar hidden`.
-        let arguments = CommandLine.arguments
-        func value(after flag: String) -> String? {
-            guard let index = arguments.firstIndex(of: flag), index + 1 < arguments.count else { return nil }
-            return arguments[index + 1]
-        }
-        if let chosen = value(after: "--look").flatMap(Look.init(rawValue:)) {
+        // Optional start-up choices (see `StartupOptions`).
+        let options = StartupOptions(arguments: CommandLine.arguments)
+        if let chosen = options.look {
             look = chosen
         }
-        if let id = value(after: "--scene"), let index = SceneCatalog.all.firstIndex(where: { $0.id == id }) {
+        if let index = options.sceneIndex {
             sceneIndex = index
         }
-        if value(after: "--sidebar") == "hidden" {
+        if options.sidebarHidden {
             columns = .detailOnly
         }
     }
@@ -91,7 +146,8 @@ final class AppModel: ObservableObject {
             case 123, 126: self.stepScene(by: -1)    // left arrow, up arrow
             default:
                 switch event.charactersIgnoringModifiers?.lowercased() {
-                case "l": self.toggleLook()
+                // Not while the key is held down: the look would flip at the keyboard's repeat rate.
+                case "l": if !event.isARepeat { self.toggleLook() }
                 case "r": if !event.isARepeat { self.restartScene() }
                 default: return event
                 }
