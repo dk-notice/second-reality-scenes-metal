@@ -196,8 +196,24 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   flickers on a 60/120 Hz display); the opening fade from white is replaced by the same 31-step fade from
   black the other sections use; the final fall loops back to section 0 (2323 steps); drawing is treated as
   instant (the original's draw loop was not locked to the refresh).
-- Not verified against a running original: the plane/chessboard layout, the exact band line, which pan
-  value pairs with which line, and that timetable "music frames" are 1/70 s. See docs/scenes/plasma.md.
+- Code review 2026-11-14 (branch `claude/review-plasma-1872aa`), two fixes, each with a self-test check:
+  (1) 1993 look: the 2-pixel pan was paired with the wrong line. The original picks line and pan together
+  in the retrace routine but the pan is written to the card by `copper1` just before the NEXT retrace
+  (order of calls is in MAIN/COPPER.ASM `copper_end`; routine numbers in DIS/DISINT.ASM), so line 60 shows
+  with pan 0 and line 61 with pan 2. Flowing-plasma pictures change at pixel level; fall and fade pictures
+  do not. (2) Modern look: the band hopped 0.34 line on the first step of each fall (counter goes 0 to 2);
+  it now glides in.
+- Settled by that review: the per-pixel formula (checked against the machine code in ASMYT.OBJ: the whole
+  16-bit address in each instruction is overwritten); the plane/chessboard layout (second reading; the C++
+  port agrees); the pan/line pairing. The real interrupt server IS in the source release (DIS/DISINT.ASM
+  plus MAIN/COPPER.ASM); only DIS/DIS.ASM is the stub.
+- Still not verified: the exact band line (rests on the VGA rule "split starts on the line after").
+- OPEN, needs the user's decision: timetable "music frames" are probably music ticks (about 52 a second at
+  the tune's starting tempo 130), not 1/70 s. The C++ port counts them per music tick. If so the original
+  sections were about a third longer (scene about 43 s, not 32). Not proven (the player is a compiled
+  library); nothing changed. See docs/scenes/plasma.md "What was not checked".
+- `--motion-check plasma classic` reports big flicker during each fall and a jump at step 33: that is the
+  original's behaviour (K and L are not mixed while falling or fading), not a fault.
 - For the plasma cube later: the fifth palette (`pals[4]`, "white II") is built in PLZ.C but not in
   `PlasmaModel.palettes`; the tables and `PlasmaModel.value` should be reusable.
 

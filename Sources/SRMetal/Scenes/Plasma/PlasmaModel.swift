@@ -204,8 +204,15 @@ struct PlasmaModel {
     }
 
     /// The two fields for the current state. Normally the video card was told to start the band at line
-    /// 60 with a 2-pixel sideways shift on one frame, and at line 61 with no shift on the next. While the
-    /// band falls or a palette fades in, both frames use the same line.
+    /// 60 with no sideways shift on one frame, and at line 61 with a 2-pixel shift on the next. While the
+    /// band falls or a palette fades in, both frames use the same line (the shift still alternates).
+    ///
+    /// Why 60 goes with "no shift": `pompota` (run during the screen's retrace, COPPER.ASM `copper2`)
+    /// picks the line and the shift together, as 60 with 2 pixels or 61 with none. The line number goes
+    /// to the card at once and applies to the frame about to be drawn. The shift is only stored; it is
+    /// sent to the card by `copper1`, which the demo's interrupt server (DIS/DISINT.ASM, MAIN/COPPER.ASM
+    /// `copper_end`) runs just before the NEXT retrace. So each frame is drawn with its own line and the
+    /// previous frame's shift.
     var fields: [Field] {
         let fixedLine: Int?
         switch dropCounter {
@@ -215,7 +222,7 @@ struct PlasmaModel {
         default: fixedLine = 60
         }
         // The band begins on the line after the one the card was given.
-        return [Field(top: (fixedLine ?? 60) + 1, pan: 2), Field(top: (fixedLine ?? 61) + 1, pan: 0)]
+        return [Field(top: (fixedLine ?? 60) + 1, pan: 0), Field(top: (fixedLine ?? 61) + 1, pan: 2)]
     }
 
     /// The plasma value (a palette number) for one 4-pixel-wide column of one band row.
@@ -286,6 +293,12 @@ struct PlasmaModel {
         var top: Float = 61.5
         if (1..<64).contains(dropCounter) {
             let t = Float(dropCounter) + alpha
+            top += t * t * 43 / 512
+        } else if dropCounter == 0, Self.drops.contains(where: { $0.step == ticks + 1 }) {
+            // The fall begins on the next step, where the counter goes straight from 0 to 2 (the
+            // main program sets 1 and the refresh routine adds 1 in the same frame). Glide towards
+            // that, or the band would sit still and then hop a third of a line.
+            let t = 2 * alpha
             top += t * t * 43 / 512
         }
         return ModernParameters(

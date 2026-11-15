@@ -185,6 +185,54 @@ enum SelfTest {
         check("Plasma repeats exactly after \(PlasmaModel.lengthInTicks) steps",
               plasma.classicReferenceFrame() == plasmaBefore && plasmaBefore.contains { $0 != 0 })
 
+        // Plasma, 1993 look: which sideways shift goes with which line (code review, 2026-11-14). The
+        // original chose line and shift together but the shift reached the video card one frame late
+        // (DIS/DISINT.ASM, MAIN/COPPER.ASM), so line 60 is seen with no shift and line 61 with 2 pixels.
+        // `plasma` is at step 400 here: flowing normally. Step 10 of a fresh run is mid-fade, where
+        // both alternating frames use line 60.
+        var fadingPlasma = PlasmaModel()
+        for _ in 0..<10 { fadingPlasma.tick() }
+        check("Plasma pairs line 60 with no shift and line 61 with the 2-pixel shift",
+              plasma.fields.map { [$0.top, $0.pan] } == [[61, 0], [62, 2]]
+                  && fadingPlasma.fields.map { [$0.top, $0.pan] } == [[61, 0], [61, 2]],
+              "flowing \(plasma.fields.map { [$0.top, $0.pan] }), fading \(fadingPlasma.fields.map { [$0.top, $0.pan] })")
+
+        // Plasma, modern look, over one whole loop and into the next: the end of every step's glide must
+        // be where the next step starts (band position, the eight plasma numbers, the palette). The only
+        // places allowed to differ are where nothing can be seen: the band hidden or wholly below the
+        // screen on one side, and hidden or black on the other.
+        do {
+            var model = PlasmaModel()
+            var worstTop: Float = 0, worstNumber: Float = 0, worstColour: Float = 0
+            var broken: [String] = []
+            func invisible(_ p: PlasmaModel.ModernParameters) -> Bool {
+                p.hidden || p.top >= Float(PlasmaModel.canvasHeight)
+                    || !p.palette.contains { $0.x > 0 || $0.y > 0 || $0.z > 0 }
+            }
+            func wrapped(_ difference: SIMD4<Float>) -> Float {
+                // The plasma numbers go round every 4096.
+                (0..<4).map { abs(difference[$0] - 4096 * (difference[$0] / 4096).rounded()) }.max() ?? 0
+            }
+            for step in 0..<(PlasmaModel.lengthInTicks + 40) {
+                let end = model.modernParameters(alpha: 1)
+                model.tick()
+                let start = model.modernParameters(alpha: 0)
+                if invisible(end) && invisible(start) { continue }
+                let top = abs(end.top - start.top)
+                let number = max(wrapped(end.k - start.k), wrapped(end.l - start.l))
+                let colour = zip(end.palette, start.palette).map { simd_reduce_max(abs($0 - $1)) }.max() ?? 0
+                worstTop = max(worstTop, top)
+                worstNumber = max(worstNumber, number)
+                worstColour = max(worstColour, colour)
+                if (invisible(end) != invisible(start) || top > 0.01 || number > 0.01 || colour > 0.001)
+                    && broken.count < 5 {
+                    broken.append("into step \(step + 1)")
+                }
+            }
+            check("Plasma modern look glides without a jump through the whole loop", broken.isEmpty,
+                  "worst: band \(worstTop) lines, numbers \(worstNumber), colour \(worstColour); \(broken.joined(separator: ", "))")
+        }
+
         // Hidden Starfield. The original worked its tables out when it started, so there is no data file
         // to compare with; the expected numbers here come from a separate re-run of the assembly's rules
         // (written independently in Python while studying STARS.ASM).
