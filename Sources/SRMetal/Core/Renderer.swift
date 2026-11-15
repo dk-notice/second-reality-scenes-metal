@@ -58,6 +58,13 @@ final class Renderer: NSObject, MTKViewDelegate {
         lastTime = nil
     }
 
+    /// Plays the current scene again from its beginning.
+    func restart() {
+        scene.reset()
+        accumulator = 0
+        lastTime = nil
+    }
+
     // MARK: - Clock
 
     /// Runs as many 1/70 s steps as real time calls for, and returns how far we are into the next one.

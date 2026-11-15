@@ -57,6 +57,8 @@ struct SceneEntry: Identifiable {
     let canvasSize: SIMD2<Float>
     /// Moments (in steps from the start) at which the self-test checks the classic look.
     let checkpoints: [Int]
+    /// The moment (in steps from the start) that makes a good small picture for the scene list.
+    let thumbnailStep: Int
     let make: (MTLDevice, MTLPixelFormat) throws -> DemoScene
 }
 
@@ -68,6 +70,7 @@ enum SceneCatalog {
             credit: "Trug",
             canvasSize: SIMD2(320, 200),
             checkpoints: [1, 60, 250, 500, 777, 1000],
+            thumbnailStep: 500,
             make: { device, format in try DotTunnelScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -76,6 +79,7 @@ enum SceneCatalog {
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 40, 100, 127, 300, 1000],
+            thumbnailStep: 300,
             make: { device, format in try InterferenceScene(part: .rings, device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -84,6 +88,7 @@ enum SceneCatalog {
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 44, 300, 500, 700, 900, 1023, 1024],
+            thumbnailStep: 700,
             make: { device, format in try InterferenceScene(part: .interference, device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -92,6 +97,7 @@ enum SceneCatalog {
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
             checkpoints: [1, 100, 419, 430, 800, 1259, 1262, 1300, 1700, 1920],
+            thumbnailStep: 310,
             make: { device, format in try TechnoBarsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -100,6 +106,7 @@ enum SceneCatalog {
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
             checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
+            thumbnailStep: 1300,
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -109,6 +116,7 @@ enum SceneCatalog {
             // The original ran in a 320x400 screen mode: twice the usual number of lines.
             canvasSize: SIMD2(320, 400),
             checkpoints: [0, 1, 2, 17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300, 2322],
+            thumbnailStep: 1000,
             make: { device, format in try PlasmaScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
@@ -117,6 +125,7 @@ enum SceneCatalog {
             credit: "Psi",
             canvasSize: SIMD2(320, 400),
             checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
+            thumbnailStep: 1700,
             make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
         )
     ]

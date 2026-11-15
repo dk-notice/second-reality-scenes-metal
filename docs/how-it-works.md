@@ -25,7 +25,7 @@ everything the scenes have in common.
 Sources/SRMetal/
   Core/        shared by every scene
   Scenes/      one folder per scene
-  App/         the window, the menu, the self-test, the picture saver
+  App/         the window, the menu, the self-test, the picture saver, the list pictures
 ```
 
 ### The contract every scene follows
@@ -39,7 +39,7 @@ A scene must be able to do four things (`Core/DemoScene.swift`):
 | `draw(...)` | Draw its current state, in whichever look is asked for |
 | `classicReferenceFrame()` | Work out its 1993 picture on the processor, for the self-test |
 
-Scenes are listed in one place, `SceneCatalog.all`. The app's scene list, the keyboard shortcuts, the
+Scenes are listed in one place, `SceneCatalog.all`. The window's sidebar, the keyboard shortcuts, the
 `--scene` option and the self-test all read that list, so adding a scene is one new entry there.
 
 Most scenes are split into two files:
@@ -98,6 +98,43 @@ erased in video memory, the model replays those steps exactly, producing a pictu
 palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars
 and Bouncing Dots work this way.
 
+## The window
+
+The window (`App/SRMetalApp.swift`) is the standard Mac two-part layout, which SwiftUI calls a
+`NavigationSplitView`: a **sidebar** on the left listing every scene, and the scene picture filling the
+rest. The toolbar holds the Modern / 1993 switch and a restart button.
+
+All of these controls do the same simple thing: they change one small object, `AppModel`, which holds the
+current scene, the current look, and whether the sidebar is showing. The sidebar highlight, the toolbar
+switch, the window title, the menu and the picture all follow that object, so they cannot disagree.
+
+**Restart** asks the scene to `reset()` and zeroes the clock. The self-test checks that every scene's
+`reset()` really does go back to its first frame.
+
+**Single-key shortcuts.** L, R and the arrow keys have no Command key, so macOS would normally offer them
+first to whatever has the keyboard focus. A focused sidebar list would keep them: arrow keys move its
+selection, and letters jump to a row by name. So the app looks at every key press before the window does
+(`AppModel.installKeyShortcuts`), handles just these keys itself, and passes everything else on. The list
+never sees an arrow key, so there is nothing to fight over: Up and Down mean previous and next scene, the
+same as Left and Right, wherever the focus is.
+
+**Fullscreen.** On the way into fullscreen the sidebar is hidden, and the toolbar is set to appear only when
+the pointer is at the top of the screen. On the way out the sidebar goes back to how it was.
+
+### The pictures in the scene list
+
+No picture files are shipped. When the window opens, `App/Thumbnails.swift` draws each scene once into a
+small picture (256x192, Modern look), using the same function as the `--snapshot` option
+(`Snapshot.render`). Each scene's entry in the scene list names the step to draw (`thumbnailStep`).
+
+Getting to that step means running the scene's rules from the start, up to 1700 steps, which takes a moment.
+So the work is done on a **background thread** (a second line of work running alongside the one that draws
+the window). The window appears at once with grey placeholders, and each picture pops in when it is ready.
+
+One build detail: SwiftUI's usual way for a view to remember a value (`@State`) needs a compiler plug-in
+that only comes with the full Xcode. This project builds with the Command Line Tools alone, so such values
+live in `AppModel` instead.
+
 ## Shaders are compiled when the app starts
 
 Shader source code is kept as text inside the Swift files and compiled by the system at start-up. The usual
@@ -135,7 +172,8 @@ assembly carefully, not by running the original. Each scene's page says which ki
 ## Adding a scene
 
 1. Create `Sources/SRMetal/Scenes/<Name>/` with a model and a scene class that follows the contract.
-2. Add one entry to `SceneCatalog.all` in `Core/DemoScene.swift`, with a few checkpoints.
+2. Add one entry to `SceneCatalog.all` in `Core/DemoScene.swift`, with a few checkpoints and a
+   `thumbnailStep` (the step that makes a good small picture for the sidebar).
 3. Implement `classicReferenceFrame()`. The self-test then covers the scene automatically.
 4. Write `docs/scenes/<name>.md`: how the original did it, how this version does, what was checked, and any
    deliberate differences.

@@ -160,6 +160,26 @@ enum SelfTest {
               starfield.ticks == 0 && starfield.classicIndices() == starfieldStart
                   && StarfieldModel.fadeLevel(tick: StarfieldModel.lengthInTicks - 1) == 1)
 
+        // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.
+        if let device = MTLCreateSystemDefaultDevice() {
+            for entry in SceneCatalog.all {
+                guard let scene = try? entry.make(device, Renderer.pixelFormat) else {
+                    check("\(entry.title) restarts from its first frame", false, "could not create the scene")
+                    continue
+                }
+                let first = scene.classicReferenceFrame()
+                for _ in 0..<entry.thumbnailStep { scene.tick() }
+                let later = scene.classicReferenceFrame()
+                scene.reset()
+                let afterReset = scene.classicReferenceFrame()
+                scene.tick()
+                let fresh = try? entry.make(device, Renderer.pixelFormat)
+                fresh?.tick()
+                check("\(entry.title) restarts from its first frame",
+                      afterReset == first && later != first && scene.classicReferenceFrame() == fresh?.classicReferenceFrame())
+            }
+        }
+
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok
     }

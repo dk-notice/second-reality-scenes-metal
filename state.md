@@ -17,13 +17,19 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   to its design; only small additions (shared sine table, shared full-canvas vertex shader, generic self-test).
 - Documentation is in `README.md` and `docs/` (how the app works, how the original demo was built, and one
   page per scene comparing the original with this version). Keep it up to date: every new scene gets a page.
-- No scene-picker UI yet. Menu "Scene" has Switch Look (L) and Next/Previous Scene (right/left arrow keys).
+- Scene chooser built (2026-11-14): a sidebar lists every scene with a small picture, title and original
+  coder; the toolbar has a Modern / 1993 switch and a restart button. Keys: L look, R restart, right/down
+  next scene, left/up previous. Fullscreen hides the sidebar and toolbar. The "Scene" menu has the same actions.
+  NOT yet tried by hand: fullscreen behaviour, the toolbar switch and restart button, the sidebar button,
+  and the L / R / arrow keys in the new window (synthetic key presses are blocked by macOS, so only the
+  user can try them). Seen working in window captures: sidebar open and hidden, both looks, row highlight,
+  pictures, 4:3 letterbox, window title.
 - No music.
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png>` saves a
   960x720 picture without opening a window. The pictures in `docs/images/` were made this way (steps:
@@ -36,11 +42,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `Core/IndexedCanvas.swift` shows a picture of colour numbers through a palette, as a VGA card did. Use it for
   the classic look of scenes best re-created by replaying the original steps on the processor.
 - `Sources/SRMetal/Scenes/<Name>/` one folder per scene.
-- `Sources/SRMetal/App/` window, menu, self-test.
+- `Sources/SRMetal/App/` window, sidebar and toolbar (`SRMetalApp.swift`), sidebar pictures
+  (`Thumbnails.swift`), picture rendering (`Snapshot.swift`), self-test.
 
 ## Adding a scene
 1. Create `Sources/SRMetal/Scenes/<Name>/` with a class that conforms to `DemoScene` (`reset`, `tick`, `draw`).
-2. Add one `SceneEntry` to `SceneCatalog.all` in `Core/DemoScene.swift`.
+2. Add one `SceneEntry` to `SceneCatalog.all` in `Core/DemoScene.swift`, including a `thumbnailStep`: the
+   step drawn for the scene's small picture in the sidebar (the docs-picture step is a good choice).
 3. Write `docs/scenes/<name>.md`, add the scene to the tables in `README.md`, and make its two pictures with
    `--snapshot`.
 4. Implement `classicReferenceFrame()` (the 1993 picture worked out on the processor) and list some
@@ -57,8 +65,15 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   e.g. no white-out in Rings, seamless loop in Interference. Record each such change in the scene's notes.
 - Tables the original loaded from data files are calculated from the original's generator formulas where
   those reproduce the files exactly (true for the tunnel: verified against TUNNEL.DAT and SINIT.DAT).
-- Recommended scene picker (not built yet): a standard Mac sidebar listing scenes, hidden in fullscreen,
-  plus the existing menu and keyboard shortcuts.
+- Scene picker (built 2026-11-14, user-approved design): a standard Mac sidebar listing scenes, hidden in
+  fullscreen, plus the existing menu and keyboard shortcuts. Sidebar pictures are drawn by the app at
+  start-up on a background thread (no picture files shipped).
+- Single-key shortcuts (L, R, arrows) are caught by the app before the window sees them, so a focused
+  sidebar list cannot swallow them. Up/down mean previous/next scene, like left/right.
+- Do not use SwiftUI's `@State` (or other macro-based features such as `@Observable`): the macro plug-in
+  ships only with full Xcode and the build fails with Command Line Tools. Keep view state in `AppModel`.
+- `docs/images/window.png` is a capture of the app's window only (`screencapture -l <window id>`), never
+  the desktop.
 
 ## Dot Tunnel notes
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
@@ -178,7 +193,8 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
 
 ## Next steps
 - Next scene: 3D sine landscape (rank 4 above).
-- Build the sidebar scene picker when asked.
+- User to try by hand the scene-chooser interactions listed under Status as not yet tried.
+- Possible polish: the Dot Tunnel sidebar picture is rather dim (thin dots at small size).
 - Later: music.
 - Once all planned scenes are added: run `/code-review` over the scene code (user's plan, 2026-11-14),
   paying most attention to what the scene pages list under "What was not checked".

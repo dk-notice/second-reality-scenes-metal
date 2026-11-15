@@ -61,13 +61,23 @@ open build/SRMetal.app
 
 ### Controls
 
-| Key | Action |
-|---|---|
-| L | Switch between the modern and 1993 looks |
-| Right / Left arrow | Next / previous scene |
-| Green window button | Fullscreen |
+![The app's window: scene list on the left, the scene on the right](docs/images/window.png)
 
-The same actions are in the **Scene** menu.
+The window has a list of scenes down the left (the sidebar) and a toolbar along the top.
+
+| To do this | Use |
+|---|---|
+| Choose a scene | Click it in the sidebar, or press the Right / Down arrow (next) or Left / Up arrow (previous) |
+| Switch between the Modern and 1993 looks | The **Modern / 1993** switch in the toolbar, or press L |
+| Play the current scene again from its start | The circular-arrow button at the right of the toolbar, or press R |
+| Hide or show the sidebar | The sidebar button at the left of the toolbar, or Control-Command-S |
+| Fullscreen | The green window button, or Control-Command-F (in newer macOS versions also the Globe key with F) |
+
+In fullscreen the sidebar and toolbar get out of the way so that only the scene shows; the keys above still
+work, and moving the pointer to the top of the screen brings the toolbar back. Leaving fullscreen puts the
+sidebar back as it was.
+
+The look, restart and next/previous actions are also in the **Scene** menu.
 
 ### Options
 
@@ -78,6 +88,7 @@ Put these after `--args` when starting the app, for example
 |---|---|
 | `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield` |
 | `--look modern` or `--look classic` | Start in that look |
+| `--sidebar hidden` | Start with the scene list hidden |
 
 Two more are run directly on the program inside the app, and open no window:
 
