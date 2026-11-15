@@ -72,6 +72,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   sidebar list cannot swallow them. Up/down mean previous/next scene, like left/right.
 - Do not use SwiftUI's `@State` (or other macro-based features such as `@Observable`): the macro plug-in
   ships only with full Xcode and the build fails with Command Line Tools. Keep view state in `AppModel`.
+  Xcode 27.2 is installed on this Mac (not the active toolchain) and does build the project, but the user
+  chose to keep the project Command-Line-Tools-only (2026-11-14).
 - `docs/images/window.png` is a capture of the app's window only (`screencapture -l <window id>`), never
   the desktop.
 
