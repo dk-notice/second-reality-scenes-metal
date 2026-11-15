@@ -145,6 +145,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Modern look: rings calculated per screen pixel with soft edges; colours, scrolling and the row wobble glide
   between steps. Ring shades stay as 8 distinct bands, as in the original.
 - Circles are round in pixels, so on the 4:3 display they are slightly tall ovals, as on a real VGA monitor.
+- Code review (2026-11-14), against TECHNO/KOEB.ASM and KOEA.ASM (+ KOE.C's wobble table); see
+  docs/scenes/rings-and-interference.md. NO bugs found, no code changed. Frame-by-frame timing of the
+  original's loop (which position, wave and palette are on screen in which frame) matches the model;
+  `--motion-check` shows no jumps in either look, loop points included. Not reproduced, on purpose: the
+  original's very first frame (window at the picture's top-left corner for one frame). Tidy-ups left:
+  formulas written twice (whole numbers / decimals), wobble list rebuilt every draw, `Phase` duplicates
+  `part`, `SceneError` lives in `InterferenceScene.swift` though other scenes use it.
 
 ## Techno Bars notes
 - Source: TECHNO/KOE.C `doit1` (420 steps), `doit2` (840), `doit3` (up to 980, sliding off right near the end),

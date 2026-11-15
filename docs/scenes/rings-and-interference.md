@@ -112,6 +112,58 @@ maths per pixel; a graphics chip does it without effort.
 - **The sine table is exact.** `sine x 256, rounded toward zero` reproduces the original `SIN1024.INC`.
 - **The graphics chip matches the processor** pixel for pixel at several moments in each scene (self-test).
 
+- **Motion, by program** (`--motion-check`, added 2026-11-14): Rings over 600 steps and Interference over
+  its whole loop, modern look also half-way between steps. No jumps in either look, including the
+  Interference loop point and the point where Rings starts repeating.
+
+### What was not checked
+
+- Nothing was compared with a running original or a recording.
+- That the copy into the fourth layer always finished before the screen was drawn. The original wrote it
+  straight into the picture being shown; on a slow PC part of a frame could show the previous step's
+  layer. This version treats the copy as instant.
+- The modern look by eye in the running app.
+
+## Code review (2026-11-14)
+
+Reviewed line by line against `TECHNO/KOEB.ASM` (Rings) and `TECHNO/KOEA.ASM` `init_interference` /
+`do_interference` (Interference), with the wobble table from `TECHNO/KOE.C`, and with `/code-review`.
+**No bugs were found, and no code was changed.**
+
+**Confirmed correct, 1993 look.** For each pass of the original's loop, what is on screen during that
+frame was worked out and compared with what the model gives for the same step:
+
+- Rings: the fade value is 2 per step, used as "colour x fade / 256"; the colour rotation steps back one
+  place per step, starting at 7; the window sits at (160, 100). The palette is sent twice per frame (the
+  old one, then the new one straight after), so the new one is what is seen.
+- Interference: the window position seen in a frame is the one calculated at the end of the pass before
+  (the video card only takes a new window position at the next refresh), and the layer copy made in the
+  same frame uses that same older position, so the two agree, as in the model. The wobble wave has already
+  moved on by then, which is why the model uses "step + 1" for the wave and "step" for the positions.
+- The two palettes, the 5 and 7 places per step, the starting turn of 211, the wobble starting to grow
+  after 350 steps by one notch per 16, the wobble table's rounding towards zero, and the plain copying
+  rule (x + offset + wave - 7), which was derived again from the assembly during the review.
+- Every picture lookup stays inside the 640x400 pictures (columns 57...568, rows 36...363 at the extremes).
+
+**Confirmed correct, modern look.** Every use of the "how far to the next step" value was checked. All
+of them go through one number, step + fraction; at the Interference loop point (1024) the two paths, the
+wave and the colour rotation are whole turns on from step 0 and the wobble strength is 0, and Rings
+repeats every 8 steps once faded in, so nothing glides across a jump.
+
+**Not reproduced (noted, not changed):**
+
+- The original's very first frame. Its position variables start at zero and are only calculated at the
+  end of the first pass, so for one frame the original showed the top-left corner of the ring picture.
+  This version starts at the calculated position, which is also what lets the loop return to frame 0.
+- In the modern look the wobble grows smoothly, so it can be up to one notch (about 2 pixels) ahead of
+  the 1993 look; and its rings are measured from the exact centre, which puts ring edges about half a
+  canvas pixel outside the 1993 look's.
+
+**Possible tidy-ups** (left for a later pass): the scroll, wobble and rotation formulas are written twice
+(whole numbers and decimals); the 200-entry wobble list is rebuilt on every draw, even for Rings; the
+model's `Phase` repeats what `part` and `ticks` already say; `SceneError`, used by other scenes, is
+declared at the bottom of `InterferenceScene.swift`.
+
 ## Differences from the original, on purpose
 
 - **Two scenes instead of one sequence.**
