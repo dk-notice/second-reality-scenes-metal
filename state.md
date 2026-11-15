@@ -345,7 +345,14 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   loop; one picture per step. Kept quirks are listed in docs/scenes/glenz-vectors.md (the third bounce
   sticks for four frames because of 16-bit overflow; blue faces' red is a leftover register; a face is
   unlit on its first frame; the plate does not fade under the glenz).
-- Not verified: against a running original or a recording; the music timings; the modern look in motion.
+- Code review 2026-11-14: script and plate re-read against MAIN.C, no difference. One modern-look bug
+  fixed: the plate snapped up 0.94 of a row on the step it settled (it switched from the fall's exact
+  position to the 1993 look's whole row); it now rests at 47 15/16. New self-tests: modern corners within
+  3 pixels of the 1993 corners at every step and every glide unbroken (so nothing glides across a phase
+  change), and the plate never moves faster than it falls. The one-step dimming at step 1070 is the
+  original's (`lightshift` becomes 10 when bscale 116 passes xscale 115), in both looks.
+- Not verified: against a running original or a recording; the music timings; how the modern look's
+  colours look in motion (positions are now checked by program).
 - For the two remaining 3D scenes (ships, city; VISU engine):
   - `tools/glenz_reference.py` shows how to reuse the interpreter: `import plasmacube_reference as pc`,
     replace `pc.compile_instruction` / `pc.parse_operand` with wrappers that add instructions, and feed

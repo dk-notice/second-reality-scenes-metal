@@ -361,6 +361,63 @@ enum SelfTest {
         check("Glenz is black at both ends and loops after \(GlenzModel.lengthInTicks) steps",
               glenz.ticks == 0 && !glenzStart.contains { $0 != 0 } && !glenzEnd.contains { $0 != 0 }
                   && glenz.classicReferenceFrame() == glenzStart)
+        // Glenz, modern look in motion, over one whole loop and into the next.
+        //  1. At the start of every step the modern look's corners are where the 1993 look's are (the 1993
+        //     ones are rounded to whole pixels and use a squash rounded to whole steps, so "within 3 pixels").
+        //  2. Where one step's glide ends the next one's begins. With 1, that means every glide runs from
+        //     the 1993 position at one step to the 1993 position at the next, and never across anything else.
+        //  3. The plate never moves further in a step than it is falling (it used to snap up by most of a
+        //     row on the step it settled).
+        do {
+            var g = GlenzModel()
+            var worstOffset: Float = 0, worstBreak: Float = 0, worstPlate: Float = 0
+            var compared = 0
+            var problems: [String] = []
+            var plateProblems: [String] = []
+            func note(_ text: String, in list: inout [String]) { if list.count < 5 { list.append(text) } }
+            for step in 1...(GlenzModel.lengthInTicks + 250) {
+                let endOfGlide = [false, true].map { g.modernCorners(second: $0, alpha: 1) }
+                let plateEnd = g.modernPlateRow(alpha: 1)
+                let speedBefore = abs(g.plateSpeed)
+                g.tick()
+                if let end = plateEnd, let start = g.modernPlateRow(alpha: 0), abs(end - start) > 1e-4 {
+                    note("plate breaks at step \(step)", in: &plateProblems)
+                }
+                if let start = g.modernPlateRow(alpha: 0), let end = g.modernPlateRow(alpha: 1), !g.mainStarted {
+                    let moved = abs(end - start)
+                    worstPlate = max(worstPlate, moved)
+                    // The fall's speed is in sixteenths of a row per step and changes by one a step.
+                    if moved > Float(max(speedBefore, abs(g.plateSpeed)) + 1) / 16 {
+                        note("plate moves \(moved) rows in step \(step)", in: &plateProblems)
+                    }
+                }
+                for second in [false, true] {
+                    let drawn = g.mainStarted && g.script.frame >= 1
+                        && (second ? g.script.frame > 800 && g.script.bscale > 4 : g.script.xscale > 4)
+                    let now = g.modernCorners(second: second, alpha: 0)
+                    if drawn != (now != nil) { note("step \(step): drawn in one look only", in: &problems) }
+                    guard let now else { continue }
+                    let classic = g.screenCorners(second: second)
+                    for (a, b) in zip(now, classic) {
+                        worstOffset = max(worstOffset, simd_length(a - SIMD2(Float(b.x), Float(b.y))))
+                    }
+                    compared += 1
+                    if let end = endOfGlide[second ? 1 : 0] {
+                        let gap = zip(now, end).map { simd_length($0 - $1) }.max() ?? 0
+                        worstBreak = max(worstBreak, gap)
+                        if gap > 0.1 { note("step \(step): glide breaks by \(gap) pixels", in: &problems) }
+                    }
+                }
+            }
+            check("Glenz modern look follows the 1993 corners and glides without a break (\(compared) glenz-steps)",
+                  problems.isEmpty && worstOffset < 3 && compared > 3000,
+                  problems.isEmpty
+                      ? "furthest from the 1993 corner \(String(format: "%.2f", worstOffset)) pixels, largest break \(String(format: "%.4f", worstBreak))"
+                      : problems.joined(separator: "; "))
+            check("Glenz modern plate never moves faster than it is falling",
+                  plateProblems.isEmpty && worstPlate > 1,
+                  plateProblems.isEmpty ? "largest move in a step \(String(format: "%.2f", worstPlate)) rows" : plateProblems.joined(separator: "; "))
+        }
 
 
         // The VISU 3D engine by itself (the Ships Fly-by and 3D City scenes, further down, are built on it).
