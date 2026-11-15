@@ -636,6 +636,51 @@ enum SelfTest {
                 check("VISU modern look glides between animation frames",
                       moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
             }
+            // The recording scales the big ship down as it leaves, and the original's light dims
+            // with that scale. The modern look must do the same (it once normalised the scale away:
+            // +4.5 here, against +0.7 now).
+            if let test = VisuTestCases.all.first(where: { $0.name == "ships-0100" }) {
+                let lean = try VisuTestCommand.brightnessLean(test.kind)
+                check("VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)",
+                      lean.pixels > 50_000 && abs(lean.lean) < 2.5,
+                      String(format: "modern is %+.2f of 255 brighter on average over %d ship pixels", lean.lean, lean.pixels))
+            }
+
+            // Both whole animations, every frame, through the 1993 replay: nothing the original
+            // would have crashed on, and one engine drawing every frame in turn gives exactly the
+            // pictures a fresh engine gives for each frame alone (so what the engine carries over
+            // from picture to picture, see docs/visu-engine.md "Kept quirks", changes no pixel).
+            var loopFaults = 0, carriedOver: [String] = [], framesDrawn = 0
+            for scene in ["U2A", "U2E"] {
+                let world = try VisuWorld(name: scene)
+                if scene == "U2E" { world.distanceRule = VisuWorld.cityOrdering }
+                let one = VisuEngine()
+                VisuWorld.setSceneWindow(one)
+                while world.advance() {
+                    one.clear(to: 0)
+                    world.draw(with: one)
+                    let fresh = VisuEngine()
+                    VisuWorld.setSceneWindow(fresh)
+                    world.draw(with: fresh)
+                    loopFaults += fresh.faults
+                    framesDrawn += 1
+                    if fresh.pixels != one.pixels && carriedOver.count < 5 { carriedOver.append("\(scene) frame \(world.frame)") }
+                }
+                loopFaults += one.faults
+            }
+            check("VISU replay of both whole animations meets nothing the original would have crashed on",
+                  framesDrawn == 2322 && loopFaults == 0, "\(framesDrawn) frames, \(loopFaults) faults")
+            check("VISU replay: what the engine carries from picture to picture changes no pixel in either animation",
+                  framesDrawn == 2322 && carriedOver.isEmpty, carriedOver.joined(separator: ", "))
+
+            // Damaged data files must be turned away with an error, or load and draw, but never
+            // crash; and the engine must hold a polygon that clipping would grow without end.
+            let damaged = try VisuDamagedFiles.run()
+            check("VISU loader turns damaged data files away instead of crashing",
+                  damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty,
+                  damaged.wronglyAccepted.isEmpty ? damaged.summary : "not turned away: \(damaged.wronglyAccepted.joined(separator: ", "))")
+            check("VISU engine stops a scribbled polygon growing past its record while being clipped",
+                  damaged.scribblesStopped > 0, "\(damaged.scribblesStopped) corners refused")
         } catch {
             check("VISU engine test cases could be set up", false, "\(error)")
         }
@@ -821,7 +866,7 @@ enum SelfTest {
                 }
             }
             check("City pictures match the original assembly's at \(expected.count) animation frames (over colour 255)",
-                  expected.count == 31 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
+                  expected.count == 45 && differ.isEmpty, differ.isEmpty ? "" : "frames \(differ) differ")
             check("City palette is the original file's with U2E.C's four changes; the screen starts black",
                   crc32(city.palette) == 2_445_111_768, "checksum \(crc32(city.palette))")
             check("City draws ground plates first always, and the ship last in frames 901...1099",
@@ -862,6 +907,35 @@ enum SelfTest {
                   String(format: "average difference at most %.2f of 255", worst))
         } catch {
             check("3D City scene could be set up", false, "\(error)")
+        }
+
+        // The sidebar builds and steps scenes on a background thread (for its small pictures) while
+        // the main scene runs. The two 3D scenes read files and share the engine's tables, so: built
+        // and stepped on four threads at once, they must draw exactly what one alone draws.
+        do {
+            func shipsPicture() throws -> [UInt8] {
+                let ships = try ShipsFlybyModel()
+                for _ in 0..<350 { ships.tick() }
+                return ships.screen
+            }
+            func cityPicture() throws -> [UInt8] {
+                let city = try City3DModel()
+                for _ in 0..<700 { city.tick() }
+                return city.screen
+            }
+            let alone = [try shipsPicture(), try cityPicture()]
+            let lock = NSLock()
+            var together = [[UInt8]?](repeating: nil, count: 4)
+            DispatchQueue.concurrentPerform(iterations: 4) { i in
+                let picture = i % 2 == 0 ? try? shipsPicture() : try? cityPicture()
+                lock.lock()
+                together[i] = picture
+                lock.unlock()
+            }
+            check("Ships and City built and stepped on four threads at once draw what one alone draws",
+                  (0..<4).allSatisfy { together[$0] == alone[$0 % 2] } && alone[0].contains { $0 != 0 })
+        } catch {
+            check("Ships and City could be built for the threads check", false, "\(error)")
         }
 
         // Restart (the toolbar button) relies on every scene's `reset()` truly going back to the first frame.

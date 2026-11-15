@@ -24,10 +24,30 @@ enum VisuTestCommand {
         }
         if arguments[flag + 1] == "compare" {
             // How close the modern picture is to the 1993 one, case by case (see the self-test).
+            // A case that cannot be drawn (a missing data file, say) is reported, not skipped.
+            var allDrawn = true
             for test in VisuTestCases.all {
-                if let d = try? difference(test.kind) { print(String(format: "%-26@ %.2f", test.name, d)) }
+                do {
+                    print(String(format: "%-26@ %.2f", test.name, try difference(test.kind)))
+                } catch {
+                    print("Could not draw \(test.name): \(error)")
+                    allDrawn = false
+                }
             }
-            return true
+            return allDrawn
+        }
+        if arguments[flag + 1] == "damaged" {
+            // Feeds the loader deliberately damaged data files (see `VisuDamagedFiles`).
+            do {
+                let only = arguments.count > flag + 2 ? arguments[flag + 2] : nil
+                let result = try VisuDamagedFiles.run(only: only) { print($0) }
+                print(result.summary)
+                for name in result.wronglyAccepted { print("NOT turned away: \(name)") }
+                return result.wronglyAccepted.isEmpty
+            } catch {
+                print("Could not run: \(error)")
+                return false
+            }
         }
         if arguments[flag + 1] == "list" {
             for test in VisuTestCases.all { print(test.name) }
@@ -65,7 +85,22 @@ enum VisuTestCommand {
     private static func usage() {
         print("Usage: SRMetal --visu-test list")
         print("       SRMetal --visu-test compare")
+        print("       SRMetal --visu-test damaged [part of a case name]")
         print("       SRMetal --visu-test <case-name> <modern|classic> <output.png> [blend 0...1]")
+    }
+
+    /// How much brighter (+) or darker (-) the modern picture of a test case is than the 1993
+    /// one, on average over the pixels where the 1993 picture has something drawn (green channel,
+    /// 0...255). Unlike `difference`, opposite errors cancel here, so what is left is a lean one
+    /// way: lighting worked out differently, not edges or banding.
+    static func brightnessLean(_ kind: VisuTestCases.Kind) throws -> (lean: Double, pixels: Int) {
+        let a = try classic(kind), b = try modern(kind, blend: 0)
+        var count = 0, total = 0
+        for i in stride(from: 0, to: a.count, by: 4) where a[i] != 0 || a[i + 1] != 0 || a[i + 2] != 0 {
+            count += 1
+            total += Int(b[i + 1]) - Int(a[i + 1])
+        }
+        return (Double(total) / Double(max(count, 1)), count)
     }
 
     /// For a run of frames, show its first frame.

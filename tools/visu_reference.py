@@ -48,7 +48,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import x86interp as pc
 
-ORIGINAL = os.path.join(HERE, '..', '..', 'secondreality')
+# The original source sits next to this project. From a git worktree that relative path does not
+# reach it, so SR_ORIGINAL may name the folder instead.
+ORIGINAL = os.environ.get('SR_ORIGINAL') or os.path.join(HERE, '..', '..', 'secondreality')
 SRC = os.path.join(ORIGINAL, 'VISU')
 DATA_DIR = os.path.join(HERE, '..', 'Data', 'Visu')        # the app's copies of the scene files
 M, R, SG, F, STACK = pc.M, pc.R, pc.SG, pc.F, pc.STACK
@@ -768,6 +770,19 @@ obj('cityship-0', 'U2E', 28, 7168, (10000, 20000, 0), (0, 0, 4000))
 obj('cityship-near', 'U2E', 28, 7168, (10000, 20000, 0), (-300, 200, 1500))
 obj('ground-0', 'U2E', 15, 7168, (44000, 3000, 0), (0, 3000, 30000))
 obj('ground-under', 'U2E', 15, 7168, (48000, 3000, 0), (0, 2000, 12000))
+
+# Added by the code review of 2026-11-14. Playing both whole animations through the Swift replay with
+# counters showed what the cases above never reach although the scenes do: five engine paths (a Gouraud
+# polygon cut by the top, bottom and right edges at once; a flat one cut by the near plane and the
+# bottom edge; an edge list that ends on its right side; an object dropped for being off the left
+# side only; the left-over clip flags sending a polygon through three more cutters) and 32 pairs of
+# object and order list. These city frames are the fewest that reach all of them.
+for f in (97, 296, 417, 424, 498, 1129, 1176, 1242, 1247, 1250, 1271, 1285, 1301, 1571):
+    case('city-%04d' % f, 'frame', 'U2E', f)
+# The same for the ships: the big ship sets the left-over clip flags as it enters (frame 22), and
+# only because of them does a fighter's polygon get the left and right cutters as extras at frame
+# 261. This run draws exactly those two frames with one engine.
+case('ships-run-b', 'run', 'U2A', 22, 261, 239)
 
 WINDOWS = [WINDOW, (0, 319, 0, 199, 256, 1000000000)]
 

@@ -64,6 +64,9 @@ final class VisuMesh {
     let polygons: [VisuPolygon]
 
     var vertexCount: Int { x.count }
+    /// The most corners a polygon may have: the engine's polygon records have room for 16
+    /// (the two scenes' data goes up to 12).
+    static let mostCorners = 16
     /// ORD0's vertex: the object's centre point, used to order whole objects by distance.
     var centreVertex: Int { orders[0][1] }
 
@@ -85,23 +88,37 @@ final class VisuMesh {
             let body = at + 8
             guard body + length <= bytes.count else { throw VisuError.badFile(file, "block \(tag) runs past the end") }
             if tag == "END " { break }
+            // Every count below comes from the file, so each is checked against the room its
+            // block really has before anything is read by it.
+            func need(_ bytes: Int, _ what: String) throws {
+                guard bytes <= length else { throw VisuError.badFile(file, "block \(tag) is too short for \(what)") }
+            }
             switch tag {
             case "VERS":
+                try need(2, "a version number")
                 guard b.u16(body) == 0x100 else { throw VisuError.badFile(file, "version is not 1.00") }
             case "NAME":
-                var end = body
-                while bytes[end] != 0 { end += 1 }
+                guard let end = bytes[body..<body + length].firstIndex(of: 0) else {
+                    throw VisuError.badFile(file, "the name has no end")
+                }
                 name = String(decoding: bytes[body..<end], as: UTF8.self)
             case "VERT":
+                try need(4, "a count")
                 let count = b.u16(body)
+                try need(4 + count * 16, "\(count) corners")
                 for i in 0..<count {
                     let p = body + 4 + i * 16
                     x.append(b.s32(p)); y.append(b.s32(p + 4)); z.append(b.s32(p + 8))
                     vertexNormal.append(b.u16(p + 12))
                 }
             case "NORM":
+                try need(4, "two counts")
                 let count = b.u16(body)
                 faceNormalCount = b.u16(body + 2)
+                try need(4 + count * 8, "\(count) normals")
+                guard faceNormalCount <= count else {
+                    throw VisuError.badFile(file, "\(faceNormalCount) face normals among \(count) normals")
+                }
                 for i in 0..<count {
                     let p = body + 4 + i * 8
                     normals.append((b.s16(p), b.s16(p + 2), b.s16(p + 4)))
@@ -109,6 +126,7 @@ final class VisuMesh {
             case "POLY":
                 polygonData = Array(bytes[body..<body + length])
             case "ORD0", "ORDE":
+                try need(4, "a length and a corner number")
                 let list = (0..<length / 2).map { b.u16(body + $0 * 2) }
                 if tag == "ORD0" { first = list } else { others.append(list) }
             default:
@@ -118,6 +136,32 @@ final class VisuMesh {
         }
         guard let first, !x.isEmpty, !polygonData.isEmpty else { throw VisuError.badFile(file, "a block is missing") }
 
+        // The order lists point into the corners and into the polygon block, and the polygons
+        // point at corners and normals. The engine follows all of these without looking, as the
+        // original did, so every one of them is checked here, once.
+        let p = VisuBytes(bytes: polygonData)
+        var checked = Set<Int>()
+        for list in [first] + others {
+            guard list[1] < x.count else { throw VisuError.badFile(file, "an order list names corner \(list[1]) of \(x.count)") }
+            for offset in list.dropFirst(2) {
+                if offset == 0 { break }
+                if !checked.insert(offset).inserted { continue }
+                guard offset + 6 <= polygonData.count else {
+                    throw VisuError.badFile(file, "an order list points outside the polygon block (\(offset))")
+                }
+                let sides = p.u8(offset)
+                guard sides >= 3, sides <= VisuMesh.mostCorners, offset + 6 + sides * 2 <= polygonData.count else {
+                    throw VisuError.badFile(file, "a polygon with \(sides) corners at \(offset)")
+                }
+                guard p.u16(offset + 4) < normals.count else {
+                    throw VisuError.badFile(file, "a polygon names normal \(p.u16(offset + 4)) of \(normals.count)")
+                }
+                for i in 0..<sides where p.u16(offset + 6 + i * 2) >= x.count {
+                    throw VisuError.badFile(file, "a polygon names corner \(p.u16(offset + 6 + i * 2)) of \(x.count)")
+                }
+            }
+        }
+
         self.name = name
         self.x = x; self.y = y; self.z = z
         self.vertexNormal = vertexNormal
@@ -126,7 +170,6 @@ final class VisuMesh {
         self.polygonData = polygonData
         self.orders = [first] + others
 
-        let p = VisuBytes(bytes: polygonData)
         var polygons: [VisuPolygon] = []
         for offset in first.dropFirst(2) {
             if offset == 0 { break }

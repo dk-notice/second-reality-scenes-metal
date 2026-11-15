@@ -45,9 +45,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   checks MOTION by program (added with the 3D City): draws every step of the loop (modern look also
   half-way between steps), compares neighbouring pictures, lists jumps and one-picture-only pixels, and
   times the scene's steps. The city's whole loop takes about 8 seconds.
-- `build/SRMetal.app/Contents/MacOS/SRMetal --visu-test list` names the 3D engine's 109 test cases;
+- `build/SRMetal.app/Contents/MacOS/SRMetal --visu-test list` names the 3D engine's 124 test cases;
   `--visu-test <case> <modern|classic> <file.png> [blend]` saves a 960x720 picture of one;
-  `--visu-test compare` prints how far the modern look is from the 1993 one for each case.
+  `--visu-test compare` prints how far the modern look is from the 1993 one for each case;
+  `--visu-test damaged` feeds the loader deliberately damaged data files (none may crash it).
 - `./build.sh` also copies `Data/Visu/` (original 3D models and animation) into the app's `Resources/Visu/`.
 - Needs only Apple's Command Line Tools (no Xcode). Shaders are compiled when the app starts.
 
@@ -470,9 +471,10 @@ Full write-up: `docs/visu-engine.md` (formats byte by byte, the pipeline, what w
   unshaded, 8-shade or textured polygons exist in the data (ported, untested).
 - All three tables are calculated from DOSIN.C / DOTAN.C / DOFILL.C and equal the files.
 - Classic: `VisuEngine` (one object to pixels) + `VisuWorld` (scene files, animation stream, object order),
-  ported step for step. Verified against `tools/visu_reference.py`, which runs the assembly as text: 109 test
-  pictures identical (15 ships frames, 31 city frames, 4 multi-frame runs, 59 single-object and clipping
-  cases), no faults. The C parts were ported by reading (Python and Swift, same author).
+  ported step for step. Verified against `tools/visu_reference.py`, which runs the assembly as text: 124 test
+  pictures identical (15 ships frames, 45 city frames, 5 multi-frame runs, 59 single-object and clipping
+  cases; 15 of the 124 were added by the code review), no faults. The C parts were ported by reading
+  (Python and Swift, same author) and read a third time, independently, in the review.
 - Modern: `VisuModernRenderer`: triangles into an off-screen picture with a depth buffer and 4 samples per
   pixel, composited over the scene's background. Depth buffer BETWEEN objects; the original's order lists
   WITHIN an object (tried a plain depth buffer first: the big ship's hull panels half vanished, because they
@@ -489,6 +491,39 @@ Full write-up: `docs/visu-engine.md` (formats byte by byte, the pipeline, what w
   quietly depend on an earlier case (this caught the camera matrix not being zeroed).
 - Not verified: against a running original or a recording; the scenes' starts, ends, fades and music timing
   (read from U2A.C / U2E.C only); the modern look in motion.
+- CODE REVIEW (2026-11-14; full account in docs/visu-engine.md, "Code review"). Every finding was
+  demonstrated before it was changed.
+  - Fixed: the loader trusted counts and positions in the data files (14 kinds of damage each shown to
+    crash the app); now every one is checked and a bad file gives `VisuError.badFile` with the reason. A
+    damaged animation just ends where the damage is.
+  - Fixed: clipping could grow a polygon past the engine's polygon records (a 16-corner zig-zag cut into
+    more than 40 corners, found by a directed search, kept as `VisuDamagedFiles.worstScribble`). Growth
+    stops at 32 corners (`VisuEngine.mostClippedCorners`) and counts as a fault. Real polygons stay at 16
+    or under.
+  - Fixed, modern look: the shader normalised the turned normal; the original does not, and the
+    recordings SCALE some objects (the ships' big ship shrinks to about a fifth; city building
+    "talojota" is stretched 2x in depth), so those were lit differently from the 1993 look (ships
+    frame 100: modern 4.5 of 255 brighter on average, now 0.7).
+  - Fixed: `--visu-test compare` skipped cases it could not draw without a word.
+  - Coverage: both whole animations were played with temporary counters in the engine. They reach five
+    engine paths and 32 object/order-list pairs the 109 cases did not; 14 city frames and a two-frame
+    ships run (22 and 261, one engine) now cover all of them and match the original assembly.
+  - New self-test checks (6; the whole self-test has 206 now): both whole animations with no
+    faults; one engine drawing every frame gives the same pictures as a fresh engine per frame (so the
+    carried-over state changes no pixel in either animation); 2,466 damaged files and 401 scribbled
+    polygons; the light on the scaled big ship; both scenes built and stepped on four threads at once.
+  - Confirmed by independent reading: VISU.C, the animation reader, the sort and U2E.C's ordering rules
+    (its frame counter counts in twos); `vid_init(3)` ("oversample x 4" in U2A.C) is the plain mode.
+    A missing data file gives a clear message in the headless tools; the data is found from four
+    different ways of starting the program.
+  - Measured, no change: the modern picture sits about a third of a 1993 pixel lower than the 1993 one
+    (the original filler steps its edges before each row).
+  - Not demonstrated, left alone: the modern renderer's shared palette buffer (a fade could be one step
+    early for one frame if the graphics chip ran behind); the mesh cache filed by object identity; the
+    replacement background's band edges at small sizes; a blend value outside 0...1 on the command line.
+  - Tidy-ups left for a later `/simplify` pass: listed at the end of docs/visu-engine.md.
+  - `tools/visu_reference.py` takes `SR_ORIGINAL=<folder of the original source>` (needed in a worktree).
+  - The self-test takes about 14 s now (was about 10).
 
 ## How to build the Ships and City scenes with this
 Read `docs/visu-engine.md` first ("The two scenes" table has each scene's parameters). Then, per scene:
@@ -570,6 +605,11 @@ Full write-up: `docs/scenes/ships-flyby.md`.
   2.8/255 of each other at 5 steps; motion of the whole loop by program (below).
 - Not checked: a running original or recording; U2A.C's start/end as the demo showed them; the modern
   look by eye in the running app (the user is the first to watch it move).
+- Code review (2026-11-14, see docs/scenes/ships-flyby.md): U2A.C read again independently, no
+  difference found. One visible fix, in the engine: the recording SCALES the big ship down to about a
+  fifth as it leaves, the original's light weakens with that scale (the ship greys), and the modern
+  look ignored it. Now both looks do it; a new kept quirk, "the big ship greys as it shrinks".
+  Motion check re-run: 1993 report identical, modern still no jumps.
 - MOTION CHECK (first time in this project): every step of the loop was rendered in both looks, the
   modern look also half-way between steps (1,776 pictures), and neighbours compared by a small program.
   Result: no jumps in either look (no step's change stands out from its neighbours, including the pause
@@ -617,7 +657,7 @@ Full write-up: `docs/scenes/city-3d.md`.
   `darkSteps` = 35 black; loop at 3639 (52 s). Those three constants are the ones to change by eye.
   The opening frame is a white wall filling the band, which slides away (the original's hand-over from a
   white screen); the fade-in keeps it dim while it fills the picture, so there is no full white screen.
-- Classic look: every animation frame drawn once, in order, by one engine. Matches all 31
+- Classic look: every animation frame drawn once, in order, by one engine. Matches all 45
   assembly-verified city frames (self-test), so the engine's carried-over state changes nothing there.
 - SPEED of the 1993 replay, measured: 0.25 ms a step on average, about 1 ms at worst (budget 14.3 ms).
   Nothing needed optimising. The self-test measures it every run. Whole self-test: about 10 s.
@@ -642,6 +682,11 @@ Full write-up: `docs/scenes/city-3d.md`.
   the modern look by eye in the running app.
 - Trap met while testing: "ship drawn last" is not literally last (see above); a check that expected the
   ship at the end of the order failed in 17 frames for that reason.
+- Code review (2026-11-14, see docs/scenes/city-3d.md): no fault found in the scene's own files. U2E.C
+  read again independently (ordering rules, frame counter, palette, pace, skipped first turn): no
+  difference. The scene now matches 45 assembly-verified frames (31 before). The engine's two fixes
+  apply here too (damaged files; the stretched building "talojota" is now lit in the modern look as
+  in the 1993 one). Motion check re-run: 1993 report identical; modern 5 jumps and 137 spikes, as before.
 
 ## Planned scenes (user's list, 2026-11-14), easiest first
 Only the purely calculated scenes and the 3D scenes will be done; the picture-based scenes, scrollers and
