@@ -35,7 +35,8 @@ The interesting part is the comparison. The original is full of tricks for makin
 A modern graphics chip needs none of them, so each scene's documentation explains what the trick was and
 what replaced it.
 
-There is no music yet.
+There is no music playing yet. The groundwork is in: the demo's two original songs and libopenmpt, the
+tracker-music library that will play them, built into the program (see [ThirdParty/README.md](ThirdParty/README.md)).
 
 ## Scenes
 
@@ -68,7 +69,8 @@ is likewise the original's models and recorded flight, with no picture.
 ## Build and run
 
 You need a Mac with macOS 15 or later and Apple's Command Line Tools (`xcode-select --install`).
-The full Xcode app is not needed, and there are no other dependencies.
+The full Xcode app is not needed, and nothing else needs installing: the one outside library, libopenmpt
+(for the music), is included as source code and built by `build.sh`.
 
 ```bash
 ./build.sh
@@ -142,6 +144,13 @@ checks a scene's motion: it draws every step of the scene's loop (the Modern loo
 steps), compares each picture with its neighbours, and lists jumps and pixels that show for one picture
 only. It also reports how long one step takes. (`classic` checks the 1993 look.)
 
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --music-info
+```
+
+loads the demo's two songs and describes them, without playing anything. Add `--write <folder>` to also
+save them unscrambled as standard S3M files (see [Data/Music/README.md](Data/Music/README.md)).
+
 ## Documentation
 
 - [docs/how-it-works.md](docs/how-it-works.md): how the app is put together, the two looks, the self-test,
@@ -202,7 +211,13 @@ anniversary. Everything here was worked out from that release:
 No code from the original or from those ports is included here. The scenes were re-implemented from the
 original's logic, and tables the original shipped as data files are calculated instead.
 
+The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
+Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see
+[ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside code in the program.
+
 ## Licence
 
 This project is released into the public domain under the [Unlicense](UNLICENSE), the same terms Future Crew
 chose for the original. You may copy, change and use it for any purpose, with no conditions and no warranty.
+The exception is `ThirdParty/libopenmpt`, which keeps its own BSD licence (its copyright notice must be kept
+with any copy of the program).

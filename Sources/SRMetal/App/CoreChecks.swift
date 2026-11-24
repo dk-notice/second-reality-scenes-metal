@@ -18,6 +18,7 @@ enum CoreChecks {
         commandLine(check)
         math3D(check)
         smoothTriangleGeometry(check)
+        music(check)
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             check("Core: Metal device available", false)
@@ -29,6 +30,55 @@ enum CoreChecks {
             try snapshots(check)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")
+        }
+    }
+
+    // MARK: - The music (libopenmpt and the demo's songs; added 2026-11-24)
+
+    private static func music(_ check: (String, Bool, String) -> Void) {
+        // The song files as shipped in the original source, and unscrambled. The unscrambled MUSIC0
+        // matched a widely circulated unscrambled copy byte for byte, except that copy's edited order
+        // list (checked 2026-11-24); these numbers pin that result down.
+        do {
+            let originals = try Song.allCases.map { SelfTest.crc32(try MusicData.original($0)) }
+            check("Music: the song files are the originals", originals == [2_761_269_977, 607_687_703], "\(originals)")
+            let unscrambled = try Song.allCases.map { SelfTest.crc32(try MusicData.unscrambled($0)) }
+            check("Music: both songs unscramble to standard S3M files, every pattern 64 rows",
+                  unscrambled == [1_538_452_661, 2_143_406_352], "\(unscrambled)")
+        } catch {
+            check("Music: the song files can be read and unscrambled", false, "\(error)")
+            return
+        }
+        // A damaged file must be refused, not crash. The unscrambler can only notice damage that
+        // breaks a pattern's structure (a changed note still unscrambles to a valid pattern), so
+        // the damage here is a pattern block whose length is one byte too long.
+        if var damaged = try? MusicData.original(.first) {
+            let pointers = 0x60 + Int(damaged[0x20]) + Int(damaged[0x21]) << 8 + 2 * (Int(damaged[0x22]) + Int(damaged[0x23]) << 8)
+            let pattern = (Int(damaged[pointers]) | Int(damaged[pointers + 1]) << 8) * 16
+            damaged[pattern] &+= 1
+            let refused = (try? MusicData.unscramble(damaged, name: "damaged")) == nil
+            check("Music: a song with a pattern block of the wrong length is refused", refused, "")
+        }
+        // libopenmpt, built into the program, opens both songs and sees what the demo relied on.
+        do {
+            let first = try TrackerSong(.first), second = try TrackerSong(.second)
+            check("Music: libopenmpt is built in", !TrackerSong.libraryVersion.isEmpty, TrackerSong.libraryVersion)
+            check("Music: libopenmpt reads both songs (8 channels; 78 and 99 orders)",
+                  [first.channels, second.channels, first.orders, second.orders] == [8, 8, 78, 99],
+                  "\([first.channels, second.channels, first.orders, second.orders])")
+            check("Music: the demo's \"+++\" and \"---\" order-list markers are visible",
+                  first.orderList.contains(TrackerSong.separatorMarker) && first.orderList.contains(TrackerSong.endMarker)
+                      && second.orderList.contains(TrackerSong.separatorMarker), "")
+            // Rendering is repeatable (a fresh song gives the same sound twice) and not silent.
+            var a = [Float](), b = [Float]()
+            let other = try TrackerSong(.first)
+            first.render(into: &a, frames: 44_100, sampleRate: 44_100)
+            other.render(into: &b, frames: 44_100, sampleRate: 44_100)
+            let loudest = a.map(abs).max() ?? 0
+            check("Music: the first second of MUSIC0 renders the same twice, and is not silent",
+                  a == b && loudest > 0.01, "loudest \(loudest)")
+        } catch {
+            check("Music: libopenmpt opens both songs", false, "\(error)")
         }
     }
 

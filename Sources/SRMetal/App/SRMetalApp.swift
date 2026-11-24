@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Entry point. `--selftest` runs the checks and exits; `--snapshot` saves a picture and exits;
 /// `--visu-test` saves a picture of a 3D engine test case and exits; `--motion-check` compares a
-/// scene's neighbouring pictures for jumps and flicker and exits; otherwise the app starts.
+/// scene's neighbouring pictures for jumps and flicker and exits; `--music-info` describes the
+/// demo's two songs and exits; otherwise the app starts.
 @main
 enum Main {
     static func main() {
@@ -18,6 +19,9 @@ enum Main {
         }
         if CommandLine.arguments.contains("--motion-check") {
             exit(MotionCheck.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
+        if CommandLine.arguments.contains("--music-info") {
+            exit(MusicInfoCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
         // A mistyped option must not quietly open the first scene (or, for a mistyped command such
         // as `--selftests`, quietly open a window): say what is wrong and stop.
@@ -43,7 +47,7 @@ struct StartupOptions {
     static var usage: String {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
-        Commands: --selftest, --snapshot, --motion-check, --visu-test (run one without arguments for its usage)
+        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info (run one without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", "))
         """
     }

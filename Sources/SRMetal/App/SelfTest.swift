@@ -974,7 +974,7 @@ enum SelfTest {
     }
 
     /// A standard checksum (CRC-32): a single number that changes if any byte of the data changes.
-    private static func crc32(_ bytes: [UInt8]) -> UInt32 {
+    static func crc32(_ bytes: [UInt8]) -> UInt32 {
         var crc: UInt32 = 0xFFFF_FFFF
         for byte in bytes {
             crc ^= UInt32(byte)

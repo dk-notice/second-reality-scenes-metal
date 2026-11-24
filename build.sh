@@ -8,6 +8,29 @@ APP="build/SRMetal.app"
 # and there is then no app at all, rather than an old one that looks like the result of this build.
 rm -rf "$APP"
 
+# libopenmpt, the tracker-music library (ThirdParty/libopenmpt; see ThirdParty/README.md), built
+# as a STATIC library with every optional format switched off, so it ends up inside the program
+# and needs nothing but macOS. It is built in a copy under build/, so the source folder stays as
+# released. make only recompiles what changed: the first build takes about 15 seconds, later
+# ones almost nothing. A different libopenmpt version wipes the copy and starts again.
+LIBOPENMPT=build/libopenmpt/src
+if ! cmp -s ThirdParty/libopenmpt/libopenmpt/libopenmpt_version.h "$LIBOPENMPT/libopenmpt/libopenmpt_version.h"; then
+    rm -rf build/libopenmpt
+fi
+mkdir -p "$LIBOPENMPT"
+rsync -a ThirdParty/libopenmpt/ "$LIBOPENMPT/"
+mkdir -p "$LIBOPENMPT/bin"
+if ! make -C "$LIBOPENMPT" -j"$(sysctl -n hw.ncpu)" CONFIG=macos MACOSX_VERSION_MIN=15.0 \
+        STATIC_LIB=1 SHARED_LIB=0 EXAMPLES=0 OPENMPT123=0 TEST=0 \
+        NO_ZLIB=1 NO_MPG123=1 NO_OGG=1 NO_VORBIS=1 NO_VORBISFILE=1 \
+        NO_MINIZ=1 NO_MINIMP3=1 NO_STBVORBIS=1 \
+        NO_PORTAUDIO=1 NO_PORTAUDIOCPP=1 NO_SDL2=1 NO_FLAC=1 NO_SNDFILE=1 \
+        > build/libopenmpt/make.log 2>&1; then
+    tail -20 build/libopenmpt/make.log
+    echo "libopenmpt failed to build (full log: build/libopenmpt/make.log)"
+    exit 1
+fi
+
 swift build -c release
 
 mkdir -p "$APP/Contents/MacOS"
@@ -35,6 +58,10 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
 </dict>
 </plist>
 EOF
+
+# The original tracker songs (scrambled as shipped; the program unscrambles them): see Data/Music/README.md.
+mkdir -p "$APP/Contents/Resources/Music"
+cp Data/Music/MUSIC*.S3M "$APP/Contents/Resources/Music/"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 codesign --force --sign - "$APP" >/dev/null

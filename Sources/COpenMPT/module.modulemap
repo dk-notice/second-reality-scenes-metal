@@ -1,0 +1,9 @@
+// Lets Swift call libopenmpt's C interface (see ThirdParty/README.md). The library itself is
+// built by build.sh as a static library and linked into the program; "c++" is the C++ standard
+// library it needs, which is part of macOS.
+module COpenMPT [system] {
+    header "../../ThirdParty/libopenmpt/libopenmpt/libopenmpt.h"
+    link "openmpt"
+    link "c++"
+    export *
+}

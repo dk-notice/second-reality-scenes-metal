@@ -27,7 +27,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - The original's shared 3D engine ("VISU") is built and verified (2026-11-14): `Core/Visu/`, original data
   in `Data/Visu/`, `tools/visu_reference.py`, and `docs/visu-engine.md`. Ships Fly-by and the 3D City are
   built on it (2026-11-14, see their notes below); what the two scenes share is `Core/Visu/VisuPlayback.swift`.
-- No music.
+- Music groundwork (2026-11-24): libopenmpt 0.8.10 is in `ThirdParty/libopenmpt` (unmodified source),
+  built by `build.sh` as a static library and linked into the program; the two original songs are in
+  `Data/Music` (scrambled, as shipped) and unscrambled at load. `--music-info` describes them. Nothing
+  plays sound yet. See "MUSIC" under Decisions.
 - ARTWORK (2026-11-24, current work): every picture the released demo shows is exported to PNG in
   `artwork/original/` (see "Artwork notes"). The user is making high-resolution versions of each, to go
   in `artwork/modern/`. No scene uses them yet.
@@ -37,6 +40,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
   `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|city-3d`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
+- `build/SRMetal.app/Contents/MacOS/SRMetal --music-info [--write <folder>]` loads both songs into libopenmpt
+  and describes them (and saves them unscrambled as standard S3M files).
+- `build.sh` first builds libopenmpt (copy in `build/libopenmpt/src`, log `build/libopenmpt/make.log`;
+  about 15 s the first time). Run it once before a bare `swift build`, which needs the library.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png> [blend]` saves a
   960x720 picture without opening a window. `blend` (0...1, optional, modern look) draws that far on towards
   the next step, for checking motion (added with Ships Fly-by). The pictures in `docs/images/` were made this way (steps:
@@ -122,6 +129,25 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   - Licence: the source release's UNLICENSE covers the whole repository, music files included; there
     is no separate statement about the music.
   - libopenmpt: newest release 0.8.10 (2026-11-01), "makefile" source package 1.7 MB.
+  DONE (2026-11-24): steps 1-2 of the plan. libopenmpt 0.8.10 source committed unchanged in
+  `ThirdParty/libopenmpt` (SHA-256 and update steps in `ThirdParty/README.md`); `build.sh` builds it with
+  its own Makefile (CONFIG=macos, STATIC_LIB=1, every NO_* switch on) in `build/libopenmpt/src`;
+  `Package.swift` has a system-library target `COpenMPT` (modulemap links "openmpt" and "c++") and a
+  `-L` to that folder. `otool -L` on the program lists no libopenmpt: it is inside. Program 3 MB.
+  Code: `Music/MusicData.swift` (finds files, unscrambles, checks 64 rows), `Music/TrackerSong.swift`
+  (wraps the C interface), `App/MusicInfoCommand.swift`. 7 self-test checks in `CoreChecks.music`
+  (260 checks in all). Correction to the rule above: a pattern block's length word COUNTS ITS OWN 2
+  BYTES, so bytes 2..<length are unscrambled. libopenmpt reports the markers as 0xFFFE (+++) and 0xFFFF
+  (---), drops trailing "---", and reports 78 / 99 orders and 5 / 1 sub-songs.
+  Cross-check: the user's downloaded unscrambled copies (`downloaded-unscrambled-s3ms/`, NOT committed,
+  the user's folder): 2ND_SKAV.S3M = our unscrambled MUSIC0 except 49 order-list bytes (their "+++"
+  removed and "---" turned into pattern 31); 2ND_PM.S3M is a different (1997) version of MUSIC1.
+  NEXT (step 3): sound out of the speakers with AVAudioEngine (an AVAudioSourceNode pulling
+  `TrackerSong.render`), a "1993" sound (no interpolation: OPENMPT_MODULE_RENDER_INTERPOLATIONFILTER_LENGTH
+  = 1) beside a "Modern" one, an offline render-to-file command, and a play command for listening.
+  Then step 4 (music position as the clock) with the sequencer.
+  Seen while building, not investigated: two linker warnings that search paths inside the Command
+  Line Tools folder do not exist; harmless (the build works).
 - Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
   engine, 2026-11-14): kept in `Data/`, copied into the app by `build.sh`, found at run time by
   `VisuData`. Still no new build tools or dependencies.
