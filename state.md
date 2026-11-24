@@ -100,6 +100,12 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   ships only with full Xcode and the build fails with Command Line Tools. Keep view state in `AppModel`.
   Xcode 27.2 is installed on this Mac (not the active toolchain) and does build the project, but the user
   chose to keep the project Command-Line-Tools-only (2026-11-14).
+- MUSIC (user, 2026-11-24; not started): the full-demo goal will play the ORIGINAL tracker songs live
+  (`MAIN/MUSIC0.S3M`, `MUSIC1.S3M`) with libopenmpt, not pre-rendered audio, because its live music
+  position (order/row) is what the original parts synchronised on. libopenmpt is built by this project
+  from its source with every optional format off (S3M needs none of them), as a STATIC library linked
+  into the program: no Homebrew copy, no separate library file in the app. This is the project's first
+  dependency; it is BSD-licensed (keep its licence file; credit it in the README).
 - Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
   engine, 2026-11-14): kept in `Data/`, copied into the app by `build.sh`, found at run time by
   `VisuData`. Still no new build tools or dependencies.
