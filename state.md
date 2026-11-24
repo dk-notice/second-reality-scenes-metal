@@ -161,6 +161,14 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Ideas: the water background was ray-traced and POV-Ray scene files survive in `WATER/`, so it may be
   re-rendered at high resolution instead of upscaled (which file made it is unknown). The credits
   pictures are mostly miniature screenshots of each part and could be re-made from the scenes.
+- Git LFS set up 2026-11-24 (user's request): `brew install git-lfs`, `git lfs install` (global git
+  config), and `.gitattributes` sends image and paint files under `artwork/modern/` to LFS. The
+  exports in `artwork/original/` stay ordinary files. Tested by staging a picture (stored as an LFS
+  pointer). Nothing pushed through LFS yet. GitHub free: 10 GB storage, 10 GB downloads a month.
+- Target size for the high-resolution pictures (advised 2026-11-24): 12 times the original width, in
+  the 1993 shape: 3840x2880 for one-screen pictures, 7680x2880 for the 640-wide ones, 1920x1440 for
+  the credits pictures and the explosion frames. The lens/rotozoomer picture may want more (decide
+  when that scene is built). Upscale from the original-size PNGs, then correct the shape.
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch

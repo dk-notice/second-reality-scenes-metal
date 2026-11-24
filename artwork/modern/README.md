@@ -20,6 +20,18 @@ folder is made by a script.
    between them, since the programs find each letter by its position. A larger version of the whole
    strip, scaled evenly, is the safe way.
 
+## Stored with Git LFS
+
+Pictures and working files here (`.png`, `.jpg`, `.tif`, `.webp`, `.psd`, `.kra`, `.xcf`, `.exr`) are
+kept with Git LFS (Large File Storage), set up in `.gitattributes` at the top of the project: GitHub
+stores them separately and the repository holds only a small pointer to each. Commit and push as
+usual; nothing else changes. On another Mac, install it first (`brew install git-lfs`, then
+`git lfs install`) or a clone gets the pointers instead of the pictures.
+
+GitHub's free allowance (2026-11): 10 GB of LFS storage and 10 GB of downloads a month. Every
+version pushed counts in full, so save drafts locally and commit finished versions. Without a
+payment method on the GitHub account, going over blocks further pushes rather than costing money.
+
 ## Status
 
 | Picture | Done? | Notes |
