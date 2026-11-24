@@ -181,6 +181,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   (shrunk with `sips`, compared in 160-block grids; best fit must be unshifted). Proven on test files
   to catch a 256-colour save, a wrong size and a crop. Done so far: 04-title, 07-troll, 15-jelly-logo, 17-end-picture (all four
   320x400 pictures).
+- Automating the 320x200 pictures in Photoshop (2026-11-24): `artwork/to-upscale/` (git-ignored) holds
+  `320x200/` (full-colour copies of ships horizon, glenz plate, mountain background, lens picture, water
+  background) and `done/` (the Batch output). Plan: a recorded Action (2 x Generative Upscale 4x, Image
+  Size 3840x2880, Save a Copy PNG, close) run by File > Automate > Batch. Generative Upscale makes a NEW
+  document with a changed name, so output names may need fixing; Claude checks, renames and moves the
+  results into `artwork/modern/`. Not yet known: whether Generative Upscale records in an Action (Adobe
+  does not say; a community answer says yes) and how many credits a batch uses.
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
