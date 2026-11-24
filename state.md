@@ -782,8 +782,23 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   with `artwork/original/4x3/`). Most credits pictures are miniature screenshots of the demo's parts,
   so this needs those parts built as scenes first. `pic02` is a placeholder ("PART PIC MISSING") and
   `pic06` (Interference) upscaled badly; both are first in line. `--snapshot` can make the pictures.
-- CURRENT (2026-11-24): the user is making high-resolution versions of the artwork in `artwork/`.
-  Picking the next scene is on hold until they say.
+- WHERE WE LEFT OFF (end of 2026-11-24). The user is making high-resolution versions of the artwork;
+  picking the next scene is on hold until they say. 30 of 39 pictures are done in `artwork/modern/`
+  (all one-screen pictures and the credits pictures), all committed and pushed (Git LFS, ~168 MB of
+  10 GB). Left, in suggested order:
+  1. `01-opening-horizon` (640x200 -> 7680x2880): ready; the Photoshop Action's Image Size step must be
+     7680x2880.
+  2. The 40 explosion frames (-> 1920x1440): try 3-4 neighbouring frames first and flip between them,
+     since generative detail may differ frame to frame (flicker); 80 upscales of credits.
+  3. Optional: `00-start-setup-screen` (only if a "play the demo" mode shows it), `starfield-text-panels`
+     (better retyped than upscaled).
+  4. Wait: the 5 fonts (on-screen pixel shape not yet checked; maybe redraw or use a modern font).
+  Skip: `10-lens-shape` (never shown).
+  Workflow: open `artwork/original/rgb/<name>.png` (or copies in the git-ignored `artwork/to-upscale/`),
+  Photoshop Action "Upscale 320x200" (Generative Upscale 4x twice, Image Size, Save a Copy PNG) run by
+  Batch into `artwork/to-upscale/done/`; Claude strips the " Topaz Gigapixel 4x scale" name parts, moves
+  the files to `artwork/modern/`, runs `python3 tools/art_check.py`, updates `artwork/modern/README.md`,
+  commits, and pushes on the user's yes.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,
