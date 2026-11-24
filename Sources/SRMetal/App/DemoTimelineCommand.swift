@@ -26,7 +26,7 @@ final class SilentMusic: DemoMusicSource {
     }
 
     /// Lets 1/70 s of music pass.
-    func advance() {
+    func stepPassed() {
         song?.render(into: &buffer, frames: 630, sampleRate: 44_100)
     }
 }
@@ -45,13 +45,18 @@ enum DemoTimelineCommand {
         ("End picture", 37469), ("Credits", 38068), ("End scroller", 45670)
     ]
 
+    /// Play Demo as a scene with silent music, for `--snapshot play-demo`.
+    static let silentEntry = SceneEntry(
+        id: "play-demo", title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
+        checkpoints: [], thumbnailStep: 0,
+        make: { device, format in try DemoRunScene(device: device, pixelFormat: format, music: SilentMusic()) })
+
     /// Runs the script until it reaches its end (or gives up after 15 minutes of demo time).
     static func simulate() -> (sequencer: DemoSequencer, problem: String?) {
         let music = SilentMusic()
         let sequencer = DemoSequencer(music: music)
         while !sequencer.finished && sequencer.time < 70 * 60 * 15 {
             sequencer.tick()
-            music.advance()
         }
         return (sequencer, music.problem)
     }

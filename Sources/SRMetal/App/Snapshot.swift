@@ -35,7 +35,7 @@ enum Snapshot {
         guard let request = request(from: arguments) else {
             print("Usage: SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png> [blend 0...1]")
             print("(step: a whole number, 0 or more)")
-            print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", "))
+            print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", ") + ", play-demo")
             return false
         }
         do {
@@ -62,7 +62,8 @@ enum Snapshot {
     /// brought to the nearer end.
     static func request(from arguments: [String]) -> Request? {
         guard let flag = arguments.firstIndex(of: "--snapshot"), arguments.count >= flag + 5,
-              let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] }),
+              let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] })
+                  ?? (arguments[flag + 1] == "play-demo" ? DemoTimelineCommand.silentEntry : nil),
               let look = Look(rawValue: arguments[flag + 2]),
               let step = Int(arguments[flag + 3]), step >= 0 else { return nil }
         var blend: Float = 0
@@ -84,6 +85,8 @@ enum Snapshot {
 
         let scene = try entry.make(device, Renderer.pixelFormat)
         for _ in 0..<step { scene.tick() }
+        // Play Demo's canvas changes with the part it is showing.
+        let canvasSize = scene.currentCanvasSize ?? entry.canvasSize
 
         // Pixels as blue, green, red, alpha, row by row.
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -95,7 +98,7 @@ enum Snapshot {
                 pixelFormat: Renderer.pixelFormat, width: width, height: height, mipmapped: false)
             descriptor.usage = [.renderTarget]
             descriptor.storageMode = .shared
-            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: entry.canvasSize,
+            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: canvasSize,
                                   targetSize: SIMD2(Float(width), Float(height)))
             scene.prepare(commands: commands, frame: frame)
             guard let texture = device.makeTexture(descriptor: descriptor),
@@ -109,12 +112,12 @@ enum Snapshot {
                              from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
 
         case .classic:
-            let smallWidth = Int(entry.canvasSize.x)
-            let smallHeight = Int(entry.canvasSize.y)
-            guard let texture = Renderer.makeClassicTexture(device: device, canvasSize: entry.canvasSize) else {
+            let smallWidth = Int(canvasSize.x)
+            let smallHeight = Int(canvasSize.y)
+            guard let texture = Renderer.makeClassicTexture(device: device, canvasSize: canvasSize) else {
                 throw Failure.couldNotDraw
             }
-            Renderer.drawClassic(scene: scene, canvasSize: entry.canvasSize, into: texture, commands: commands)
+            Renderer.drawClassic(scene: scene, canvasSize: canvasSize, into: texture, commands: commands)
             commands.commit()
             commands.waitUntilCompleted()
             var small = [UInt8](repeating: 0, count: smallWidth * smallHeight * 4)

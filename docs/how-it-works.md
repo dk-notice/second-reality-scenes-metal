@@ -223,6 +223,11 @@ modern look needs this: it uses a depth buffer (a per-pixel record of distance, 
 far things) and four samples per pixel for smooth edges, and the app's main drawing pass has neither.
 Most scenes leave it out.
 
+A scene may also give a `currentCanvasSize` when its canvas changes as it runs; the window and
+`--snapshot` then use that instead of the entry's fixed size. Only Play Demo needs it (2026-11-24): to the
+window it is one scene, which shows other scenes, pictures and title cards in turn (`Demo/`; see
+[demo-timeline.md](demo-timeline.md#play-demo-how-the-app-follows-this-table)).
+
 ## House rules for scenes
 
 These came out of building the first scenes.

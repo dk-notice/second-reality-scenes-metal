@@ -36,8 +36,13 @@ A modern graphics chip needs none of them, so each scene's documentation explain
 what replaced it.
 
 The demo's two original songs can be played from the **Music** menu: the real tracker music, played live by
-libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdParty/README.md)). The scenes do not
-choose or follow the music yet.
+libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdParty/README.md)).
+
+**Play Demo** (in the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
+the original music, changing parts on the same music cues the 1993 demo waited for. It is a skeleton for now:
+the parts this project has built appear as its scenes, cut where the original part ended; picture parts show
+the high-resolution pictures (or, in the 1993 look, the original ones); every other part shows a title card
+naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes
 
@@ -96,6 +101,8 @@ The window has a list of scenes down the left (the sidebar) and a toolbar along 
 | Fullscreen | The green window button, or Control-Command-F (in newer macOS versions also the Globe key with F) |
 | Play one of the demo's two songs, from its start | **Music** menu, "Play Song 1" or "Play Song 2" |
 | Stop the music | **Music** menu, "Stop Music", or Command-. (full stop) |
+| Play the whole demo with its music | **Scene** menu, "Play Demo", or press P (again: from the start) |
+| Stop the demo | Escape, **Scene** menu "Stop Demo", or choose any scene |
 
 In fullscreen the sidebar and toolbar get out of the way so that only the scene shows; the keys above still
 work, and moving the pointer to the top of the screen brings the toolbar back. Leaving fullscreen puts the
@@ -105,7 +112,8 @@ The look, restart and next/previous actions are also in the **Scene** menu.
 
 The music's sound follows the look: smooth in the Modern look; in the 1993 look the samples are played
 without smoothing, which sounds grittier, closer to a sound card of the time. Each song plays to its end
-(Song 1 lasts about 9 and a half minutes, Song 2 about 7).
+(Song 1 lasts about 10 minutes, Song 2 about 7). Song 1 plays at tempo 120, as the demo played it, not at
+the 125 written in the file.
 
 ### Options
 
@@ -114,7 +122,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `city-3d` |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `city-3d`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -133,7 +141,9 @@ runs the checks (see [docs/how-it-works.md](docs/how-it-works.md#the-self-test))
 build/SRMetal.app/Contents/MacOS/SRMetal --snapshot dot-tunnel modern 500 picture.png
 ```
 
-saves a picture of a scene at a given step. The pictures on this page were made that way. (For the
+saves a picture of a scene at a given step. The pictures on this page were made that way. `play-demo`
+works too (the music is then rendered silently to find the place): `--snapshot play-demo modern 7500 title.png`
+shows the title picture, 7,500 steps (1:47) into the demo. (For the
 Modern look, a number from 0 to 1 added at the end draws the picture that far on towards the next step;
 this is for checking that motion is smooth.)
 
@@ -165,6 +175,14 @@ build/SRMetal.app/Contents/MacOS/SRMetal --music-render 1 20 song1.wav classic
 saves the first 20 seconds of song 1 (or 2) as a WAV sound file without playing it, in the `modern` or
 `classic` (1993) sound; `--music-play 1 10 classic` plays them through the speakers instead.
 
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --demo-timeline
+```
+
+runs Play Demo's whole running order against the music, silently, in well under a second, and lists when each
+part starts. It checks every start against the research simulation (`tools/demo_timeline.py`); the self-test
+does the same.
+
 ## Documentation
 
 - [docs/how-it-works.md](docs/how-it-works.md): how the app is put together, the two looks, the self-test,
@@ -176,7 +194,7 @@ saves the first 20 seconds of song 1 (or 2) as a WAV sound file without playing 
 - [artwork/](artwork/README.md): every picture the original demo shows, exported to PNG, as the
   starting point for high-resolution versions.
 - [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
-  out from its source and simulated against the real music (groundwork for a "Play Demo" mode).
+  out from its source and simulated against the real music, and how Play Demo follows it.
 - [state.md](state.md): working notes: current status, decisions, and what is next.
 
 ## How faithful is the 1993 look?

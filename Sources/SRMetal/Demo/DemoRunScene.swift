@@ -143,7 +143,12 @@ final class DemoRunScene: DemoScene {
         sequencer.tick()
         if sequencer.partStarts.count != partsStarted {
             partsStarted = sequencer.partStarts.count
-            if let name = sequencer.currentPart { onPart?(name) }
+            if let (name, step) = sequencer.partStarts.last {
+                let p = music.position
+                NSLog("SR Metal: Play Demo part %d \"%@\" at step %d (%@); music section %d row %d",
+                      partsStarted, name, step, DemoTimelineCommand.time(step), p.order, p.row)
+                onPart?(name)
+            }
         }
     }
 

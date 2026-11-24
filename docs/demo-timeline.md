@@ -38,6 +38,40 @@ already has for the part.
 The hidden starfield (`DDSTARS`) is not in the normal run: the loader plays it only when chosen
 specially, over song 1 from section 70.
 
+## Play Demo: how the app follows this table
+
+Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app, with the music live.
+
+- **The script** (`Sources/SRMetal/Demo/DemoSequencer.swift`, `DemoScript.steps`) is
+  `tools/demo_timeline.py` written again in Swift, step for step: "start song 2 at section 0", "wait 1,060
+  steps", "wait until music plus ≥ -4", "show the rings", and so on. `DemoSequencer` follows it one 1/70 s
+  step at a time, reading the music's section and row from the player each step.
+- **The music position** comes from the sound output itself: after each block of sound (a few
+  milliseconds) the player notes the section and row it has reached, and the sequencer works out "music
+  plus" and the sync value from them (`Music/MusicPosition.swift`). Song 1 is loaded at tempo 120.
+- **Checked:** `SRMetal --demo-timeline` (and the self-test) run the same script against the music rendered
+  silently, as `tools/music_steps.c` does, and every part starts on exactly the step the Python simulation
+  gives; the credits end at step 45,670 (10:52.4).
+- **Stand-ins** (`Demo/DemoRunScene.swift`), until each part is built properly:
+
+  | Part | Shown now |
+  |---|---|
+  | Opening credits, explosion, switch-off, rotozoomer, end scroller | A title card naming the part |
+  | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
+  | Title, mountain, lens, water, jelly logo, end picture | The picture: the high-resolution version in the Modern look, the original in the 1993 look |
+  | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
+  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the troll picture, each at the original's moment |
+  | Loader's wait after the switch-off | Black |
+  | Credits | The 21 credits pictures in the original order, 362 steps each |
+
+  The scenes keep their own timing (they loop and differ from the original on purpose), so a scene
+  may loop or be cut mid-way. The end scroller's card stays, with the music playing, until the demo is
+  stopped (Escape).
+- **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
+  parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
+  Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
+  its 3D data) can take a moment at the start of a part; pictures are loaded ahead in the background.
+
 ## How the music is used
 
 - **Song 1** is `MUSIC0.S3M` (Skaven), **song 2** `MUSIC1.S3M` (Purple Motion). The loader

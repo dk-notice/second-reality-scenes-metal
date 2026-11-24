@@ -52,6 +52,12 @@ protocol DemoMusicSource: AnyObject {
     func play(_ song: Song, fromOrder order: Int)
     var position: MusicPosition { get }
     var orderList: [Int] { get }
+    /// Called once at the end of every step (silent music renders 1/70 s here; real music plays on its own).
+    func stepPassed()
+}
+
+extension DemoMusicSource {
+    func stepPassed() {}
 }
 
 enum DemoScript {
@@ -190,5 +196,6 @@ final class DemoSequencer {
     private func passTime() {
         time += 1
         frameCounter += 1
+        music.stepPassed()
     }
 }

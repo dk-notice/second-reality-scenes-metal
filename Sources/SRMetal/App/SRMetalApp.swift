@@ -50,6 +50,8 @@ enum Main {
 struct StartupOptions {
     var look: Look?
     var sceneIndex: Int?
+    /// `--scene play-demo`: start with Play Demo.
+    var playDemo = false
     var sidebarHidden = false
     /// What is wrong with the options, in words. Empty when all is well.
     var problems: [String] = []
@@ -57,8 +59,8 @@ struct StartupOptions {
     static var usage: String {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
-        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play (run one without arguments for its usage)
-        Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", "))
+        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline (run one without arguments for its usage)
+        Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or play-demo for the whole demo
         """
     }
 
@@ -86,7 +88,8 @@ struct StartupOptions {
                 if let chosen = Look(rawValue: value) { look = chosen }
                 else { problems.append("Unknown look \"\(value)\" (use modern or classic)") }
             case "--scene":
-                if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
+                if value == "play-demo" { playDemo = true }
+                else if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
                 else { problems.append("Unknown scene \"\(value)\"") }
             default:
                 if value == "hidden" { sidebarHidden = true }
@@ -102,7 +105,13 @@ final class AppModel: ObservableObject {
     @Published var look: Look = .modern {
         didSet { music.setSound(look) }   // the music's sound follows the look
     }
-    @Published var sceneIndex = 0
+    @Published var sceneIndex = 0 {
+        didSet { endDemo() }   // choosing a scene (sidebar, keys, menu) leaves Play Demo
+    }
+    /// Whether Play Demo is running (it then takes the scene's place in the window).
+    @Published private(set) var playingDemo = false
+    /// The demo part now playing, for the window title.
+    @Published private(set) var demoPart: String?
     /// Goes up by one each time the user asks to replay the scene from its start.
     @Published private(set) var restartCount = 0
     /// Whether the sidebar is showing. The standard toolbar button changes this too.
@@ -129,13 +138,42 @@ final class AppModel: ObservableObject {
         if let index = options.sceneIndex {
             sceneIndex = index
         }
+        if options.playDemo {
+            playingDemo = true
+        }
         if options.sidebarHidden {
             columns = .detailOnly
         }
         music.onFinished = { [weak self] in self?.nowPlaying = nil }
     }
 
-    var entry: SceneEntry { SceneCatalog.all[sceneIndex] }
+    var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
+
+    /// Play Demo, as a scene the window can show. Not in `SceneCatalog.all`: it is not in the sidebar.
+    private lazy var demoEntry = SceneEntry(
+        id: "play-demo", title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
+        checkpoints: [], thumbnailStep: 0,
+        make: { [unowned self] device, format in
+            let scene = try DemoRunScene(device: device, pixelFormat: format,
+                                         music: LiveDemoMusic(player: self.music, look: { [unowned self] in self.look }))
+            scene.onPart = { [weak self] name in self?.demoPart = name }
+            return scene
+        })
+
+    /// Starts the whole demo from its beginning, with its music.
+    func playDemo() {
+        if playingDemo { restartScene() }   // already running: start again
+        demoPart = nil
+        playingDemo = true
+    }
+
+    /// Stops Play Demo and its music (nothing happens if it is not running).
+    func endDemo() {
+        guard playingDemo else { return }
+        playingDemo = false
+        demoPart = nil
+        stopMusic()
+    }
     var hasSeveralScenes: Bool { SceneCatalog.all.count > 1 }
 
     func toggleLook() {
@@ -152,6 +190,10 @@ final class AppModel: ObservableObject {
     }
 
     func playMusic(_ song: Song) {
+        if playingDemo {   // the menu's song replaces the demo's: leave the demo first
+            playingDemo = false
+            demoPart = nil
+        }
         do {
             try music.play(song, look: look)
             musicProblem = nil
@@ -182,11 +224,13 @@ final class AppModel: ObservableObject {
             switch event.keyCode {
             case 124, 125: self.stepScene(by: 1)     // right arrow, down arrow
             case 123, 126: self.stepScene(by: -1)    // left arrow, up arrow
+            case 53 where self.playingDemo: self.endDemo()   // Escape stops the demo
             default:
                 switch event.charactersIgnoringModifiers?.lowercased() {
                 // Not while the key is held down: the look would flip at the keyboard's repeat rate.
                 case "l": if !event.isARepeat { self.toggleLook() }
                 case "r": if !event.isARepeat { self.restartScene() }
+                case "p": if !event.isARepeat { self.playDemo() }
                 default: return event
                 }
             }
@@ -224,6 +268,13 @@ struct SRMetalApp: App {
 
                 Button("Restart Scene") { model.restartScene() }
                     .keyboardShortcut("r", modifiers: [])
+
+                Divider()
+
+                Button(model.playingDemo ? "Play Demo from the Start" : "Play Demo") { model.playDemo() }
+                    .keyboardShortcut("p", modifiers: [])
+                Button("Stop Demo") { model.endDemo() }
+                    .disabled(!model.playingDemo)
 
                 Divider()
 
@@ -268,7 +319,9 @@ struct ContentView: View {
                 .frame(minWidth: 480, minHeight: 360)
                 .background(Color.black)
         }
-        .navigationTitle("\(model.entry.title) — \(model.look.title) look")
+        .navigationTitle(model.playingDemo
+                         ? "Play Demo: \(model.demoPart ?? "starting") — \(model.look.title) look"
+                         : "\(model.entry.title) — \(model.look.title) look")
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Picker("Look", selection: $model.look) {

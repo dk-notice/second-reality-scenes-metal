@@ -31,8 +31,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   built by `build.sh` as a static library and linked into the program; the two original songs are in
   `Data/Music` (scrambled, as shipped) and unscrambled at load. `--music-info` describes them.
   MUSIC PLAYER (2026-11-24): a "Music" menu plays either song (whole song, all sub-songs) or stops
-  (Command-.); the sound follows the look (1993 = no interpolation). Scenes do not choose or follow
-  the music yet. See "MUSIC" under Decisions.
+  (Command-.); the sound follows the look (1993 = no interpolation). See "MUSIC" under Decisions.
+- PLAY DEMO SKELETON (2026-11-24): Scene menu "Play Demo" (P; Escape stops) runs all 19 parts in the
+  original order with the original music, changing parts on the original's music cues. Stand-ins: the
+  11 built scenes (cut at the part's end), artwork pictures (high-resolution in Modern, originals in
+  1993), title cards for the rest. See "PLAY DEMO notes" below and `docs/demo-timeline.md`.
 - ARTWORK (2026-11-24, current work): every picture the released demo shows is exported to PNG in
   `artwork/original/` (see "Artwork notes"). The user is making high-resolution versions of each, to go
   in `artwork/modern/`. No scene uses them yet.
@@ -42,6 +45,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
   `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|city-3d`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
+- `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
+  silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
+  `--snapshot play-demo <look> <step> <file>` pictures any moment of it.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --music-info [--write <folder>]` loads both songs into libopenmpt
   and describes them (and saves them unscrambled as standard S3M files).
 - `--music-render <1|2> <seconds> <file.wav> [modern|classic]` saves the start of a song as a WAV file;
@@ -157,9 +163,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   forwards the look. 2 more self-test checks (262). `--music-play 1 3` reached exactly 3.00 s.
   NOT verified by Claude: how it sounds (the user listens), switching the look while playing by ear,
   and the menu in the running app (only that the app still starts).
-  NEXT: each scene starts its own music at the original part's song and order (research: the loader
-  `MAIN/U2.ASM` and each part's waits; the scene's loops will drift from the music after one loop).
-  Then step 4 (music position as the clock) with the full-demo sequencer.
+  DONE (2026-11-24): step 4, the music position as the clock, with the Play Demo sequencer (see
+  "PLAY DEMO notes"). Song 1 now ALWAYS loads at tempo 120 (the Music menu too: as the demo played it);
+  `TrackerSong(song, asInDemo: false)` gives the file's 125.
   Seen while building, not investigated: two linker warnings that search paths inside the Command
   Line Tools folder do not exist; harmless (the build works).
 - Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
@@ -170,6 +176,35 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   pipelines did not have to change.
 - `docs/images/window.png` is a capture of the app's window only (`screencapture -l <window id>`), never
   the desktop.
+
+## PLAY DEMO notes (2026-11-24)
+- Asked for by the parent session (full-demo skeleton); plan approved by the user before coding.
+- Music read-out: after each block the audio thread writes section/row into a SECOND lock it only tries
+  (`MusicPlayer.reached`; always taken inside `shared`, never the other way round). `play()` resets it
+  inside `shared`, so no block of an old song can report after a switch. `Music/MusicPosition.swift`
+  has "music plus" and the sync table (same rules as the Python tool). `play(_:look:fromOrder:)`.
+- `Demo/DemoSequencer.swift`: `DemoScript.steps` = `tools/demo_timeline.py` step for step (part,
+  show, playSong, frames, until with optional cap, reset frame counter, note section, hold).
+  `DemoSequencer.tick()` runs the no-time steps, then spends the step waiting. Music comes through
+  `DemoMusicSource`: `LiveDemoMusic` (the player) or `SilentMusic` (renders 630 samples at 44,100 Hz per
+  step, like `tools/music_steps.c`). Result: all 21 part starts equal the Python's to the step.
+- `Demo/DemoRunScene.swift`: Play Demo is one `DemoScene` to the window. New protocol member
+  `currentCanvasSize` (default nil) lets it change canvas as parts change; Renderer and Snapshot use it.
+  High-resolution pictures: only current + next kept, next loaded in the background (MTKTextureLoader).
+  Title cards drawn with Core Text. `build.sh` copies `artwork/modern` and `artwork/original/rgb` into
+  the app (`Resources/Artwork/`); the app grew to 165 MB.
+- AppModel: `playingDemo`; the demo's SceneEntry is not in `SceneCatalog.all` (not in the sidebar, not
+  in the per-scene self-tests). Choosing a scene, Escape or Stop Demo ends it and stops the music; the
+  Music menu replaces the demo's song and leaves the demo. Window title shows the part. Each part
+  change is logged (NSLog) with the music position.
+- Seen by Claude: snapshots of the title card, title picture, troll (1993), plasma, credits picture 1
+  (both looks). LIVE RUN (2026-11-24, `--scene play-demo`, window open, music through the speakers):
+  all 21 parts started, each 0.2-0.3 s after the simulation's time (the sound output's start-up delay;
+  the music cues keep it from growing); credits ended 10:52.7 vs 10:52.4; no errors logged; song
+  switches landed on song 2 section 0 and song 1 section 18. NOT verified by Claude: how it looks and
+  sounds to a viewer, fullscreen, switching look mid-demo, Escape/P/menu by hand.
+- Not done / ideas: the Music menu's check mark does not show during Play Demo; a "start from part N"
+  option (needs the music jumped to the right place); the end scroller is only a card.
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
@@ -853,9 +888,9 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   player's section number is the one playing (both "most likely", see the doc). Two helper agents
   read the parts; Claude checked their numbers against our scenes (tunnel 1,060; techno 420/840/980).
   The user said (2026-11-24) the visuals' tempo and the music's already line up well, by ear.
-  NEXT for the skeleton: give the music player a thread-safe section/row/"music plus" read-out, then
-  a sequencer that follows the table (song switches, part changes), with existing scenes, artwork
-  stills and title cards as stand-ins. Song 1 must be loaded with its tempo byte (0x32) set to 120.
+  DONE (2026-11-24): the Play Demo skeleton built on it (see "PLAY DEMO notes"). NEXT: replace stand-ins
+  part by part with real parts (the user chooses which), and make the built scenes follow the original
+  part's timing inside the demo instead of looping.
 - WHERE WE LEFT OFF (end of 2026-11-24). The user is making high-resolution versions of the artwork;
   picking the next scene is on hold until they say. 30 of 39 pictures are done in `artwork/modern/`
   (all one-screen pictures and the credits pictures), all committed and pushed (Git LFS, ~168 MB of
