@@ -16,6 +16,9 @@ folder is made by a script.
    relative position in yours. Do not crop, pad or recompose.
 5. **Any size**, as long as the shape is right. 3840x2880 (4K-wide, 4:3) is plenty for a full screen;
    1600x1200 is the least that is worth doing. The scenes will scale to the window.
+7. **Full colour: 8-bit RGB.** Not indexed ("256 colours"): in Photoshop's Export As, untick
+   "Smaller File (8-bit)", or use File > Save a Copy as PNG. An indexed save throws the upscaler's
+   shading away. A finished picture is typically 5-20 MB.
 6. **Fonts:** keep the letters in the same order and the same proportions, with the same gaps
    between them, since the programs find each letter by its position. A larger version of the whole
    strip, scaled evenly, is the safe way.
@@ -36,7 +39,7 @@ payment method on the GitHub account, going over blocks further pushes rather th
 
 | Picture | Done? | Notes |
 |---|---|---|
-| (none yet) | | |
+| `04-title.png` | Yes (2026-11-24) | Photoshop Generative Upscale; 3840x2880, 8-bit RGB. Framing checked against the original: lines up with no shift. |
 
 Note: the Ships Fly-by scene already accepts a replacement horizon, but it looks for it as
 `Data/Visu/U2ABG-modern.png`. When the first pictures here are ready, the scenes will be changed to

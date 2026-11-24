@@ -169,6 +169,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   the 1993 shape: 3840x2880 for one-screen pictures, 7680x2880 for the 640-wide ones, 1920x1440 for
   the credits pictures and the explosion frames. The lens/rotozoomer picture may want more (decide
   when that scene is built). Upscale from the original-size PNGs, then correct the shape.
+- First high-resolution picture done 2026-11-24: `artwork/modern/04-title.png` (user, Photoshop
+  Generative Upscale; upscale the original grid, then shrink to 3840x2880). Checked: 8-bit RGB,
+  framing lines up with the original. Trap met: Photoshop's "Smaller File (8-bit)" export saved it
+  with 256 colours the first time; check every new file is RGB (PNG colour type 2 or 6).
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
