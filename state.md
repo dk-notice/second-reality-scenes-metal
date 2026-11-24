@@ -106,6 +106,22 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   from its source with every optional format off (S3M needs none of them), as a STATIC library linked
   into the program: no Homebrew copy, no separate library file in the app. This is the project's first
   dependency; it is BSD-licensed (keep its licence file; credit it in the README).
+  FINDINGS (2026-11-24, read-only so far):
+  - The songs' PATTERN DATA IS SCRAMBLED: each byte of a pattern is XOR-ed with (i) ^ (4*i), i = the
+    byte's offset from the start of the pattern block (its 2-byte length included). Unscrambled, all
+    154 patterns of MUSIC0/MUSIC1.S3M parse to exactly 64 rows, effects ABCDEFGHJKOQS. libopenmpt cannot
+    play the files as they are: unscramble before handing them over (a few lines, at load time).
+  - No Zxx sync markers in the songs. The parts synchronised on: the current order and row
+    (`dis_muscode`/`dis_musrow`, STMIK's `_np_ord`/`_np_row`); `dis_musplus`, a count around the "+++"
+    separators (254) in the order list (-32 when none is near; rows-64 before one, row after one; see
+    DIS/DISINT.ASM muscode_6 and the C++ port's st3play GetPlusFlags); and `dis_sync`, a hard-coded
+    order/row table (the port's music.cpp `syncdata`). libopenmpt reports order, row and the order
+    list, so all of these can be computed.
+  - The C++ port plays the music with st3play (8bitbubsy's port of Scream Tracker 3.21's replayer,
+    modified to unscramble), not libopenmpt. Our choice stays libopenmpt (user's decision).
+  - Licence: the source release's UNLICENSE covers the whole repository, music files included; there
+    is no separate statement about the music.
+  - libopenmpt: newest release 0.8.10 (2026-11-01), "makefile" source package 1.7 MB.
 - Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
   engine, 2026-11-14): kept in `Data/`, copied into the app by `build.sh`, found at run time by
   `VisuData`. Still no new build tools or dependencies.
