@@ -844,6 +844,18 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   with `artwork/original/4x3/`). Most credits pictures are miniature screenshots of the demo's parts,
   so this needs those parts built as scenes first. `pic02` is a placeholder ("PART PIC MISSING") and
   `pic06` (Interference) upscaled badly; both are first in line. `--snapshot` can make the pictures.
+- DEMO TIMELINE RESEARCH DONE (2026-11-24): `docs/demo-timeline.md` has every part's start and end
+  (from the original source, simulated against the real music with `tools/music_steps.c` +
+  `tools/demo_timeline.py`): 19 parts, credits end at 10:52, then the end scroller until a key. Key facts:
+  song 1 = MUSIC0 at tempo 120 (STARTMUS.C overrides the file's 125: every section 8 s); loader runs
+  song 1 from 0 (parts 1-4), song 2 from 0 (parts 5-15), song 1 from section 18 (city and end parts);
+  most parts wait on "music plus" (rows around "+++" separators); dis_getmframe counts 1/70 s; the
+  player's section number is the one playing (both "most likely", see the doc). Two helper agents
+  read the parts; Claude checked their numbers against our scenes (tunnel 1,060; techno 420/840/980).
+  The user said (2026-11-24) the visuals' tempo and the music's already line up well, by ear.
+  NEXT for the skeleton: give the music player a thread-safe section/row/"music plus" read-out, then
+  a sequencer that follows the table (song switches, part changes), with existing scenes, artwork
+  stills and title cards as stand-ins. Song 1 must be loaded with its tempo byte (0x32) set to 120.
 - WHERE WE LEFT OFF (end of 2026-11-24). The user is making high-resolution versions of the artwork;
   picking the next scene is on hold until they say. 30 of 39 pictures are done in `artwork/modern/`
   (all one-screen pictures and the credits pictures), all committed and pushed (Git LFS, ~168 MB of
@@ -871,10 +883,10 @@ The planned list of scenes is complete (2026-11-14).
   Notable: Dot Tunnel's 1993 look now replays the original's dot-by-dot erasing (about one dot in twenty is
   missing each frame, as in 1993); every Hidden Starfield dot had been one step out of place; the plasma's
   sideways shift was paired with the wrong frame; the 3D loader no longer crashes on damaged files.
-- OPEN QUESTION for the user (from the Plasma review, see docs/scenes/plasma.md "What was not checked"): the
-  plasma's section timings may be in music ticks (about 1/52 s), not screen refreshes (1/70 s). If so the
-  original's sections were about a third longer (whole scene about 43 s, not 32). Not proven; nothing changed.
-  The same question may apply to other music-timed lengths. Best settled when music is added.
+- MOSTLY SETTLED (2026-11-24, docs/demo-timeline.md): the plasma's section timings (dis_getmframe) are in
+  screen refreshes (1/70 s), as built: simulating the whole demo with music ticks makes later parts overrun
+  song 2, and a recording places the sine landscape where the 1/70-s reading predicts. To confirm: that the
+  recording (youtu.be/iw17c70uJes) starts with the music (check the explosion flash at about 1:44).
 - NEXT, if the user wants it: a `/simplify` pass. Each scene page and the core notes list "Possible
   tidy-ups" that the review deliberately left alone.
 - Still never done: comparing any scene with the original program running. The user's own copy of the

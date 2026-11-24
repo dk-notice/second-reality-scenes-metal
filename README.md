@@ -175,6 +175,8 @@ saves the first 20 seconds of song 1 (or 2) as a WAV sound file without playing 
   City): how it worked, its data formats, this project's version of it, and what was checked.
 - [artwork/](artwork/README.md): every picture the original demo shows, exported to PNG, as the
   starting point for high-resolution versions.
+- [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
+  out from its source and simulated against the real music (groundwork for a "Play Demo" mode).
 - [state.md](state.md): working notes: current status, decisions, and what is next.
 
 ## How faithful is the 1993 look?

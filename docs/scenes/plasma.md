@@ -215,6 +215,10 @@ None of this has been compared with the original program running.
   right, the original's sections were about a third longer than here (the whole scene about 43 seconds,
   not 32). It is not proven: the player itself is only in the release as a compiled library, and the
   tempo may change within the tune. Nothing was changed; the scene still uses 1/70 second.
+  **Update 2026-11-24:** simulating the whole demo against the real music (`docs/demo-timeline.md`)
+  points the other way: with music ticks the later parts overrun song 2, and a recording places the
+  sine landscape where the 1/70-second reading predicts it (within 2 s), not 30 s later. So 1/70
+  second, as built here, is most likely right. Still to confirm: that the recording starts with the music.
 - **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (now twice).
 - The pictures in `docs/images/` were remade after the review was merged, so they show the corrected 1993 look.
 
