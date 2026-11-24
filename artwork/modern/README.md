@@ -42,6 +42,14 @@ GitHub's free allowance (2026-11): 10 GB of LFS storage and 10 GB of downloads a
 version pushed counts in full, so save drafts locally and commit finished versions. Without a
 payment method on the GitHub account, going over blocks further pushes rather than costing money.
 
+## The credits pictures are a stopgap
+
+The 21 credits pictures are upscaled for now, but most of them are miniature screenshots of the
+demo's parts. Once each part exists as a high-resolution scene, the plan (user, 2026-11-24) is to
+replace them with screenshots taken from this project's own finished scenes, framed like the
+originals (compare with `../original/4x3/`). That will look better than any upscale of a
+160x100 picture.
+
 ## Checking a picture
 
 ```bash
@@ -65,6 +73,27 @@ or shift). Add names (`python3 tools/art_check.py 07-troll`) to check only those
 | `09-mountain-background.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
 | `10-lens-picture.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
 | `13-water-background.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
+| `18-credits-pic01.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic02.png` | Stopgap (2026-11-24) | Placeholder in the source ("PART PIC MISSING"); upscaled anyway. Replace. |
+| `18-credits-pic03.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic04.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic05.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic05b.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic06.png` | Stopgap (2026-11-24) | Upscaler turned the ring pattern into embossed blobs (lines up, looks different). Replace. |
+| `18-credits-pic07.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic08.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic09.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic10.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic10b.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic11.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic12.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic13.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic14.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic14b.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic15.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic16.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic17.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
+| `18-credits-pic18.png` | Stopgap (2026-11-24) | Photoshop Batch, 1920x1440; checked. |
 
 Note: the Ships Fly-by scene already accepts a replacement horizon, but it looks for it as
 `Data/Visu/U2ABG-modern.png`. When the first pictures here are ready, the scenes will be changed to

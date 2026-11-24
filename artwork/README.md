@@ -68,7 +68,7 @@ shape: 320x200 and 320x400 pictures become 1600x1200; the two 640-wide pictures 
 | `13-water-font` | 13 | 400x35 | The sword-shaped scroller letters, with their own colours. (The file's header says 400x250; the data is 400x35.) |
 | `15-jelly-logo` | 15, jelly logo (`JPLOGO`) | 320x400 | The warrior on a horse ("Ice Kingdom"). The program squashes and wobbles it row by row. |
 | `17-end-picture` | 17, end picture (`END`) | 320x400 | The Future Crew ring. |
-| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits. Most are miniature screenshots of the part, so they could also be re-made from the high-resolution scenes instead of upscaled. See the warnings below. |
+| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits. Most are miniature screenshots of the part. **Plan (user, 2026-11-24): replace them with screenshots of this project's finished scenes**; the upscaled versions in `modern/` are a stopgap. See the warnings below. |
 | `18-credits-font` | 18 | 1500x40 | The credits font (shades 0-9, coloured by each credits picture's palette). The program uses the top 32 rows. |
 | `19-endscroller-font` | 19, end scroller (`ENDSCRL`) | 1500x30 | The end scroller's font; shades, coloured by the program. |
 | `starfield-text-panels` | Hidden part (`DDSTARS`) | 320x200 | The two text panels of the hidden starfield part. Left out of this project's Hidden Starfield scene. 16-colour picture using 4. |

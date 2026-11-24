@@ -7,7 +7,8 @@
 For each picture: it has an original of the same name; it is a PNG in full colour (8 bits per
 channel, RGB, not indexed, nothing visibly see-through); it has the target size (the shape of the
 original's 4x3 version, 2.4 times as large, e.g. 3840x2880); and its framing matches the original
-(both are reduced to 160 blocks across and compared; the best fit should be with no shift).
+(both are reduced to 160 blocks across, or fewer so that a block covers at least 2 original pixels,
+and compared; the best fit should be with no shift).
 Uses only Python and macOS's own `sips` (to shrink the big picture quickly).
 """
 
@@ -95,8 +96,12 @@ def original_brightness(name, cols, rows):
 
 
 def framing(name, path, width, height):
-    cols = GRID
-    rows = round(GRID * height / width)
+    # Blocks of at least 2 original pixels: at 1 pixel per block the upscaler's half-pixel
+    # smoothing can tip the best fit by one block (seen on the 160x100 credits pictures).
+    with open(os.path.join(ORIGINAL, name + ".png"), "rb") as f:
+        original_width = read_png_indexed(f.read())[0]
+    cols = min(GRID, original_width // 2)
+    rows = round(cols * height / width)
     new = small_brightness(path, cols, rows)
     old = original_brightness(name, cols, rows)
     def diff(dx, dy):
@@ -104,7 +109,7 @@ def framing(name, path, width, height):
              for Y in range(SHIFT, rows - SHIFT) for X in range(SHIFT, cols - SHIFT)]
         return sum(v) / len(v)
     results = sorted((diff(dx, dy), dx, dy) for dx in range(-SHIFT, SHIFT + 1) for dy in range(-SHIFT, SHIFT + 1))
-    return results[0]
+    return results[0] + (cols,)
 
 
 def target_size(name):
@@ -148,11 +153,11 @@ def check(name):
     elif (w, h) != target:
         problems.append(f"size {w}x{h}, should be {target[0]}x{target[1]}")
     if ctype in (2, 6):
-        d, dx, dy = framing(name, path, w, h)
+        d, dx, dy, cols = framing(name, path, w, h)
         notes.append(f"framing: best fit {'with no shift' if (dx, dy) == (0, 0) else f'shifted {dx},{dy} blocks'}, "
                      f"brightness differs by {d:.1f} of 255 on average")
         if (dx, dy) != (0, 0):
-            problems.append(f"framing is off by about {dx},{dy} of {GRID} blocks across: check for cropping or padding")
+            problems.append(f"framing is off by about {dx},{dy} of {cols} blocks across: check for cropping or padding")
         elif d > 25:
             problems.append("lines up, but looks very different from the original: check by eye")
     return problems, notes

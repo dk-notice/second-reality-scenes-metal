@@ -182,6 +182,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   to catch a 256-colour save, a wrong size and a crop. Done so far: 04-title, 07-troll, 15-jelly-logo, 17-end-picture (all four
   320x400 pictures); 02-ships-horizon, 05-glenz-plate, 09-mountain-background, 10-lens-picture,
   13-water-background (the five 320x200 ones worth doing, by Batch, 2026-11-24).
+  The 21 credits pictures (1920x1440, by Batch, 2026-11-24) are a STOPGAP: see the next step below.
+  `art_check.py` fix found on them: framing is compared in blocks of at least 2 original pixels (at 1
+  pixel per block the upscaler's half-pixel smoothing tipped the best fit by one block).
 - Automating the 320x200 pictures in Photoshop (2026-11-24): `artwork/to-upscale/` (git-ignored) holds
   `320x200/` (full-colour copies of ships horizon, glenz plate, mountain background, lens picture, water
   background) and `done/` (the Batch output). Plan: a recorded Action (2 x Generative Upscale 4x, Image
@@ -774,6 +777,11 @@ All planned scenes are done.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
+- FUTURE (user, 2026-11-24): replace the 21 upscaled credits pictures (`artwork/modern/18-credits-pic*`)
+  with screenshots taken from this project's own finished scenes, framed like the originals (compare
+  with `artwork/original/4x3/`). Most credits pictures are miniature screenshots of the demo's parts,
+  so this needs those parts built as scenes first. `pic02` is a placeholder ("PART PIC MISSING") and
+  `pic06` (Interference) upscaled badly; both are first in line. `--snapshot` can make the pictures.
 - CURRENT (2026-11-24): the user is making high-resolution versions of the artwork in `artwork/`.
   Picking the next scene is on hold until they say.
 The planned list of scenes is complete (2026-11-14).
