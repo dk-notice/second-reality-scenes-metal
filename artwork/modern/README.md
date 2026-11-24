@@ -60,6 +60,11 @@ or shift). Add names (`python3 tools/art_check.py 07-troll`) to check only those
 | `07-troll.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
 | `15-jelly-logo.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
 | `17-end-picture.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
+| `02-ships-horizon.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
+| `05-glenz-plate.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
+| `09-mountain-background.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
+| `10-lens-picture.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
+| `13-water-background.png` | Yes (2026-11-24) | Photoshop Batch: Generative Upscale (Topaz Gigapixel) 4x twice, Image Size 3840x2880; checked. |
 
 Note: the Ships Fly-by scene already accepts a replacement horizon, but it looks for it as
 `Data/Visu/U2ABG-modern.png`. When the first pictures here are ready, the scenes will be changed to

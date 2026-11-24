@@ -5,7 +5,7 @@
     python3 tools/art_check.py 07-troll         # just these
 
 For each picture: it has an original of the same name; it is a PNG in full colour (8 bits per
-channel, RGB, not indexed, no transparency in use); it has the target size (the shape of the
+channel, RGB, not indexed, nothing visibly see-through); it has the target size (the shape of the
 original's 4x3 version, 2.4 times as large, e.g. 3840x2880); and its framing matches the original
 (both are reduced to 160 blocks across and compared; the best fit should be with no shift).
 Uses only Python and macOS's own `sips` (to shrink the big picture quickly).
@@ -16,7 +16,6 @@ import struct
 import subprocess
 import sys
 import tempfile
-import zlib
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,40 +38,23 @@ def png_header(path):
     return w, h, depth, ctype
 
 
-def alpha_in_use(path):
-    """For a PNG with an alpha channel: is any pixel not fully opaque? (Full decode; slow.)"""
-    with open(path, "rb") as f:
-        data = f.read()
-    pos, idat = 8, b""
-    while pos < len(data):
-        n = struct.unpack_from(">I", data, pos)[0]
-        name = data[pos + 4:pos + 8]
-        if name == b"IHDR":
-            w, h = struct.unpack_from(">II", data, pos + 8)
-        elif name == b"IDAT":
-            idat += data[pos + 8:pos + 8 + n]
-        pos += 12 + n
-    raw = zlib.decompress(idat)
-    stride, bpp = w * 4, 4
-    prev = bytearray(stride)
-    p = 0
-    for _ in range(h):
-        f = raw[p]
-        line = bytearray(raw[p + 1:p + 1 + stride]); p += 1 + stride
-        for i in range(stride):
-            a = line[i - bpp] if i >= bpp else 0
-            b = prev[i]
-            c = prev[i - bpp] if i >= bpp else 0
-            if f == 1: line[i] = (line[i] + a) & 255
-            elif f == 2: line[i] = (line[i] + b) & 255
-            elif f == 3: line[i] = (line[i] + (a + b) // 2) & 255
-            elif f == 4:
-                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
-                line[i] = (line[i] + (a if pa <= pb and pa <= pc else (b if pb <= pc else c))) & 255
-        if min(line[3::4]) < 255:
-            return True
-        prev = line
-    return False
+def alpha_counts(path):
+    """For a PNG with an alpha channel: (pixels not fully solid, pixels visibly see-through,
+    i.e. below 250 of 255). sips turns it into a 32-bit BMP, whose alpha bytes Python can scan fast."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "full.bmp")
+        subprocess.run(["sips", "-s", "format", "bmp", path, "--out", out], check=True, capture_output=True)
+        with open(out, "rb") as f:
+            bmp = f.read()
+    start = struct.unpack_from("<I", bmp, 10)[0]
+    if struct.unpack_from("<H", bmp, 28)[0] != 32:
+        return 0, 0
+    mask = struct.unpack_from("<I", bmp, 66)[0] or 0xFF000000  # the alpha mask (BITMAPV4 header)
+    byte = {0xFF: 0, 0xFF00: 1, 0xFF0000: 2, 0xFF000000: 3}[mask]
+    alpha = bmp[start + byte::4]
+    not_solid = len(alpha) - alpha.count(255)
+    see_through = sum(alpha.count(v) for v in range(250))
+    return not_solid, see_through
 
 
 def small_brightness(path, cols, rows):
@@ -153,8 +135,11 @@ def check(name):
     if depth != 8:
         problems.append(f"{depth} bits per channel; save as 8-bit")
     if ctype == 6:
-        if alpha_in_use(path):
-            problems.append("has see-through pixels; flatten the picture before saving")
+        not_solid, see_through = alpha_counts(path)
+        if see_through:
+            problems.append(f"{see_through} see-through pixels; flatten the picture before saving")
+        elif not_solid:
+            notes.append(f"{not_solid} pixels a hair short of solid (250-254 of 255; invisible, harmless)")
         else:
             notes.append("has an unused transparency channel (harmless)")
     target = target_size(name)

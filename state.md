@@ -180,7 +180,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   transparency in use, target size (2.4 x the `4x3/` version; explosion frames 1920x1440), framing
   (shrunk with `sips`, compared in 160-block grids; best fit must be unshifted). Proven on test files
   to catch a 256-colour save, a wrong size and a crop. Done so far: 04-title, 07-troll, 15-jelly-logo, 17-end-picture (all four
-  320x400 pictures).
+  320x400 pictures); 02-ships-horizon, 05-glenz-plate, 09-mountain-background, 10-lens-picture,
+  13-water-background (the five 320x200 ones worth doing, by Batch, 2026-11-24).
 - Automating the 320x200 pictures in Photoshop (2026-11-24): `artwork/to-upscale/` (git-ignored) holds
   `320x200/` (full-colour copies of ships horizon, glenz plate, mountain background, lens picture, water
   background) and `done/` (the Batch output). Plan: a recorded Action (2 x Generative Upscale 4x, Image
@@ -188,6 +189,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   document with a changed name, so output names may need fixing; Claude checks, renames and moves the
   results into `artwork/modern/`. Not yet known: whether Generative Upscale records in an Action (Adobe
   does not say; a community answer says yes) and how many credits a batch uses.
+  RESULT: it records and batches fine (user, 2026-11-24). Photoshop's default model was Topaz
+  Gigapixel (a partner model). Output names gain " Topaz Gigapixel 4x scale" twice. The saved PNGs
+  have an alpha channel with the top and bottom rows at 254 (invisible); `art_check.py` now treats
+  250-254 as harmless and flags only real see-through pixels. A "Flatten Image" step before saving
+  would avoid the channel.
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
