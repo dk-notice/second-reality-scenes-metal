@@ -45,10 +45,14 @@ protocol DemoScene: AnyObject {
     /// red, green, blue bytes (0...255) for each canvas pixel, row by row. The self-test compares
     /// what the graphics chip draws against this.
     func classicReferenceFrame() -> [UInt8]
+    /// The canvas size right now, for a scene whose size changes as it runs (Play Demo, which
+    /// shows other scenes and pictures). nil, the default, means the entry's `canvasSize`.
+    var currentCanvasSize: SIMD2<Float>? { get }
 }
 
 extension DemoScene {
     func prepare(commands: MTLCommandBuffer, frame: FrameInfo) {}
+    var currentCanvasSize: SIMD2<Float>? { nil }
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.

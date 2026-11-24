@@ -89,11 +89,12 @@ final class Renderer: NSObject, MTKViewDelegate {
 
         let screen = drawable.texture
         let box = Self.letterbox(width: Double(screen.width), height: Double(screen.height))
+        let canvasSize = scene.currentCanvasSize ?? entry.canvasSize
 
         switch look {
         case .modern:
             // Draw the scene straight onto the screen at full resolution.
-            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: entry.canvasSize,
+            let frame = FrameInfo(look: .modern, alpha: alpha, canvasSize: canvasSize,
                                   targetSize: SIMD2(Float(box.width), Float(box.height)))
             scene.prepare(commands: commands, frame: frame)
             if let encoder = commands.makeRenderCommandEncoder(descriptor: Self.clearPass(into: screen)) {
@@ -104,8 +105,8 @@ final class Renderer: NSObject, MTKViewDelegate {
 
         case .classic:
             // Draw the scene onto a small picture the size of the original screen, then scale that up.
-            guard let small = classicTarget() else { break }
-            Self.drawClassic(scene: scene, canvasSize: entry.canvasSize, into: small, commands: commands)
+            guard let small = classicTarget(canvasSize) else { break }
+            Self.drawClassic(scene: scene, canvasSize: canvasSize, into: small, commands: commands)
             if let encoder = commands.makeRenderCommandEncoder(descriptor: Self.clearPass(into: screen)) {
                 encoder.setViewport(box)
                 encoder.setRenderPipelineState(blitPipeline)
@@ -137,9 +138,12 @@ final class Renderer: NSObject, MTKViewDelegate {
         return device.makeTexture(descriptor: descriptor)
     }
 
-    private func classicTarget() -> MTLTexture? {
+    private func classicTarget(_ canvasSize: SIMD2<Float>) -> MTLTexture? {
+        if let texture = classicTexture, texture.width != Int(canvasSize.x) || texture.height != Int(canvasSize.y) {
+            classicTexture = nil   // the canvas changed size (Play Demo moved on to another part)
+        }
         if classicTexture == nil {
-            classicTexture = Self.makeClassicTexture(device: device, canvasSize: entry.canvasSize)
+            classicTexture = Self.makeClassicTexture(device: device, canvasSize: canvasSize)
         }
         return classicTexture
     }

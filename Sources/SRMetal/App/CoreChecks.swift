@@ -19,6 +19,7 @@ enum CoreChecks {
         math3D(check)
         smoothTriangleGeometry(check)
         music(check)
+        demoTimeline(check)
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             check("Core: Metal device available", false)
@@ -96,6 +97,24 @@ enum CoreChecks {
             check("Music: libopenmpt opens both songs", false, "\(error)")
         }
         musicPosition(check)
+    }
+
+    /// Play Demo's running order (added 2026-11-24): the script, run silently against the music,
+    /// starts every part at the step the research simulation (`tools/demo_timeline.py`) gives.
+    private static func demoTimeline(_ check: (String, Bool, String) -> Void) {
+        let (sequencer, problem) = DemoTimelineCommand.simulate()
+        let wrong = DemoTimelineCommand.differences(sequencer.partStarts)
+        check("Play Demo: all \(DemoTimelineCommand.expected.count) parts start on the step tools/demo_timeline.py gives (credits end 10:52.4)",
+              wrong.isEmpty && problem == nil, problem ?? wrong.prefix(3).joined(separator: "; "))
+        let ids = Set(SceneCatalog.all.map(\.id))
+        let scenes = DemoScript.steps.compactMap { step -> String? in
+            if case .show(.scene(let id)) = step { return id } else { return nil }
+        }
+        let unknown = scenes.filter { !ids.contains($0) }
+        check("Play Demo: every scene it shows exists (\(scenes.count) uses)", unknown.isEmpty, unknown.joined(separator: ", "))
+        let missing = DemoScript.pictures.filter { DemoPictures.url($0, look: .modern) == nil || DemoPictures.url($0, look: .classic) == nil }
+        check("Play Demo: every picture it shows is there in both looks (\(DemoScript.pictures.count) pictures)",
+              missing.isEmpty, missing.joined(separator: ", "))
     }
 
     /// The song position Play Demo waits on (added 2026-11-24 with Play Demo).

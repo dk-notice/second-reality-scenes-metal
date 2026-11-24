@@ -27,6 +27,9 @@ enum Main {
         if CommandLine.arguments.contains("--music-render") {
             exit(MusicRenderCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        if CommandLine.arguments.contains("--demo-timeline") {
+            exit(DemoTimelineCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--music-info") {
             exit(MusicInfoCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
