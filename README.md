@@ -35,8 +35,9 @@ The interesting part is the comparison. The original is full of tricks for makin
 A modern graphics chip needs none of them, so each scene's documentation explains what the trick was and
 what replaced it.
 
-There is no music playing yet. The groundwork is in: the demo's two original songs and libopenmpt, the
-tracker-music library that will play them, built into the program (see [ThirdParty/README.md](ThirdParty/README.md)).
+The demo's two original songs can be played from the **Music** menu: the real tracker music, played live by
+libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdParty/README.md)). The scenes do not
+choose or follow the music yet.
 
 ## Scenes
 
@@ -93,12 +94,18 @@ The window has a list of scenes down the left (the sidebar) and a toolbar along 
 | Play the current scene again from its start | The circular-arrow button at the right of the toolbar, or press R |
 | Hide or show the sidebar | The sidebar button at the left of the toolbar, or Control-Command-S |
 | Fullscreen | The green window button, or Control-Command-F (in newer macOS versions also the Globe key with F) |
+| Play one of the demo's two songs, from its start | **Music** menu, "Play Song 1" or "Play Song 2" |
+| Stop the music | **Music** menu, "Stop Music", or Command-. (full stop) |
 
 In fullscreen the sidebar and toolbar get out of the way so that only the scene shows; the keys above still
 work, and moving the pointer to the top of the screen brings the toolbar back. Leaving fullscreen puts the
 sidebar back as it was.
 
 The look, restart and next/previous actions are also in the **Scene** menu.
+
+The music's sound follows the look: smooth in the Modern look; in the 1993 look the samples are played
+without smoothing, which sounds grittier, closer to a sound card of the time. Each song plays to its end
+(Song 1 lasts about 9 and a half minutes, Song 2 about 7).
 
 ### Options
 
@@ -150,6 +157,13 @@ build/SRMetal.app/Contents/MacOS/SRMetal --music-info
 
 loads the demo's two songs and describes them, without playing anything. Add `--write <folder>` to also
 save them unscrambled as standard S3M files (see [Data/Music/README.md](Data/Music/README.md)).
+
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --music-render 1 20 song1.wav classic
+```
+
+saves the first 20 seconds of song 1 (or 2) as a WAV sound file without playing it, in the `modern` or
+`classic` (1993) sound; `--music-play 1 10 classic` plays them through the speakers instead.
 
 ## Documentation
 

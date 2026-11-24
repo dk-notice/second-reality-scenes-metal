@@ -77,6 +77,21 @@ enum CoreChecks {
             let loudest = a.map(abs).max() ?? 0
             check("Music: the first second of MUSIC0 renders the same twice, and is not silent",
                   a == b && loudest > 0.01, "loudest \(loudest)")
+            // The player's two sounds (they follow the look) really differ, and "the whole song"
+            // goes on past the first "---" mark: MUSIC0's first sub-song is only about 2 minutes.
+            let smooth = try TrackerSong(.first), gritty = try TrackerSong(.first)
+            smooth.setSound(.modern)
+            gritty.setSound(.classic)
+            var c = [Float](), d = [Float]()
+            smooth.render(into: &c, frames: 44_100, sampleRate: 44_100)
+            gritty.render(into: &d, frames: 44_100, sampleRate: 44_100)
+            let difference = zip(c, d).map { abs($0 - $1) }.max() ?? 0
+            check("Music: the Modern and 1993 sounds differ", difference > 0.001, "largest difference \(difference)")
+            let firstPart = smooth.durationSeconds
+            smooth.playWholeSong()
+            check("Music: playing the whole of MUSIC0 lasts longer than its first sub-song",
+                  smooth.durationSeconds > firstPart + 60,
+                  "\(Int(firstPart)) s -> \(Int(smooth.durationSeconds)) s")
         } catch {
             check("Music: libopenmpt opens both songs", false, "\(error)")
         }

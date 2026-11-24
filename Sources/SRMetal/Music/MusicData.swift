@@ -23,6 +23,14 @@ enum Song: String, CaseIterable {
     case first = "MUSIC0.S3M"
     /// "UnreaL ][ / PM", by Purple Motion: the second half.
     case second = "MUSIC1.S3M"
+
+    /// How the Music menu names the song.
+    var menuTitle: String {
+        switch self {
+        case .first: return "Song 1: \"The 2ND Reality\" (Skaven)"
+        case .second: return "Song 2: \"Unreal II\" (Purple Motion)"
+        }
+    }
 }
 
 /// Finds and reads the song files, and undoes Future Crew's scrambling of their patterns.

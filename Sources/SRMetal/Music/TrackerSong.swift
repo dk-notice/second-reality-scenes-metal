@@ -61,6 +61,27 @@ final class TrackerSong {
     var currentOrder: Int { Int(openmpt_module_get_current_order(module)) }
     var currentRow: Int { Int(openmpt_module_get_current_row(module)) }
 
+    /// The two sounds, matching the app's two looks. `.classic` turns off smoothing between a
+    /// sample's points (libopenmpt's "interpolation filter length" 1, nearest point): grittier, closer
+    /// to a 1993 sound card. `.modern` uses libopenmpt's default, smooth filter.
+    func setSound(_ look: Look) {
+        openmpt_module_set_render_param(module, OPENMPT_MODULE_RENDER_INTERPOLATIONFILTER_LENGTH, look == .classic ? 1 : 0)
+    }
+
+    /// Plays every sub-song in turn instead of only the first (MUSIC0 is split into 5 by its "---" marks).
+    func playWholeSong() {
+        openmpt_module_select_subsong(module, -1)
+    }
+
+    /// How far into the song playback has got, in seconds.
+    var positionSeconds: Double { openmpt_module_get_position_seconds(module) }
+
+    /// Renders the next `frames` sample pairs into two separate channels, without allocating memory
+    /// (safe to call from the audio thread). Returns how many were rendered: fewer at the end.
+    func render(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, sampleRate: Int) -> Int {
+        Int(openmpt_module_read_float_stereo(module, Int32(sampleRate), frames, left, right))
+    }
+
     /// Renders the next `frames` stereo sample pairs at `sampleRate` into `buffer` (left, right,
     /// left, right ...; -1...1). Returns how many pairs were rendered: fewer at the end of the song.
     @discardableResult

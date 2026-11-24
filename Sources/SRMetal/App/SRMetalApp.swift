@@ -4,7 +4,8 @@ import SwiftUI
 /// Entry point. `--selftest` runs the checks and exits; `--snapshot` saves a picture and exits;
 /// `--visu-test` saves a picture of a 3D engine test case and exits; `--motion-check` compares a
 /// scene's neighbouring pictures for jumps and flicker and exits; `--music-info` describes the
-/// demo's two songs and exits; otherwise the app starts.
+/// demo's two songs and exits; `--music-render` saves a stretch of one as a sound file and exits;
+/// `--music-play` plays a stretch of one through the speakers and exits; otherwise the app starts.
 @main
 enum Main {
     static func main() {
@@ -19,6 +20,12 @@ enum Main {
         }
         if CommandLine.arguments.contains("--motion-check") {
             exit(MotionCheck.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
+        if CommandLine.arguments.contains("--music-play") {
+            exit(MusicPlayCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
+        if CommandLine.arguments.contains("--music-render") {
+            exit(MusicRenderCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
         if CommandLine.arguments.contains("--music-info") {
             exit(MusicInfoCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
@@ -47,7 +54,7 @@ struct StartupOptions {
     static var usage: String {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
-        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info (run one without arguments for its usage)
+        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play (run one without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", "))
         """
     }
@@ -89,7 +96,9 @@ struct StartupOptions {
 
 /// What the user has currently chosen. The sidebar, toolbar, menu and keys change it; the picture follows it.
 final class AppModel: ObservableObject {
-    @Published var look: Look = .modern
+    @Published var look: Look = .modern {
+        didSet { music.setSound(look) }   // the music's sound follows the look
+    }
     @Published var sceneIndex = 0
     /// Goes up by one each time the user asks to replay the scene from its start.
     @Published private(set) var restartCount = 0
@@ -101,6 +110,12 @@ final class AppModel: ObservableObject {
     var columnsBeforeFullscreen: NavigationSplitViewVisibility?
 
     private var keyMonitor: Any?
+
+    /// The music player (Music menu). `nowPlaying` mirrors it for the menu's check marks.
+    let music = MusicPlayer()
+    @Published private(set) var nowPlaying: Song?
+    /// Why the last attempt to play failed, if it did (shown in the Music menu).
+    @Published private(set) var musicProblem: String?
 
     init() {
         // Optional start-up choices (see `StartupOptions`).
@@ -114,6 +129,7 @@ final class AppModel: ObservableObject {
         if options.sidebarHidden {
             columns = .detailOnly
         }
+        music.onFinished = { [weak self] in self?.nowPlaying = nil }
     }
 
     var entry: SceneEntry { SceneCatalog.all[sceneIndex] }
@@ -130,6 +146,21 @@ final class AppModel: ObservableObject {
 
     func restartScene() {
         restartCount += 1
+    }
+
+    func playMusic(_ song: Song) {
+        do {
+            try music.play(song, look: look)
+            musicProblem = nil
+        } catch {
+            musicProblem = "\(error)"
+        }
+        nowPlaying = music.nowPlaying
+    }
+
+    func stopMusic() {
+        music.stop()
+        nowPlaying = nil
     }
 
     /// Makes the single-key shortcuts work wherever the keyboard focus is.
@@ -199,6 +230,22 @@ struct SRMetalApp: App {
                 Button("Previous Scene") { model.stepScene(by: -1) }
                     .keyboardShortcut(.leftArrow, modifiers: [])
                     .disabled(!model.hasSeveralScenes)
+            }
+
+            // The demo's two original songs, played live by libopenmpt. The sound follows the look:
+            // smooth in the Modern look, gritty (no smoothing) in the 1993 look.
+            CommandMenu("Music") {
+                ForEach(Song.allCases, id: \.self) { song in
+                    Button((model.nowPlaying == song ? "✓ " : "") + "Play \(song.menuTitle)") { model.playMusic(song) }
+                }
+                Divider()
+                Button("Stop Music") { model.stopMusic() }
+                    .keyboardShortcut(".", modifiers: [.command])
+                    .disabled(model.nowPlaying == nil)
+                if let problem = model.musicProblem {
+                    Divider()
+                    Text("Could not play: \(problem)")
+                }
             }
         }
     }

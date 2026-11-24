@@ -29,8 +29,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   built on it (2026-11-14, see their notes below); what the two scenes share is `Core/Visu/VisuPlayback.swift`.
 - Music groundwork (2026-11-24): libopenmpt 0.8.10 is in `ThirdParty/libopenmpt` (unmodified source),
   built by `build.sh` as a static library and linked into the program; the two original songs are in
-  `Data/Music` (scrambled, as shipped) and unscrambled at load. `--music-info` describes them. Nothing
-  plays sound yet. See "MUSIC" under Decisions.
+  `Data/Music` (scrambled, as shipped) and unscrambled at load. `--music-info` describes them.
+  MUSIC PLAYER (2026-11-24): a "Music" menu plays either song (whole song, all sub-songs) or stops
+  (Command-.); the sound follows the look (1993 = no interpolation). Scenes do not choose or follow
+  the music yet. See "MUSIC" under Decisions.
 - ARTWORK (2026-11-24, current work): every picture the released demo shows is exported to PNG in
   `artwork/original/` (see "Artwork notes"). The user is making high-resolution versions of each, to go
   in `artwork/modern/`. No scene uses them yet.
@@ -42,6 +44,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --music-info [--write <folder>]` loads both songs into libopenmpt
   and describes them (and saves them unscrambled as standard S3M files).
+- `--music-render <1|2> <seconds> <file.wav> [modern|classic]` saves the start of a song as a WAV file;
+  `--music-play <1|2> <seconds> [modern|classic]` plays it through the speakers and reports how far the
+  sound output got (proof the audio thread pulled music).
 - `build.sh` first builds libopenmpt (copy in `build/libopenmpt/src`, log `build/libopenmpt/make.log`;
   about 15 s the first time). Run it once before a bare `swift build`, which needs the library.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --snapshot <scene-id> <modern|classic> <step> <file.png> [blend]` saves a
@@ -142,10 +147,19 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   Cross-check: the user's downloaded unscrambled copies (`downloaded-unscrambled-s3ms/`, NOT committed,
   the user's folder): 2ND_SKAV.S3M = our unscrambled MUSIC0 except 49 order-list bytes (their "+++"
   removed and "---" turned into pattern 31); 2ND_PM.S3M is a different (1997) version of MUSIC1.
-  NEXT (step 3): sound out of the speakers with AVAudioEngine (an AVAudioSourceNode pulling
-  `TrackerSong.render`), a "1993" sound (no interpolation: OPENMPT_MODULE_RENDER_INTERPOLATIONFILTER_LENGTH
-  = 1) beside a "Modern" one, an offline render-to-file command, and a play command for listening.
-  Then step 4 (music position as the clock) with the sequencer.
+  DONE (step 3, 2026-11-24): `Music/MusicPlayer.swift`: AVAudioEngine + an AVAudioSourceNode whose
+  render block pulls `TrackerSong.render(left:right:)` at the output's own sample rate. The audio thread
+  only TRIES the lock (`OSAllocatedUnfairLock.withLockIfAvailableUnchecked`) and plays silence if the
+  menu is swapping songs; songs are made and freed on the main thread. End of song -> main thread, once,
+  and only stops if that song is still loaded. Sound follows the look: `TrackerSong.setSound` sets the
+  interpolation filter length (1 = none for 1993, 0 = default). `playWholeSong` selects sub-song -1
+  (MUSIC0 whole: 578 s; first sub-song 119 s). Menu in `SRMetalApp` ("Music"); `AppModel.look` didSet
+  forwards the look. 2 more self-test checks (262). `--music-play 1 3` reached exactly 3.00 s.
+  NOT verified by Claude: how it sounds (the user listens), switching the look while playing by ear,
+  and the menu in the running app (only that the app still starts).
+  NEXT: each scene starts its own music at the original part's song and order (research: the loader
+  `MAIN/U2.ASM` and each part's waits; the scene's loops will drift from the music after one loop).
+  Then step 4 (music position as the clock) with the full-demo sequencer.
   Seen while building, not investigated: two linker warnings that search paths inside the Command
   Line Tools folder do not exist; harmless (the build works).
 - Original data is loaded from files, not Swift source, when it is large and binary (decided for the 3D
