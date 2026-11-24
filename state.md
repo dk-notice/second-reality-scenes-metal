@@ -163,8 +163,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   pictures are mostly miniature screenshots of each part and could be re-made from the scenes.
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
-- Noticed, not touched: a `.claude/worktrees/` folder appeared inside `../secondreality` on 2026-11-24
-  (created by some session; the reference folder should not be changed).
+- A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
+  `claude/project-continuation-5bf400`, no changes or commits of its own) was removed at the user's
+  request on 2026-11-24, with `git worktree remove` and `git branch -d`.
 
 ## Dot Tunnel notes
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
