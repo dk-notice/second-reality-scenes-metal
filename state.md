@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-14
+Last updated: 2026-11-24
 
 ## Goal
 A native macOS app that re-creates scenes from Second Reality (Future Crew, 1993) from scratch,
@@ -28,6 +28,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   in `Data/Visu/`, `tools/visu_reference.py`, and `docs/visu-engine.md`. Ships Fly-by and the 3D City are
   built on it (2026-11-14, see their notes below); what the two scenes share is `Core/Visu/VisuPlayback.swift`.
 - No music.
+- ARTWORK (2026-11-24, current work): every picture the released demo shows is exported to PNG in
+  `artwork/original/` (see "Artwork notes"). The user is making high-resolution versions of each, to go
+  in `artwork/modern/`. No scene uses them yet.
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
@@ -129,6 +132,39 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Proposals, not done: use the display's own timestamp for the clock; a `/simplify` pass over the
   duplicated picture-difference loops in `SelfTest.swift` and `MotionCheck.swift` and the per-scene
   shader recompiling; give `SceneEntry` a loop length so `--motion-check` need not guess where a loop ends.
+
+## Artwork notes
+- Started 2026-11-24 at the user's request, instead of a new scene for now. A ranked list of possible
+  new scenes was made the same day (best first: Rotozoomer, Lens, Jelly Logo; the unused Twister; the
+  two scrollers; the explosion). The user has not picked one yet; every remaining part of the demo
+  needs original pictures, so the "calculated and 3D only" scope would have to widen.
+- `tools/art_export.py` (with `tools/artformats.py`, standard-library Python) reads `../secondreality`
+  and writes `artwork/original/` (exact indexed PNGs), `original/4x3/` (pixels repeated 5x6 or 5x3 to
+  the 1993 monitor shape) and `original/explosion/` (40 frames). `--check` re-decodes and compares
+  pixel for pixel. `artwork/README.md` is the inventory: what each picture is and what an upscale
+  must respect. `artwork/modern/README.md` gives the naming and shape rules for the user's versions.
+- Decided: the exports live in this repository (user, 2026-11-24). The PNGs are made by the script;
+  do not edit them by hand.
+- Each picture is read from the copy BUILT INTO the demo (.OBK/.OBJ/.INC or the file the part loads)
+  and cross-checked against the artist's Deluxe Paint file: all match, except the opening horizon's
+  colours 1-3 (changed to the text's greys in the built copy; the PNG keeps the built colours). The
+  Ships horizon and the Glenz plate agree with this project's scenes.
+- Format traps found: the "FDFC" packer can run past a row's end (START/HZPIC.P); MIEKKA.SCI's header
+  says 400x250 but holds 400x35; ALKU/FONA.INC has one stray byte in front; TEXTS.16 is 2 bit planes
+  though its header says 16 colours; the credits font has 10 shades, the others 4; explosion frames
+  are changes against the frame TWO back (two video pages), and every frame covers exactly 64000
+  pixels, which is the decoding's check.
+- Not verified: the 21 credits pictures (only the artist's files survive; `PIC02` is a "PART PIC
+  MISSING" placeholder in the source, the released demo may differ); the explosion against its
+  Autodesk Animator original (`PAM/PRAX4.FLI`); how tall the fonts' pixels were on screen (so fonts
+  have no `4x3/` version); how much of the 640-wide setup screen shows at once.
+- Ideas: the water background was ray-traced and POV-Ray scene files survive in `WATER/`, so it may be
+  re-rendered at high resolution instead of upscaled (which file made it is unknown). The credits
+  pictures are mostly miniature screenshots of each part and could be re-made from the scenes.
+- When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
+  `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
+- Noticed, not touched: a `.claude/worktrees/` folder appeared inside `../secondreality` on 2026-11-24
+  (created by some session; the reference folder should not be changed).
 
 ## Dot Tunnel notes
 - Modern look keeps the original's projection (ring size shrinks with distance; ring offsets do not),
@@ -704,6 +740,8 @@ All planned scenes are done.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
+- CURRENT (2026-11-24): the user is making high-resolution versions of the artwork in `artwork/`.
+  Picking the next scene is on hold until they say.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,

@@ -150,6 +150,8 @@ only. It also reports how long one step takes. (`classic` checks the 1993 look.)
 - [docs/scenes/](docs/scenes/): one page per scene, original versus new.
 - [docs/visu-engine.md](docs/visu-engine.md): the original's 3D engine (used by Ships Fly-by and the 3D
   City): how it worked, its data formats, this project's version of it, and what was checked.
+- [artwork/](artwork/README.md): every picture the original demo shows, exported to PNG, as the
+  starting point for high-resolution versions.
 - [state.md](state.md): working notes: current status, decisions, and what is next.
 
 ## How faithful is the 1993 look?
