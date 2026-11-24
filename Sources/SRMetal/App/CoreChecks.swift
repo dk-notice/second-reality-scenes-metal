@@ -95,6 +95,50 @@ enum CoreChecks {
         } catch {
             check("Music: libopenmpt opens both songs", false, "\(error)")
         }
+        musicPosition(check)
+    }
+
+    /// The song position Play Demo waits on (added 2026-11-24 with Play Demo).
+    private static func musicPosition(_ check: (String, Bool, String) -> Void) {
+        // Song 1 plays at tempo 120, as in the demo: its first section lasts 8 s = 560 steps of 1/70 s.
+        func stepsInFirstSection(_ song: TrackerSong) -> Int {
+            var buffer = [Float](), steps = 0
+            while song.currentOrder == 0 && steps < 2000 {
+                song.render(into: &buffer, frames: 630, sampleRate: 44_100)
+                steps += 1
+            }
+            return steps
+        }
+        do {
+            let demo = try TrackerSong(.first), file = try TrackerSong(.first, asInDemo: false)
+            let a = stepsInFirstSection(demo), b = stepsInFirstSection(file)
+            check("Music: song 1 is loaded at the demo's tempo 120 (first section 8 s), not the file's 125",
+                  (559...561).contains(a) && b < a - 10, "\(a) and \(b) steps")
+            let later = try TrackerSong(.first)
+            later.playWholeSong()
+            later.start(atOrder: 18)
+            var buffer = [Float]()
+            later.render(into: &buffer, frames: 630, sampleRate: 44_100)
+            check("Music: a song can start from section 18 (the city)",
+                  later.currentOrder == 18 && later.currentRow == 0, "\(later.currentOrder)/\(later.currentRow)")
+        } catch {
+            check("Music: song 1 opens at the demo's tempo", false, "\(error)")
+        }
+        // "Music plus" around a separator, on a made-up order list: 5, +++, 6, 7.
+        let sep = TrackerSong.separatorMarker
+        let list = [5, sep, 6, 7]
+        let plus = [(0, 10), (0, 40), (0, 63), (2, 0), (2, 31), (2, 32), (3, 10)].map {
+            MusicPosition.plus(orderList: list, order: $0.0, row: $0.1)
+        }
+        check("Music: \"music plus\" counts up to a \"+++\" and on after it",
+              plus == [-32, -24, -1, 0, 31, -32, -32], "\(plus)")
+        let both = [0, 31, 33, 63].map { MusicPosition.plus(orderList: [1, sep, 2, sep, 3], order: 2, row: $0) }
+        check("Music: \"music plus\" between two separators counts after the first, then towards the second",
+              both == [0, 31, -31, -1], "\(both)")
+        let sync = [(0, 0), (2, 0), (2, 1), (3, 0x2F), (3, 0x30), (13, 1), (40, 0), (62, 0), (70, 0)].map {
+            MusicPosition.sync(order: $0.0, row: $0.1)
+        }
+        check("Music: the sync table gives the original's numbers", sync == [0, 0, 1, 2, 3, 10, 10, 1, 4], "\(sync)")
     }
 
     // MARK: - The scene list

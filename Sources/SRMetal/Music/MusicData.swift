@@ -24,6 +24,9 @@ enum Song: String, CaseIterable {
     /// "UnreaL ][ / PM", by Purple Motion: the second half.
     case second = "MUSIC1.S3M"
 
+    /// The starting tempo the demo forced on the song when loading it, if any (see `TrackerSong.init`).
+    var demoTempo: UInt8? { self == .first ? 120 : nil }
+
     /// How the Music menu names the song.
     var menuTitle: String {
         switch self {

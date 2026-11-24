@@ -10,9 +10,13 @@ final class TrackerSong {
     let song: Song
     private let module: OpaquePointer
 
-    init(_ song: Song) throws {
+    /// `asInDemo`: load the song as the demo did. For song 1 that means tempo 120 instead of the
+    /// file's 125 (`MAIN/STARTMUS.C` set byte 50 of the module, its starting tempo, to 0x78), which
+    /// makes every section of it last exactly 8 seconds. Song 2 is loaded unchanged either way.
+    init(_ song: Song, asInDemo: Bool = true) throws {
         self.song = song
-        let bytes = try MusicData.unscrambled(song)
+        var bytes = try MusicData.unscrambled(song)
+        if asInDemo, let tempo = song.demoTempo { bytes[Self.tempoOffset] = tempo }
         var error: Int32 = 0
         var message: UnsafePointer<CChar>?
         let module = bytes.withUnsafeBytes { buffer in
@@ -57,6 +61,15 @@ final class TrackerSong {
     /// The song's order list ("sequence"): the pattern played at each position, or one of the two
     /// markers above. libopenmpt leaves out "---" markers at the very end of the list.
     var orderList: [Int] { (0..<orders).map { Int(openmpt_module_get_order_pattern(module, Int32($0))) } }
+
+    /// Where in an S3M file its starting tempo is kept.
+    static let tempoOffset = 0x32
+
+    /// Starts playing from the beginning of section `order` (the demo started song 1 again from
+    /// section 18 for the city). Call after `playWholeSong`, which resets the position.
+    func start(atOrder order: Int) {
+        openmpt_module_set_position_order_row(module, Int32(order), 0)
+    }
 
     var currentOrder: Int { Int(openmpt_module_get_current_order(module)) }
     var currentRow: Int { Int(openmpt_module_get_current_row(module)) }

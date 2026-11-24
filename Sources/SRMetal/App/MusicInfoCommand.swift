@@ -125,7 +125,10 @@ enum MusicPlayCommand {
         print("Playing \(song.menuTitle), \(look.rawValue) sound, for \(seconds) s ...")
         RunLoop.main.run(until: Date().addingTimeInterval(seconds))
         let reached = player.positionSeconds
+        let position = player.position
+        let plus = MusicPosition.plus(orderList: player.orderList, order: position.order, row: position.row)
         player.stop()
+        print("Position read from the audio thread: section \(position.order), row \(position.row), music plus \(plus).")
         print("The sound output reached \(String(format: "%.2f", reached)) s into the song.")
         // The output renders a little ahead of what is heard, so allow some slack either way.
         return reached > seconds * 0.8
