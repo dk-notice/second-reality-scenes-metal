@@ -7,6 +7,7 @@ into the public domain in 2013.
 | Folder | What is in it |
 |---|---|
 | [original/](original/) | The pictures exactly as the demo had them: original size, original colours. Made by a script; do not edit. |
+| [original/rgb/](original/rgb/) | The same pictures in full colour (8-bit RGB, marked as sRGB), including the explosion frames. **Open these in Photoshop to upscale**: no change of mode or colour profile needed. |
 | [original/4x3/](original/4x3/) | The same pictures with each pixel repeated so they have the shape they had on a 1993 monitor (no smoothing). Use these to judge proportions. |
 | [original/explosion/](original/explosion/) | The 40 frames of the explosion animation. |
 | [modern/](modern/) | Your high-resolution versions go here. See [modern/README.md](modern/README.md). |

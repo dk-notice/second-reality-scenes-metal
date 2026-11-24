@@ -249,12 +249,14 @@ def inc_data(text):
 
 # ---------------------------------------------------------------- PNG
 
-def _png(width, height, colour_type, rows, plte=None):
+def _png(width, height, colour_type, rows, plte=None, srgb=False):
     def chunk(name, payload):
         c = name + payload
         return struct.pack(">I", len(payload)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
     raw = b"".join(b"\0" + r for r in rows)
     out = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, colour_type, 0, 0, 0))
+    if srgb:  # "these colours are sRGB" (rendering intent 0), so editors need not ask
+        out += chunk(b"sRGB", b"\0")
     if plte is not None:
         out += chunk(b"PLTE", plte)
     out += chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
@@ -276,6 +278,38 @@ def png_scaled(pic, sx, sy):
         line = b"".join(lut[v] * sx for v in pic.pixels[y * pic.width:(y + 1) * pic.width])
         rows += [line] * sy
     return _png(pic.width * sx, pic.height * sy, 2, rows)
+
+
+def png_rgb(pic):
+    """Full colour (8 bits per channel), marked as sRGB: ready for photo editors and upscalers."""
+    lut = [bytes(c) for c in pic.palette]
+    rows = [b"".join(lut[v] for v in pic.pixels[y * pic.width:(y + 1) * pic.width]) for y in range(pic.height)]
+    return _png(pic.width, pic.height, 2, rows, srgb=True)
+
+
+def read_png_written(data):
+    """Reads back a PNG this module wrote (no row filters). Returns (width, height, colour
+    type, pixel bytes, palette or None, has sRGB chunk)."""
+    pos = 8
+    idat = b""; plte = None; w = h = ctype = 0; srgb = False
+    while pos < len(data):
+        n = struct.unpack_from(">I", data, pos)[0]
+        name = data[pos + 4:pos + 8]; body = data[pos + 8:pos + 8 + n]
+        if name == b"IHDR":
+            w, h = struct.unpack_from(">II", body, 0); ctype = body[9]
+        elif name == b"PLTE":
+            plte = [tuple(body[i:i + 3]) for i in range(0, len(body), 3)]
+        elif name == b"sRGB":
+            srgb = True
+        elif name == b"IDAT":
+            idat += body
+        pos += 12 + n
+    raw = zlib.decompress(idat)
+    stride = w * (3 if ctype == 2 else 1)
+    if any(raw[y * (stride + 1)] for y in range(h)):
+        raise FormatError("row filters are not supported here")
+    pixels = b"".join(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)] for y in range(h))
+    return w, h, ctype, pixels, plte, srgb
 
 
 def read_png_indexed(data):

@@ -169,6 +169,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   the 1993 shape: 3840x2880 for one-screen pictures, 7680x2880 for the 640-wide ones, 1920x1440 for
   the credits pictures and the explosion frames. The lens/rotozoomer picture may want more (decide
   when that scene is built). Upscale from the original-size PNGs, then correct the shape.
+- `artwork/original/rgb/` (added 2026-11-24, user's request): full-colour copies of every export
+  and explosion frame, 8-bit RGB with an sRGB chunk, as the starting files for Photoshop (it needs
+  RGB). `--check` verifies them against the palettes.
 - First high-resolution picture done 2026-11-24: `artwork/modern/04-title.png` (user, Photoshop
   Generative Upscale; upscale the original grid, then shrink to 3840x2880). Checked: 8-bit RGB,
   framing lines up with the original. Trap met: Photoshop's "Smaller File (8-bit)" export saved it

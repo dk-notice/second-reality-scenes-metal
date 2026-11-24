@@ -8,6 +8,8 @@ For each picture it reads the copy that was BUILT INTO the demo (the .OBK/.OBJ/.
 into the part's program, or the file the program loads) and cross-checks it against the
 artist's Deluxe Paint file, so the PNG is what the demo actually showed. Outputs:
 - artwork/original/<name>.png       exact pixels and palette (an indexed PNG)
+- artwork/original/rgb/<name>.png    the same, in full colour (8-bit RGB, marked sRGB), ready
+                                    to open in Photoshop and upscale (explosion frames too)
 - artwork/original/4x3/<name>.png   each pixel repeated so the picture has the shape it
                                     had on a 1993 monitor (no smoothing); pictures only
 - artwork/original/explosion/frame-NN.png   the 40 explosion frames
@@ -21,8 +23,9 @@ import sys
 
 sys.dont_write_bytecode = True  # leave no __pycache__ folder in tools/
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from artformats import (FormatError, Picture, inc_data, obk_data, png_indexed, png_scaled,  # noqa: E402
-                        read_any, read_fcfc, read_lbm, read_png_indexed, read_rix, vga_palette, words)
+from artformats import (FormatError, Picture, inc_data, obk_data, png_indexed, png_rgb,  # noqa: E402
+                        png_scaled, read_any, read_lbm, read_png_indexed, read_png_written, read_rix,
+                        vga_palette, words)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
@@ -194,6 +197,7 @@ def explosion_frames():
 def export():
     os.makedirs(os.path.join(OUT, "4x3"), exist_ok=True)
     os.makedirs(os.path.join(OUT, "explosion"), exist_ok=True)
+    os.makedirs(os.path.join(OUT, "rgb", "explosion"), exist_ok=True)
     sums = []
     problems = 0
     for name, part, load, others, shape, note in PIECES:
@@ -209,6 +213,8 @@ def export():
                 results.append(f"{o}: unreadable ({e})")
         with open(os.path.join(OUT, name + ".png"), "wb") as f:
             f.write(png_indexed(pic))
+        with open(os.path.join(OUT, "rgb", name + ".png"), "wb") as f:
+            f.write(png_rgb(pic))
         if shape:
             with open(os.path.join(OUT, "4x3", name + ".png"), "wb") as f:
                 f.write(png_scaled(pic, *shape))
@@ -219,6 +225,8 @@ def export():
     for i, pic in enumerate(frames, 1):
         with open(os.path.join(OUT, "explosion", f"frame-{i:02}.png"), "wb") as f:
             f.write(png_indexed(pic))
+        with open(os.path.join(OUT, "rgb", "explosion", f"frame-{i:02}.png"), "wb") as f:
+            f.write(png_rgb(pic))
         sums.append(f"{checksum(pic)}  explosion/frame-{i:02}.png  320x200")
     with open(os.path.join(OUT, "4x3", "explosion-frame-20.png"), "wb") as f:
         f.write(png_scaled(frames[19], *TALL))
@@ -241,7 +249,13 @@ def check():
             w, h, pixels, palette = read_png_indexed(f.read())
         if (w, h, pixels) != (pic.width, pic.height, pic.pixels) or palette != pic.palette:
             print("DIFFERENT:", name); bad += 1
-    print(f"{len(pics)} PNGs checked, {bad} different")
+        # the full-colour copy: every pixel must be its colour number's palette colour
+        with open(os.path.join(OUT, "rgb", name + ".png"), "rb") as f:
+            w, h, ctype, rgb, _, srgb = read_png_written(f.read())
+        expected = b"".join(bytes(pic.palette[v]) for v in pic.pixels)
+        if (w, h, ctype, rgb, srgb) != (pic.width, pic.height, 2, expected, True):
+            print("DIFFERENT:", "rgb/" + name); bad += 1
+    print(f"{len(pics)} pictures checked (indexed and full-colour copies), {bad} different")
     return bad == 0
 
 

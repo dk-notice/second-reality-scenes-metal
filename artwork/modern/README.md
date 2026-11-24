@@ -3,6 +3,13 @@
 Your high-resolution versions of the pictures in [../original/](../original/) go here. Nothing in this
 folder is made by a script.
 
+## Where to start
+
+Open the full-colour copy in [../original/rgb/](../original/rgb/) (it needs no change of mode or colour
+profile). Upscale it, keeping its proportions, until it is at least the target size both ways; then
+shrink it to the target size (Image Size, width and height unlinked, Bicubic Sharper). Compare the
+result with the `../original/4x3/` version: shapes and positions should line up.
+
 ## Rules, so the app can use them later
 
 1. **Same name as the original.** `../original/10-lens-picture.png` becomes `10-lens-picture.png`
