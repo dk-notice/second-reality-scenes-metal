@@ -42,11 +42,22 @@ GitHub's free allowance (2026-11): 10 GB of LFS storage and 10 GB of downloads a
 version pushed counts in full, so save drafts locally and commit finished versions. Without a
 payment method on the GitHub account, going over blocks further pushes rather than costing money.
 
+## Checking a picture
+
+```bash
+python3 tools/art_check.py
+```
+
+checks every picture here: the name matches an original, full colour (not 256 colours), no
+see-through pixels, the target size, and that it lines up with the original (no cropping, padding
+or shift). Add names (`python3 tools/art_check.py 07-troll`) to check only those.
+
 ## Status
 
 | Picture | Done? | Notes |
 |---|---|---|
 | `04-title.png` | Yes (2026-11-24) | Photoshop Generative Upscale; 3840x2880, 8-bit RGB. Framing checked against the original: lines up with no shift. |
+| `07-troll.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
 
 Note: the Ships Fly-by scene already accepts a replacement horizon, but it looks for it as
 `Data/Visu/U2ABG-modern.png`. When the first pictures here are ready, the scenes will be changed to
