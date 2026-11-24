@@ -179,7 +179,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `tools/art_check.py` (2026-11-24) checks pictures in `artwork/modern/`: name, full colour, no
   transparency in use, target size (2.4 x the `4x3/` version; explosion frames 1920x1440), framing
   (shrunk with `sips`, compared in 160-block grids; best fit must be unshifted). Proven on test files
-  to catch a 256-colour save, a wrong size and a crop. Done so far: 04-title, 07-troll.
+  to catch a 256-colour save, a wrong size and a crop. Done so far: 04-title, 07-troll, 15-jelly-logo, 17-end-picture (all four
+  320x400 pictures).
 - When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
   `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch

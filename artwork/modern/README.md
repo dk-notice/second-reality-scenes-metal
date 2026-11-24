@@ -58,6 +58,8 @@ or shift). Add names (`python3 tools/art_check.py 07-troll`) to check only those
 |---|---|---|
 | `04-title.png` | Yes (2026-11-24) | Photoshop Generative Upscale; 3840x2880, 8-bit RGB. Framing checked against the original: lines up with no shift. |
 | `07-troll.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
+| `15-jelly-logo.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
+| `17-end-picture.png` | Yes (2026-11-24) | Photoshop Generative Upscale; checked by `tools/art_check.py`. |
 
 Note: the Ships Fly-by scene already accepts a replacement horizon, but it looks for it as
 `Data/Visu/U2ABG-modern.png`. When the first pictures here are ready, the scenes will be changed to
