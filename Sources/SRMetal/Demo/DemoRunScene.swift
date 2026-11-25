@@ -60,16 +60,14 @@ final class DemoRunScene: DemoScene {
     private var shown = Shown.black
     private var partsStarted = 0
 
-    private let pipeline: MTLRenderPipelineState
-    private let smooth: MTLSamplerState
-    private let nearest: MTLSamplerState
     private let loader: MTKTextureLoader
 
-    /// Pictures are shown through the shared toolkit (`PictureLayer`). Only the one showing is kept:
-    /// its Modern-look version is up to 2560x3200 (made when first drawn).
+    /// Pictures and title cards are shown through the shared toolkit (`PictureLayer`). Only the last
+    /// picture shown is kept, and its Modern-look version (up to 2560x3200, made when first drawn) only
+    /// while it shows.
     private let pictureLayer: PictureLayer
-    private var pictures: [String: ScenePicture] = [:]
-    private var cards: [String: (modern: MTLTexture, classic: MTLTexture)] = [:]
+    private var picture: (name: String, picture: ScenePicture)?
+    private var cards: [String: ScenePicture] = [:]
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource) throws {
         self.device = device
@@ -79,29 +77,6 @@ final class DemoRunScene: DemoScene {
         self.loader = MTKTextureLoader(device: device)
         self.pictureLayer = try PictureLayer(device: device, pixelFormat: pixelFormat)
 
-        let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + """
-        fragment float4 picture_fragment(CanvasOut in [[stage_in]],
-                                         texture2d<float> tex [[texture(0)]],
-                                         sampler smp [[sampler(0)]]) {
-            return float4(tex.sample(smp, in.uv).rgb, 1.0);
-        }
-        """)
-        let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.vertexFunction = try Shaders.function("canvas_vertex", in: library)
-        descriptor.fragmentFunction = try Shaders.function("picture_fragment", in: library)
-        descriptor.colorAttachments[0].pixelFormat = pixelFormat
-        pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-
-        func sampler(_ filter: MTLSamplerMinMagFilter) throws -> MTLSamplerState {
-            let d = MTLSamplerDescriptor()
-            d.minFilter = filter
-            d.magFilter = filter
-            d.mipFilter = filter == .linear ? .linear : .notMipmapped
-            guard let state = device.makeSamplerState(descriptor: d) else { throw RendererError.noSampler }
-            return state
-        }
-        smooth = try sampler(.linear)
-        nearest = try sampler(.nearest)
         hookUp()
     }
 
@@ -156,25 +131,16 @@ final class DemoRunScene: DemoScene {
     }
 
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
-        let texture: MTLTexture?
+        let still: ScenePicture?
         switch shown {
         case .scene(let scene, _):
             scene.draw(into: encoder, frame: frame)
             return
-        case .black:
-            return
-        case .picture(let name):
-            if let picture = picture(name) { pictureLayer.draw(picture, into: encoder, look: frame.look) }
-            return
-        case .card(let title):
-            let pair = card(title)
-            texture = frame.look == .modern ? pair?.modern : pair?.classic
+        case .black: return
+        case .picture(let name): still = picture(name)
+        case .card(let title): still = card(title)
         }
-        guard let texture else { return }
-        encoder.setRenderPipelineState(pipeline)
-        encoder.setFragmentTexture(texture, index: 0)
-        encoder.setFragmentSamplerState(frame.look == .modern ? smooth : nearest, index: 0)
-        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        if let still { pictureLayer.draw(still, into: encoder, look: frame.look) }
     }
 
     /// Play Demo has no 1993 reference picture of its own: each scene it shows has one.
@@ -183,6 +149,9 @@ final class DemoRunScene: DemoScene {
     // MARK: - Changing what is shown
 
     private func show(_ visual: DemoVisual) {
+        // The last picture's Modern-look version is let go; its small original stays (the ships'
+        // horizon is shown twice in a row).
+        if case .picture(let name) = visual, picture?.name == name {} else { picture?.picture.dropUpscaled() }
         switch visual {
         case .scene(let id):
             guard let entry = SceneCatalog.all.first(where: { $0.id == id }) else { shown = .black; return }
@@ -194,7 +163,6 @@ final class DemoRunScene: DemoScene {
             }
         case .picture(let name):
             shown = .picture(name)
-            pictures = pictures.filter { $0.key == name }   // only the one showing
         case .card(let title):
             shown = .card(title)
         case .black:
@@ -202,28 +170,21 @@ final class DemoRunScene: DemoScene {
         }
     }
 
-    private static let loadOptions: [MTKTextureLoader.Option: Any] = [
-        .SRGB: false,                       // the bytes as they are, like every scene's colours
-        .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-        .textureStorageMode: MTLStorageMode.private.rawValue,
-        .generateMipmaps: false
-    ]
-
     private func picture(_ name: String) -> ScenePicture? {
-        if let picture = pictures[name] { return picture }
-        guard let picture = try? ScenePicture(named: name, device: device) else { return nil }
-        pictures[name] = picture
-        return picture
+        if let picture, picture.name == name { return picture.picture }
+        guard let made = try? ScenePicture(named: name, device: device) else { return nil }
+        picture = (name, made)
+        return made
     }
 
     /// A title card naming a part not built yet, drawn once per look.
-    private func card(_ title: String) -> (modern: MTLTexture, classic: MTLTexture)? {
-        if let pair = cards[title] { return pair }
+    private func card(_ title: String) -> ScenePicture? {
+        if let card = cards[title] { return card }
         guard let big = Self.cardImage(title, width: 1600, height: 1200, smooth: true),
               let small = Self.cardImage(title, width: 320, height: 200, smooth: false),
-              let modernCard = try? loader.newTexture(cgImage: big, options: Self.loadOptions),
-              let classicCard = try? loader.newTexture(cgImage: small, options: Self.loadOptions) else { return nil }
-        cards[title] = (modernCard, classicCard)
+              let modern = try? loader.newTexture(cgImage: big, options: ScenePicture.loadOptions),
+              let classic = try? loader.newTexture(cgImage: small, options: ScenePicture.loadOptions) else { return nil }
+        cards[title] = ScenePicture(classic, modern: modern, device: device)
         return cards[title]
     }
 

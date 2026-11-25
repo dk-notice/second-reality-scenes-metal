@@ -16,6 +16,12 @@ final class ScenePicture: @unchecked Sendable {
         self.device = device
     }
 
+    /// A picture whose Modern-look version is made some other way (Play Demo's title cards, drawn large).
+    convenience init(_ original: MTLTexture, modern: MTLTexture, device: MTLDevice) {
+        self.init(original, device: device)
+        upscaledCopy = modern
+    }
+
     /// One of the exported pictures by name (as in `artwork/original/rgb`, without ".png"), e.g. "04-title",
     /// or a path below that folder, e.g. "explosion/frame-01".
     convenience init(named name: String, device: MTLDevice) throws {
