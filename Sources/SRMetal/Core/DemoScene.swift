@@ -89,6 +89,11 @@ struct DemoContext {
     var previous: DemoHandover?
 }
 
+/// Palette bytes from a data file as VGA levels (0...63): the card kept only a level's low six bits, so a
+/// damaged byte cannot become a level the rest of the app is not ready for. Every loader of a file's
+/// palette goes through this.
+func vgaLevels<Bytes: Sequence>(_ bytes: Bytes) -> [UInt8] where Bytes.Element == UInt8 { bytes.map { $0 & 63 } }
+
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.
 func byteFromVGA(_ value: Int) -> UInt8 {
     UInt8((Double(value) * 255 / 63).rounded())

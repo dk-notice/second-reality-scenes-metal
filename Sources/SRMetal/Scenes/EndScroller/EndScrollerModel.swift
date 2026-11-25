@@ -121,13 +121,16 @@ struct EndScrollerModel {
         }
     }
 
+    /// A line starting `%` shows nothing and starts the text again (one rule for both looks).
+    static func isLoopLine(_ line: [UInt8]) -> Bool { line.first == UInt8(ascii: "%") }
+
     /// One pass of the original's `do_scroll`.
     private mutating func drawRow() {
         if row == 0 {
             let line = lines[nextLine]
             start = font.lineStart(line)
             gapRows = 0
-            loops = line.first == UInt8(ascii: "%")
+            loops = Self.isLoopLine(line)
             if line.first == UInt8(ascii: "["), line.count >= 3,
                let tens = Int(String(UnicodeScalar(line[1]))), let ones = Int(String(UnicodeScalar(line[2]))) {
                 gapRows = tens * 10 + ones

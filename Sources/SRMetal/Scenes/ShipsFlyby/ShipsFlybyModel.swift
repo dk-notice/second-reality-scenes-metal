@@ -64,7 +64,7 @@ final class ShipsFlybyModel {
         background = Array(file[784..<784 + Self.width * Self.height])
         // U2A.C: memcpy(scene0+16+192*3, bg+16, 64*3)
         var colours = playback.world.palette
-        colours.replaceSubrange(192 * 3..<256 * 3, with: file[16..<16 + 64 * 3])
+        colours.replaceSubrange(192 * 3..<256 * 3, with: vgaLevels(file[16..<16 + 64 * 3]))
         palette = colours
         drawClassic()
     }

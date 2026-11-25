@@ -39,15 +39,14 @@ extension CoreChecks {
 
         // A flat colour stays exactly that colour.
         let flatRGB = [UInt8](repeating: 0, count: 16 * 16 * 3).enumerated().map { [UInt8(200), 90, 30][$0.offset % 3] }
+        let flatName = "Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged"
         if let flat = picture(flatRGB, width: 16, height: 16) {
             let big = try PictureScaler.upscaled(flat, device: device)
             let values = readBack(big)
             let worst = zip(values, (0..<values.count).map { Float([200, 90, 30][$0 % 3]) / 255 }).map { abs($0 - $1) }.max() ?? 1
-            check("Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged",
-                  big.width == 16 * PictureScaler.modernScale && big.height == 16 * PictureScaler.modernScale && worst < 0.002, "largest change \(worst)")
+            check(flatName, big.width == 16 * PictureScaler.modernScale && big.height == 16 * PictureScaler.modernScale && worst < 0.002, "largest change \(worst)")
         } else {
-            check("Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged",
-                  false, "the test picture could not be made")
+            check(flatName, false, "the test picture could not be made")
         }
 
         // On a real picture (the troll: dithering, gradients, hard edges) every new pixel stays within
@@ -64,9 +63,9 @@ extension CoreChecks {
         let big = try PictureScaler.upscaled(troll, device: device)
         let values = readBack(big)
         let scale = PictureScaler.modernScale
+        let trollName = "Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it"
         guard values.count == scale * w * scale * h * 3 else {
-            check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
-                  false, "the scaled picture could not be read back (\(values.count) values)")
+            check(trollName, false, "the scaled picture could not be read back (\(values.count) values)")
             return
         }
         // The lowest and highest value of each colour among the original pixels within 2 of each pixel.
@@ -95,8 +94,7 @@ extension CoreChecks {
                 }
             }
         }
-        check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
-              big.width == scale * w && big.height == scale * h && outside == 0, "\(outside) values outside, worst by \(worst)")
+        check(trollName, big.width == scale * w && big.height == scale * h && outside == 0, "\(outside) values outside, worst by \(worst)")
     }
 
     /// The shared picture-and-fade toolkit (added 2026-11-24): in the 1993 look a fade gives exactly the

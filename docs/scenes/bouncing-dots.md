@@ -163,7 +163,7 @@ the one that wrote the port, and with `/code-review`.
   Such a dot does not fall while hidden, so in the modern look a few near dots of the cloud hang still
   for a moment. Hiding them would make dots blink out in mid-air; left as it is.
 
-**Possible tidy-ups** (left for a later pass): `floorGrey` is never used; the floor and dot colour
+**Possible tidy-ups** (left for a later pass): the floor and dot colour
 formulas are written two or three times (palette, modern colours, shader); the shade rule is written out
 again in the scene; the 1993 look copies the 64,000-byte picture and rebuilds the palette on every draw;
 320, 200, 160 and 100 are literal numbers throughout.

@@ -117,7 +117,7 @@ struct OpeningCreditsModel {
             throw CreditsError.badData("OpeningCredits HORIZON.BIN")
         }
         let font = try Font(shades: OpeningCreditsData.load("FONT.BIN"))
-        return OpeningCreditsModel(palette: Array(horizon[16..<784]), pixels: Array(horizon[784...]), font: font)
+        return OpeningCreditsModel(palette: vgaLevels(horizon[16..<784]), pixels: Array(horizon[784...]), font: font)
     }
 
     init(palette: [UInt8], pixels: [UInt8], font: Font) {

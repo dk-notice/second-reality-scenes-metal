@@ -25,9 +25,12 @@ enum LensTables {
 
     /// Table 4 from its file. nil if the file is missing or damaged: `LensModel.drawRow` reads by the
     /// table's own offsets and counts, so they are checked here, once.
-    static func ringTable() -> [UInt16]? {
-        guard let url = folder?.appendingPathComponent("LENS.EX4"), let data = try? Data(contentsOf: url) else { return nil }
-        return ringTable(bytes: [UInt8](data))
+    static func ringTable() -> [UInt16]? { bytes("LENS.EX4").flatMap(ringTable(bytes:)) }
+
+    /// One of the folder's files (as `MountainData.bytes`).
+    static func bytes(_ name: String) -> [UInt8]? {
+        guard let url = folder?.appendingPathComponent(name), let data = try? Data(contentsOf: url) else { return nil }
+        return [UInt8](data)
     }
 
     static func ringTable(bytes: [UInt8]) -> [UInt16]? {

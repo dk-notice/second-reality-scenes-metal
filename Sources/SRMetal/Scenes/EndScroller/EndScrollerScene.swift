@@ -95,9 +95,7 @@ final class EndScrollerScene: DemoScene {
     private func lineTexture(_ index: Int) -> MTLTexture? {
         if let made = lineTextures[index] { return made }
         guard let image = Self.lineImage(model.lines[index]),
-              let texture = try? loader.newTexture(cgImage: image, options: [
-                .SRGB: false, .generateMipmaps: true, .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                .textureStorageMode: MTLStorageMode.private.rawValue]) else { return nil }
+              let texture = try? loader.newTexture(cgImage: image, options: ScenePicture.textLoadOptions) else { return nil }
         lineTextures[index] = texture
         return texture
     }
@@ -134,7 +132,7 @@ final class EndScrollerScene: DemoScene {
     /// One straying, kept on purpose: the quotation marks around a nickname show here; the 1993 font has
     /// no glyph for them.
     static func modernText(_ line: [UInt8]) -> String {
-        guard line.first != UInt8(ascii: "%") else { return "" }
+        guard !EndScrollerModel.isLoopLine(line) else { return "" }
         return String(String.UnicodeScalarView(line.filter { $0 >= 32 }.compactMap { UnicodeScalar(dosCharacter($0)) }))
     }
 

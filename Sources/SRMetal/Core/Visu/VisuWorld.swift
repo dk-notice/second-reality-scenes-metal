@@ -43,9 +43,7 @@ final class VisuWorld {
         let materials = try load("\(name).00M")
         guard materials.count >= 16 + 768 else { throw VisuError.badFile("\(name).00M", "too short") }
         let m = VisuBytes(bytes: materials)
-        // Colour levels are 0...63; a VGA card ignored a level's top two bits, so a damaged byte cannot
-        // become a level the rest of the app is not ready for.
-        palette = materials[16..<16 + 768].map { $0 & 63 }
+        palette = vgaLevels(materials[16..<16 + 768])
         // (Byte 15, `C` or `R`, switched on special object ordering in U2A.C; it is 0 in both shipped
         // scenes, so those rules never ran and are not built here.)
 

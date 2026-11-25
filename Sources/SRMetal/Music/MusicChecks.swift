@@ -34,7 +34,6 @@ extension CoreChecks {
         // libopenmpt, built into the program, opens both songs and sees what the demo relied on.
         do {
             let first = try TrackerSong(.first), second = try TrackerSong(.second)
-            // (The version number itself: 0.7 or later, as build.sh builds it from ThirdParty/libopenmpt.)
             let version = TrackerSong.libraryVersionNumbers
             check("Music: libopenmpt is built in, version 0.7 or later",
                   version.major > 0 || version.minor >= 7, TrackerSong.libraryVersion)

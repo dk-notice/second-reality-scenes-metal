@@ -98,7 +98,7 @@ cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT "$APP/Contents/R
 
 # The credits' Modern-look pictures, captured from the scenes themselves (Modern look), at the moments
 # in CreditsModel.captures. Made here, not kept in git: they always match the scenes as built.
-"$APP/Contents/MacOS/SRMetal" --credits-captures "$APP/Contents/Resources/Credits/Modern" || exit 1
+"$APP/Contents/MacOS/SRMetal" --credits-captures "$APP/Contents/Resources/Credits/Modern"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 # codesign refuses a folder carrying Finder information. When the project sits in a synced folder

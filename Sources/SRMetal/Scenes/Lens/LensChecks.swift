@@ -17,14 +17,14 @@ extension CoreChecks {
         } else {
             check("Lens: the lens shape picture is there", false, "")
         }
-        let ring = LensTables.ringTable().map { SelfTest.crc32(bytes($0)) }
+        let whole = LensTables.bytes("LENS.EX4") ?? []
+        let ring = LensTables.ringTable(bytes: whole).map { SelfTest.crc32(bytes($0)) }
         check("Lens: table 4 (Data/Lens/LENS.EX4) is the original file", ring == 224_138_840, "\(String(describing: ring))")
         // A damaged table must be turned away at load, not crash the first time the lens is drawn.
-        let whole = LensTables.ringTable().map(bytes) ?? []
         var wrongCount = whole
         if wrongCount.count > 3 { wrongCount[2] = 0xFF; wrongCount[3] = 0xFF }      // row 0: 65,535 entries
         check("Lens: a damaged table 4 is turned away (empty, cut short, a row's count past the end)",
-              !whole.isEmpty && LensTables.ringTable(bytes: whole) != nil && LensTables.ringTable(bytes: []) == nil
+              ring != nil && LensTables.ringTable(bytes: []) == nil
                 && LensTables.ringTable(bytes: Array(whole.prefix(whole.count / 2 & ~1))) == nil
                 && LensTables.ringTable(bytes: wrongCount) == nil,
               "\(whole.count) bytes")

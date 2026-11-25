@@ -72,9 +72,7 @@ final class OpeningCreditsScene: DemoScene {
         var texts: [OpeningCreditsModel.Text: MTLTexture] = [:]
         for text in Self.allTexts {
             guard let image = Self.textImage(text, font: model.font) else { continue }
-            texts[text] = try? loader.newTexture(cgImage: image, options: [
-                .SRGB: false, .generateMipmaps: true, .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                .textureStorageMode: MTLStorageMode.private.rawValue])
+            texts[text] = try? loader.newTexture(cgImage: image, options: ScenePicture.textLoadOptions)
         }
         self.texts = texts
     }

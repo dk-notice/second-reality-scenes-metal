@@ -35,10 +35,10 @@ struct MountainData {
             guard let d = bytes("POS\(n).DAT"), let table = ScrollTables.parse(d, columns: columns, rows: rows) else { return nil }
             tables.append(table)
         }
+        let levels = vgaLevels(hills[10..<778])
         var palette: [SIMD3<Int>] = []
-        for colour in 0..<256 {
-            let at = 10 + 3 * colour
-            palette.append(SIMD3<Int>(Int(hills[at]), Int(hills[at + 1]), Int(hills[at + 2])))
+        for at in stride(from: 0, to: 768, by: 3) {
+            palette.append(SIMD3<Int>(Int(levels[at]), Int(levels[at + 1]), Int(levels[at + 2])))
         }
         let textEnd = 778 + textWidth * rows
         return MountainData(palette: palette, background: Array(hills[778...]), text: Array(o2[778..<textEnd]), tables: tables)

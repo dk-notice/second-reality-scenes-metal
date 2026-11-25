@@ -36,9 +36,9 @@ struct CreditsModel {
     static let screens = 21
     static let stepsPerScreen = 362
     static let length = screens * stepsPerScreen
-    static let slideInSteps = 102
+    static var slideInSteps: Int { slideIn.count }      // 102
     static let holdSteps = 200
-    static let slideOutSteps = 59
+    static var slideOutSteps: Int { slideOut.count }    // 59
 
     /// The canvas: 320 pixels across, the card's 400 lines down (each display row is 2 lines).
     static let width = 320
@@ -174,10 +174,6 @@ struct CreditsModel {
         /// Where the top half's window starts, in pixels of video memory.
         var view: Int { 4 * (start / 4) + (pan & 3) }
     }
-
-    /// How many steps the two slides really take (the tables' lengths), for the self-test to hold the
-    /// constants above to.
-    static var slideLengths: (in: Int, out: Int) { (slideIn.count, slideOut.count) }
 
     private static let slideIn: [Int] = {
         var ys: [Int] = []

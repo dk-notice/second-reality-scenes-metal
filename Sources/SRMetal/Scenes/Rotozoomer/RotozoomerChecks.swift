@@ -23,9 +23,7 @@ extension CoreChecks {
         let turned = path.filter { abs($0.xa) > abs($0.ya) }.count
         check("Rotozoomer: the turned tile is read on 920 of the 2000 steps, as tools/rotozoom_reference.py counts",
               turned == 920, "\(turned)")
-        // Flash in: 70 levels above on step 0, 5 fewer each step, gone on step 14. Fade to white in 64 levels
-        // from step 1872 (still whole there, one level down on 1873), white at the end; on its own it starts
-        // again after 35 white steps.
+        // The fade's value on the steps either side of each change; on its own, 35 white steps at the end.
         var model = RotozoomerModel()
         func run(to step: Int) -> PictureFade {
             while model.step < step { model.tick() }

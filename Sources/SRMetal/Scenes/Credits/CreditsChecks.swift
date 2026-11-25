@@ -38,8 +38,7 @@ extension CoreChecks {
         model.tick()
         check("Credits: 21 screens of 362 steps (1 + 102 sliding in + 200 still + 59 sliding out), then it starts again",
               CreditsModel.length == 7602 && model.step == 0
-                && 1 + CreditsModel.slideInSteps + CreditsModel.holdSteps + CreditsModel.slideOutSteps == 362
-                && CreditsModel.slideLengths == (CreditsModel.slideInSteps, CreditsModel.slideOutSteps)
+                && CreditsModel.slideInSteps == 102 && CreditsModel.holdSteps == 200 && CreditsModel.slideOutSteps == 59
                 && CreditsModel.registers(local: 103) == CreditsModel.registers(local: 302),
               "\(CreditsModel.length) steps, back to \(model.step)")
         // The text is written with 320-wide rows into 640-wide video memory: only the font's even rows
@@ -97,16 +96,15 @@ extension CoreChecks {
               "1993 picture x \(first)...\(last), Modern \(layout.picture); text from \(layout.textTop)")
         // DIN Condensed Bold's capitals 30 lines (15 rows) tall from line 16 + 42 i of the text area: in the
         // text picture (2.4 pixels a line), "GRAPHICS - MARVEL" inks rows 38...110.
+        let textName = "Credits: Modern text in DIN Condensed Bold, capitals as tall as the 1993 letters (15 rows) on the same rows"
         if let image = CreditsScene.textImage(["GRAPHICS - MARVEL"]), let data = image.dataProvider?.data,
            let bytes = CFDataGetBytePtr(data) {
             let rows = (0..<image.height).filter { y in (0..<image.width).contains { bytes[y * image.bytesPerRow + $0] > 128 } }
-            check("Credits: Modern text in DIN Condensed Bold, capitals as tall as the 1993 letters (15 rows) on the same rows",
-                  CTFontCopyPostScriptName(CTFontCreateWithName(CreditsScene.fontName as CFString, 10, nil)) as String == "DINCondensed-Bold"
+            check(textName, CTFontCopyPostScriptName(CTFontCreateWithName(CreditsScene.fontName as CFString, 10, nil)) as String == "DINCondensed-Bold"
                     && abs((rows.first ?? 0) - 38) <= 1 && abs((rows.last ?? 0) - 110) <= 1,
                   "inked rows \(rows.first ?? -1)...\(rows.last ?? -1)")
         } else {
-            check("Credits: Modern text in DIN Condensed Bold, capitals as tall as the 1993 letters (15 rows) on the same rows",
-                  false, "the text picture could not be made")
+            check(textName, false, "the text picture could not be made")
         }
     }
 }

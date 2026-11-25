@@ -36,7 +36,11 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    build.sh leaves no half-made app; the timeline tool prints steps; the opening credits', credits'
    and a dozen other checks made to check what they say; the opening credits' Modern pictures made
    with the scene; unused code and stale comments; README checksums.
-   LEFT TO DO, in this order: (a) the user runs /simplify on the branch; (b) the user looks at the
+   /simplify was run on the branch's changes (2026-11-25) and its cleanups applied: one rule for palette
+   bytes read from a file (`vgaLevels`, used by every loader), one set of options for text pictures
+   (`ScenePicture.textLoadOptions`), one "is this the loop line" rule for the end scroller, check names
+   written once, and the self-test's total pinned (`SelfTest.expectedChecks`).
+   LEFT TO DO, in this order: (b) the user looks at the
    result in the app (end scroller's last lines in the Modern look, about 5.5 minutes in; Troll on its
    own in the Modern look; the opening credits); (c) merge, then `./build.sh` and the full self-test in
    the main folder; ask before pushing.
@@ -70,6 +74,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   ways of finding the original source: several tools need `SR_ORIGINAL` set when run from a worktree);
   `tools/x86interp.py` treats any `imul` as the one-operand form (no source uses another today);
   the reference tools do not check the hash of the EXE they unpack.
+- Left from /simplify (2026-11-25): the Lens, Mountain and Water loaders return nil for a damaged file, so
+  it is reported as "missing" (make them throw, as Credits and Visu do); the water's sword values have no
+  load check like the mountain text's; the end scroller still makes each line's picture on the frame the
+  line enters; the opening credits hold about 50 MB of Modern pictures even in the 1993 look (made with
+  the scene so none is late on its cue); `--demo-timeline` could print the same "Part starts (steps)"
+  line as the Python tool, to compare by eye.
 - Skip the black waits when Play Demo starts "from here"?
 - Troll flash possibly one refresh late (rests on how VGA latches, not on the source alone).
 - The jelly logo's white border (overscan) is left out.
@@ -181,6 +191,8 @@ All parts are built; this is the checklist when one is redone or a new one is ad
   the uncommitted fix being proven). Use the optimised build for the filtered self-test (`swift build -c
   release`, then `.build/release/SRMetal --selftest <word>`): the debug build takes minutes; its one
   expected failure is the credits' captured pictures, which only the app bundle has.
+- The full self-test fails if its total is not `SelfTest.expectedChecks` (634): change that number with
+  every check added or removed. It is how a check that silently stops running gets noticed.
 - Every new check is proven to fail with the detail broken on purpose, then restored, using the filtered
   self-test (`--selftest <scene id>`); run the full self-test and `--demo-timeline` once before each
   commit and after each merge (user, 2026-11-25).
