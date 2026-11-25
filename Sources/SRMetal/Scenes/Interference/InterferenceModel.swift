@@ -38,6 +38,13 @@ struct InterferenceModel {
     /// rate at the end, so it is back to nothing when the scene loops. (The shrinking is our addition.)
     static let wobbleGrowTicks = 16
 
+    /// Inside Play Demo the original's interference ended when the music's frame counter, started with
+    /// the rings, reached this many music ticks (`TECHNO/KOEA.ASM` 900-904)...
+    static let demoEndTicks = 925
+    /// ...and then the screen went to white over four refreshes, each mixing the last palette this
+    /// much of 256 towards white (`KOE.C` 224-228, `flash`). White then stays until the lead-in.
+    static let flashMixes = [32, 64, 192, 256]
+
     static let pictureWidth = 640
     static let pictureHeight = 400
 
@@ -48,6 +55,12 @@ struct InterferenceModel {
 
     let part: Part
     private(set) var ticks = 0
+    /// Inside Play Demo (set by the scene): the interference runs as the original's did, the wobble
+    /// growing to full and staying there, no loop.
+    var inDemo = false
+    /// Inside Play Demo, once the music's cue has come: refreshes of the flash to white so far (the
+    /// picture stays at its last step meanwhile). nil before.
+    private(set) var flashSteps: Int?
 
     init(part: Part) {
         self.part = part
@@ -57,9 +70,30 @@ struct InterferenceModel {
         part == .rings ? .rings(frame: ticks) : .interference(frame: ticks)
     }
 
-    mutating func reset() { ticks = 0 }
+    mutating func reset() { ticks = 0; flashSteps = nil }
+
+    /// Play Demo's cue: from the next tick, the flash to white instead of the next step.
+    mutating func startFlash() { if flashSteps == nil { flashSteps = 0 } }
+
+    /// How far (of 256) the palette is mixed towards white: 0 before the flash, then 32, 64, 192, 256.
+    var flashMix: Int {
+        guard let flashSteps, flashSteps > 0 else { return 0 }
+        return Self.flashMixes[min(flashSteps, Self.flashMixes.count) - 1]
+    }
+
+    /// The same one step earlier (the Modern look glides from it).
+    var previousFlashMix: Int {
+        guard let flashSteps, flashSteps > 1 else { return 0 }
+        return Self.flashMixes[min(flashSteps - 1, Self.flashMixes.count) - 1]
+    }
+
+    /// A colour mixed `mix` of 256 towards white, as `flash` did: (colour x (256 - mix) + 63 x mix) / 256.
+    static func flashed(_ colour: Colour, mix: Int) -> Colour {
+        (colour &* (256 - mix) &+ Colour(repeating: 63 * mix)) &>> 8
+    }
 
     mutating func tick() {
+        if let flashSteps { self.flashSteps = flashSteps + 1; return }
         ticks += 1
         switch part {
         case .rings:
@@ -67,7 +101,7 @@ struct InterferenceModel {
             // every 8 steps, so step back 8 to keep the counter small.
             if ticks >= 2 * Self.ringsFadeTicks { ticks -= 8 }
         case .interference:
-            if ticks == Self.interferenceTicks { ticks = 0 }
+            if ticks == Self.interferenceTicks && !inDemo { ticks = 0 }
         }
     }
 
@@ -153,8 +187,9 @@ struct InterferenceModel {
             return eight + eight
         case .interference(let frame):
             let rotation = Self.cycle(frame: frame)
-            return (0..<8).map { Self.lowerRamp[(rotation + $0) & 7] }
-                 + (0..<8).map { Self.upperRamp[(rotation + $0) & 7] }
+            let mix = flashMix
+            return ((0..<8).map { Self.lowerRamp[(rotation + $0) & 7] }
+                  + (0..<8).map { Self.upperRamp[(rotation + $0) & 7] }).map { Self.flashed($0, mix: mix) }
         }
     }
 
@@ -169,10 +204,11 @@ struct InterferenceModel {
         var wobble: [Int]
     }
 
-    /// Strength of the row wobble, 0...15, at a given Interference frame.
-    static func wobblePower(frame: Int) -> Int {
+    /// Strength of the row wobble, 0...15, at a given Interference frame. On its own the scene shrinks
+    /// it back so it can loop; inside Play Demo (`inDemo`) it stays at full, as the original's did.
+    static func wobblePower(frame: Int, inDemo: Bool = false) -> Int {
         let growing = (frame - wobbleStartTick) / wobbleGrowTicks
-        let shrinking = (interferenceTicks - frame) / wobbleGrowTicks
+        let shrinking = inDemo ? 15 : (interferenceTicks - frame) / wobbleGrowTicks
         return min(15, max(0, min(growing, shrinking)))
     }
 
@@ -186,7 +222,7 @@ struct InterferenceModel {
             // Each picture's window moves in its own circle, at a different speed.
             let ringTurn = 5 * frame
             let stripeTurn = 211 + 7 * frame
-            let power = Self.wobblePower(frame: frame)
+            let power = Self.wobblePower(frame: frame, inDemo: inDemo)
             let wobble = (0..<200).map { row -> Int in
                 let wave = SinTable.sin(7 * (frame + 1) + 9 * (row + 1)) >> 3
                 return power == 15 ? wave : wave * power / 15
@@ -259,14 +295,19 @@ struct InterferenceModel {
                 wobbleAmplitude: 0, wobblePhase: 0)
 
         case .interference(let whole):
-            let frame = Double(whole) + alpha
+            // During Play Demo's flash the picture holds still and only the palette moves.
+            let frame = Double(whole) + (flashSteps == nil ? alpha : 0)
             let ringTurn = 5 * frame
             let stripeTurn = 211 + 7 * frame
             let growing = (frame - Double(Self.wobbleStartTick)) / Double(Self.wobbleGrowTicks)
-            let shrinking = (Double(Self.interferenceTicks) - frame) / Double(Self.wobbleGrowTicks)
+            let shrinking = inDemo ? 15 : (Double(Self.interferenceTicks) - frame) / Double(Self.wobbleGrowTicks)
             let power = min(15, max(0, min(growing, shrinking)))
+            // The flash glides between its four mixes.
+            let mix = Double(previousFlashMix) + Double(flashMix - previousFlashMix) * alpha
+            let white = SIMD3<Double>(repeating: 63)
+            let flash = { (c: SIMD3<Double>) in (c * (256 - mix) + white * mix) / 256 }
             return ModernParameters(
-                ramps: unit(Self.lowerRamp.map { SIMD3<Double>($0) } + Self.upperRamp.map { SIMD3<Double>($0) }),
+                ramps: unit((Self.lowerRamp.map { SIMD3<Double>($0) } + Self.upperRamp.map { SIMD3<Double>($0) }).map(flash)),
                 cycle: rotation(frame),
                 ringScroll: SIMD2(Float(wave(ringTurn) + 160), Float(wave(ringTurn + 256) + 100)),
                 stripeScroll: SIMD2(Float(wave(stripeTurn) + 160 - 7), Float(wave(stripeTurn + 256) + 100)),

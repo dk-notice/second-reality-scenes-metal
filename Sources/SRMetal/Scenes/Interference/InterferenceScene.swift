@@ -62,6 +62,14 @@ final class InterferenceScene: DemoScene {
     func reset() { model.reset() }
     func tick() { model.tick() }
 
+    /// Inside Play Demo: the original's run (full wobble, no loop), then on the music's cue the flash to
+    /// white. (Told before each step, with the music as the script reads it on that step.)
+    func demoUpdate(_ context: DemoContext) {
+        guard model.part == .interference else { return }
+        model.inDemo = true
+        if context.music.ticks >= InterferenceModel.demoEndTicks { model.startFlash() }
+    }
+
     func classicReferenceFrame() -> [UInt8] {
         model.classicReferenceFrame().map { byteFromVGA(Int($0)) }
     }

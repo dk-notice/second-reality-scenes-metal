@@ -172,8 +172,8 @@ extension CoreChecks {
         // just before the troll's.
         let interference = length("interference"), bars = length("techno-bars")
         let barsSectionThree = bars - TechnoBarsModel.sectionOneTicks - TechnoBarsModel.sectionTwoTicks
-        check("Play Demo: the interference shows 989 steps (to 925 music ticks), the techno bars 1,955 (their third section 695, to 2520 ticks)",
-              interference == 989 && bars == 1955 && barsSectionThree == 695,
+        check("Play Demo: the interference shows 989 steps to 925 music ticks (and its 5-step flash), the techno bars 1,955 (their third section 695, to 2520 ticks)",
+              interference == 989 + 5 && bars == 1955 && barsSectionThree == 695,
               "interference \(interference), bars \(bars)")
     }
 

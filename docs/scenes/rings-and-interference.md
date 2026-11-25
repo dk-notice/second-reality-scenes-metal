@@ -184,8 +184,19 @@ Play Demo (2026-11-24) shows Rings for 256 steps, as long as the original's, the
 music's frame counter reaches 925. That counter counts music ticks, 52 a second (found 2026-11-25 in
 the player's library; see `docs/demo-timeline.md`), so the interference shows for 989 steps, measured
 from the script's silent run. (It was first read as screen refreshes, which cut it at 669 steps, 4.6 s
-early.) The scenes themselves are unchanged there: Rings still has no
-white-out, and neither waits for the music.
+early.)
+
+Inside Play Demo the interference then follows the original (2026-11-25):
+
+- **Full wobble to the end.** The wave grows to full strength and stays there; this scene's own
+  shrinking-back (over its last 240 steps, there only so it can loop) is left out, and it does not loop.
+- **The flash to white.** On the step the music's counter reaches 925, the picture stops and the palette
+  goes 32, 64, 192 and 256 of the way to white, one step each (`KOE.C` 224-228, `flash`: the formula is
+  colour x (256 - mix) / 256 + 63 x mix / 256). The fifth step is white too: the script waits five steps
+  there. The Modern look glides between the four mixes.
+
+Rings is unchanged there (still no white-out) and neither scene waits for the music; the checks are
+"Play Demo: the interference runs to the script's 925 music ticks..." (`InterferenceChecks.swift`).
 
 One thing that is not a difference: the circles are round in pixels, and the canvas is shown at 4:3 as on a
 VGA monitor, so they appear as slightly tall ovals. They did in 1993 too.
