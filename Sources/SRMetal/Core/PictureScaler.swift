@@ -1,7 +1,9 @@
+import Foundation
 import Metal
 
 /// Scales a small original picture (e.g. 320x200) up for the Modern look, on the graphics chip.
-/// Four ways, for comparing (2026-11-24, `--scaler-compare`); the user picks one.
+/// Four ways were compared (2026-11-24, `--scaler-compare`); the user chose Super-xBR, which the app
+/// now uses for every picture (`upscaled(_:device:)`): made once, 4x, then stretched smoothly.
 ///
 /// - `smooth`: ordinary bilinear stretching (each screen pixel mixes the four nearest picture pixels).
 /// - `sharp`: hard-edged blocks, with only the block edges softened ("sharp bilinear"), so the blocks
@@ -26,6 +28,37 @@ final class PictureScaler {
             case .superXBR: return "Super-xBR (4x, then smooth)"
             }
         }
+    }
+
+    /// The Modern look's pictures: `picture` (8-bit, at its original size) made 4 times larger by
+    /// Super-xBR, once, with smaller copies for showing it small. Draw it with a smooth (linear,
+    /// mipmapped) sampler. Safe to call from any thread; waits for the graphics chip.
+    static func upscaled(_ picture: MTLTexture, device: MTLDevice) throws -> MTLTexture {
+        let scaler = try shared(device)
+        guard let queue = device.makeCommandQueue(), let commands = queue.makeCommandBuffer() else {
+            throw RendererError.noCommandQueue
+        }
+        var result = picture
+        for round in 0..<2 { result = scaler.superXBRRound(result, commands: commands, last: round == 1) }
+        if result.mipmapLevelCount > 1, let blit = commands.makeBlitCommandEncoder() {
+            blit.generateMipmaps(for: result)
+            blit.endEncoding()
+        }
+        commands.commit()
+        commands.waitUntilCompleted()
+        return result
+    }
+
+    /// One scaler per graphics device: compiling its shaders takes a moment.
+    private static let lock = NSLock()
+    private static var scalers: [UInt64: PictureScaler] = [:]
+    private static func shared(_ device: MTLDevice) throws -> PictureScaler {
+        lock.lock()
+        defer { lock.unlock() }
+        if let scaler = scalers[device.registryID] { return scaler }
+        let scaler = try PictureScaler(device: device)
+        scalers[device.registryID] = scaler
+        return scaler
     }
 
     private let device: MTLDevice
@@ -91,19 +124,20 @@ final class PictureScaler {
         encoder.endEncoding()
     }
 
-    /// One Super-xBR round: the picture at twice the size.
-    private func superXBRRound(_ input: MTLTexture, commands: MTLCommandBuffer) -> MTLTexture {
+    /// One Super-xBR round: the picture at twice the size. `last`: the result gets room for smaller copies.
+    private func superXBRRound(_ input: MTLTexture, commands: MTLCommandBuffer, last: Bool = false) -> MTLTexture {
         let w = input.width, h = input.height
-        let corners = makeTexture(w, h), doubled = makeTexture(2 * w, 2 * h), refined = makeTexture(2 * w, 2 * h)
+        let corners = makeTexture(w, h), doubled = makeTexture(2 * w, 2 * h)
+        let refined = makeTexture(2 * w, 2 * h, mipmapped: last)
         pass("sxbr_pass0", inputs: [input], into: corners, commands: commands)
         pass("sxbr_pass1", inputs: [input, corners], into: doubled, commands: commands)
         pass("sxbr_pass2", inputs: [doubled], into: refined, commands: commands)
         return refined
     }
 
-    private func makeTexture(_ width: Int, _ height: Int) -> MTLTexture {
+    private func makeTexture(_ width: Int, _ height: Int, mipmapped: Bool = false) -> MTLTexture {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: width,
-                                                                  height: height, mipmapped: false)
+                                                                  height: height, mipmapped: mipmapped)
         descriptor.usage = [.renderTarget, .shaderRead]
         descriptor.storageMode = .private
         return device.makeTexture(descriptor: descriptor)!

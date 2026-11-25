@@ -303,7 +303,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   250-254 as harmless and flags only real see-through pixels. A "Flatten Image" step before saving
   would avoid the channel.
 - Ships Fly-by still looks for an optional replacement background `Data/Visu/U2ABG-modern.png` (none
-  exists); the pixel-art scaler will replace its smooth stretch instead.
+  exists); without it the Modern look uses the original made 4x by Super-xBR (2026-11-24).
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
   `claude/project-continuation-5bf400`, no changes or commits of its own) was removed at the user's
   request on 2026-11-24, with `git worktree remove` and `git branch -d`.
@@ -900,11 +900,9 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   part by part with real parts (the user chooses which), and make the built scenes follow the original
   part's timing inside the demo instead of looping.
 - WHERE WE LEFT OFF (end of 2026-11-24). Play Demo skeleton done and pushed. The user dropped the AI
-  artwork (deleted). NEXT, when the user OKs it: (1) build the pixel-art scaler shader; try it first on
-  the troll, title, Glenz plate and Ships horizon and show before/after pictures (risk: the pictures'
-  dithering); (2) if approved, use it for every picture (Play Demo, Ships background, Glenz plate);
-  (3) later, one at a time: re-made pictures (water via POV-Ray, credits from scenes). The user wants
-  to talk more before starting.
+  artwork (deleted). The Modern look's pictures now go through Super-xBR (user's choice after
+  side-by-side sheets). NEXT: the user looks at it in the app; later, one at a time, re-made pictures
+  (water via POV-Ray, credits from scenes).
   SCALER COMPARISON DONE (2026-11-24): `Core/PictureScaler.swift` has four methods as Metal shaders
   (smooth, sharp pixels, xBR level 2, Super-xBR 4x then smooth), the xBR ones written from Hyllian's
   MIT-licensed libretro shaders (default-preset settings). `--scaler-compare <picture> <folder> [x y w]`
@@ -913,6 +911,15 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   painted shading into hard contour bands (rejected); Super-xBR gives clean edges and smooth shading,
   slightly soft; it once turned two neighbouring stars into a short streak. Nothing in the app uses
   the scaler yet: WAITING for the user's choice.
+  CHOSEN AND BUILT (user, 2026-11-24): SUPER-XBR. `PictureScaler.upscaled(_:device:)` makes a picture 4x
+  once (two rounds of the three passes, rgba16Float, mipmapped; one compiled scaler per device, behind a
+  lock, since sidebar pictures are made on a background thread). Used by Ships Fly-by's background,
+  Glenz's plate and Play Demo's pictures (Modern look only; Play Demo keeps only the picture showing at
+  4x). 2 new self-test checks (272): a flat colour stays unchanged and 4x; on the troll every new
+  pixel lies within the colours of the original pixels within 2 around it (proven to fail, 268,682
+  values, with Super-xBR's own clamp removed). Docs pictures remade: ships-flyby-modern/-bigship/-near,
+  glenz-vectors-squash-modern. Seen by Claude in snapshots: ships, glenz plate, troll. NOT seen by the
+  user in the running app yet.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,

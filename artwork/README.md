@@ -1,8 +1,8 @@
 # Artwork
 
 Every picture the released *Second Reality* (Future Crew, 1993) shows, exported to PNG. The app shows
-these originals; for the Modern look it will scale them up on the graphics chip with a pixel-art
-scaler, and re-make a picture from its source where that is possible (decided 2026-11-24, replacing
+these originals; for the Modern look it scales them up on the graphics chip with Super-xBR, a
+pixel-art scaler (chosen 2026-11-24), and will re-make a picture from its source where that is possible (decided 2026-11-24, replacing
 an earlier plan of AI-upscaled versions, which were removed). Like the rest of the original, the artwork was released
 into the public domain in 2013.
 

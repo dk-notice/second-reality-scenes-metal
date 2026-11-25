@@ -10,7 +10,7 @@ import simd
 ///  - Classic look: the processor copies the background picture into a 320x200 screen of colour
 ///    numbers and the engine's 1993 replay draws the ships over it (`ShipsFlybyModel`); the
 ///    graphics chip only looks the colours up (`IndexedCanvas`).
-///  - Modern look: the background picture scaled up smoothly, then the ships as real triangles at
+///  - Modern look: the background picture scaled up by Super-xBR, then the ships as real triangles at
 ///    full resolution (`VisuModernRenderer`), gliding between animation frames.
 ///
 /// THIS SCENE USES ORIGINAL ARTWORK AND DATA: the background picture and the ship models and
@@ -51,8 +51,9 @@ final class ShipsFlybyScene: DemoScene {
         descriptor.colorAttachments[0].pixelFormat = pixelFormat
         backgroundPipeline = try device.makeRenderPipelineState(descriptor: descriptor)
 
+        // The original picture made 4x larger by Super-xBR (see `PictureScaler`), unless a replacement exists.
         backgroundTexture = try Self.replacementBackground(device: device)
-            ?? Self.originalBackground(model: model, device: device)
+            ?? PictureScaler.upscaled(Self.originalBackground(model: model, device: device), device: device)
 
         // "Linear" blends neighbouring picture pixels, so the scaled-up picture is smooth.
         let samplerDescriptor = MTLSamplerDescriptor()
@@ -152,7 +153,7 @@ final class ShipsFlybyScene: DemoScene {
         float4 band;   // top and bottom of the picture's band (0...1 down the canvas), half a picture row
     };
 
-    // The background picture, scaled smoothly. Outside the band the screen is black, and the
+    // The background picture (4x by Super-xBR), scaled smoothly to the screen. Outside the band the screen is black, and the
     // band's top and bottom edges are kept sharp (the smooth scaling must not blend picture
     // with the black bar next to it).
     fragment float4 ships_background_fragment(CanvasOut in [[stage_in]],

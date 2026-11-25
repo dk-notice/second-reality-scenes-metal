@@ -58,7 +58,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   |---|---|
   | Opening credits, explosion, switch-off, rotozoomer, end scroller | A title card naming the part |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
-  | Title, mountain, lens, water, jelly logo, end picture | The original picture: hard-edged pixels in the 1993 look, smoothly stretched in the Modern look (a pixel-art scaler is planned) |
+  | Title, mountain, lens, water, jelly logo, end picture | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 4x larger by Super-xBR, then smoothly scaled |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the troll picture, each at the original's moment |
   | Loader's wait after the switch-off | Black |

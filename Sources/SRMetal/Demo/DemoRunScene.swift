@@ -73,8 +73,10 @@ final class DemoRunScene: DemoScene {
     private let nearest: MTLSamplerState
     private let loader: MTKTextureLoader
 
-    /// The original pictures (small: kept once loaded).
+    /// The original pictures (small: kept once loaded), and for the Modern look the same made 4x
+    /// larger by Super-xBR (1280x800 or 1280x1600; made once, when first shown).
     private var pictures: [String: MTLTexture] = [:]
+    private var upscaledPictures: [String: MTLTexture] = [:]
     private var cards: [String: (modern: MTLTexture, classic: MTLTexture)] = [:]
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource) throws {
@@ -101,7 +103,7 @@ final class DemoRunScene: DemoScene {
             let d = MTLSamplerDescriptor()
             d.minFilter = filter
             d.magFilter = filter
-            d.mipFilter = .notMipmapped
+            d.mipFilter = filter == .linear ? .linear : .notMipmapped
             guard let state = device.makeSamplerState(descriptor: d) else { throw RendererError.noSampler }
             return state
         }
@@ -162,8 +164,7 @@ final class DemoRunScene: DemoScene {
         case .black:
             return
         case .picture(let name):
-            // For now the original picture in both looks: smoothly stretched in the Modern look.
-            texture = picture(name)
+            texture = frame.look == .modern ? (upscaledPicture(name) ?? picture(name)) : picture(name)
         case .card(let title):
             let pair = card(title)
             texture = frame.look == .modern ? pair?.modern : pair?.classic
@@ -192,6 +193,7 @@ final class DemoRunScene: DemoScene {
             }
         case .picture(let name):
             shown = .picture(name)
+            upscaledPictures = upscaledPictures.filter { $0.key == name }   // only the one showing
         case .card(let title):
             shown = .card(title)
         case .black:
@@ -205,6 +207,13 @@ final class DemoRunScene: DemoScene {
         .textureStorageMode: MTLStorageMode.private.rawValue,
         .generateMipmaps: false
     ]
+
+    private func upscaledPicture(_ name: String) -> MTLTexture? {
+        if let texture = upscaledPictures[name] { return texture }
+        guard let original = picture(name), let texture = try? PictureScaler.upscaled(original, device: device) else { return nil }
+        upscaledPictures[name] = texture
+        return texture
+    }
 
     private func picture(_ name: String) -> MTLTexture? {
         if let texture = pictures[name] { return texture }

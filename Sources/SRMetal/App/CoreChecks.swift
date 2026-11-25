@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Metal
+import MetalKit
 import simd
 
 /// Self-test checks for the code every scene shares (`Core/`) and for the app's command line.
@@ -29,6 +30,7 @@ enum CoreChecks {
             try indexedCanvas(check, device: device, queue: queue)
             try smoothTrianglesDrawn(check, device: device, queue: queue)
             try snapshots(check)
+            try pictureScaler(check, device: device, queue: queue)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")
         }
@@ -97,6 +99,96 @@ enum CoreChecks {
             check("Music: libopenmpt opens both songs", false, "\(error)")
         }
         musicPosition(check)
+    }
+
+    // MARK: - The Modern look's picture scaler (Super-xBR; added 2026-11-24)
+
+    private static func pictureScaler(_ check: (String, Bool, String) -> Void, device: MTLDevice, queue: MTLCommandQueue) throws {
+        /// An 8-bit picture on the graphics chip, from red, green, blue bytes.
+        func picture(_ rgb: [UInt8], width: Int, height: Int) -> MTLTexture? {
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false)
+            guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
+            var rgba = [UInt8]()
+            for i in 0..<(width * height) { rgba += [rgb[3 * i], rgb[3 * i + 1], rgb[3 * i + 2], 255] }
+            texture.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: rgba, bytesPerRow: width * 4)
+            return texture
+        }
+        /// The upscaled picture's red, green, blue values (0...1), read back from the graphics chip.
+        func readBack(_ texture: MTLTexture) -> [Float] {
+            let w = texture.width, h = texture.height
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: texture.pixelFormat, width: w, height: h, mipmapped: false)
+            descriptor.storageMode = .shared
+            guard let copy = device.makeTexture(descriptor: descriptor), let commands = queue.makeCommandBuffer(),
+                  let blit = commands.makeBlitCommandEncoder() else { return [] }
+            blit.copy(from: texture, sourceSlice: 0, sourceLevel: 0, to: copy, destinationSlice: 0, destinationLevel: 0,
+                      sliceCount: 1, levelCount: 1)
+            blit.endEncoding()
+            commands.commit()
+            commands.waitUntilCompleted()
+            var halves = [UInt16](repeating: 0, count: w * h * 4)
+            copy.getBytes(&halves, bytesPerRow: w * 8, from: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0)
+            var out = [Float]()
+            out.reserveCapacity(w * h * 3)
+            for i in 0..<(w * h) { for k in 0..<3 { out.append(floatFromHalf(halves[4 * i + k])) } }
+            return out
+        }
+
+        // A flat colour stays exactly that colour.
+        let flatRGB = [UInt8](repeating: 0, count: 16 * 16 * 3).enumerated().map { [UInt8(200), 90, 30][$0.offset % 3] }
+        if let flat = picture(flatRGB, width: 16, height: 16) {
+            let big = try PictureScaler.upscaled(flat, device: device)
+            let values = readBack(big)
+            let worst = zip(values, (0..<values.count).map { Float([200, 90, 30][$0 % 3]) / 255 }).map { abs($0 - $1) }.max() ?? 1
+            check("Picture scaler: Super-xBR makes a picture exactly 4 times larger, and leaves a flat colour unchanged",
+                  big.width == 64 && big.height == 64 && worst < 0.002, "largest change \(worst)")
+        }
+
+        // On a real picture (the troll: dithering, gradients, hard edges) every new pixel stays within
+        // the colours of the original pixels around it: no invented colours, no halos.
+        guard let url = DemoPictures.url("07-troll") else {
+            check("Picture scaler: the troll picture is there to test with", false, "")
+            return
+        }
+        let troll = try MTKTextureLoader(device: device).newTexture(URL: url, options: [.SRGB: false, .generateMipmaps: false])
+        let w = troll.width, h = troll.height
+        var bgra = [UInt8](repeating: 0, count: w * h * 4)
+        troll.getBytes(&bgra, bytesPerRow: w * 4, from: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0)
+        let isBGRA = troll.pixelFormat == .bgra8Unorm
+        func original(_ x: Int, _ y: Int, _ k: Int) -> Float {
+            let i = (min(max(y, 0), h - 1) * w + min(max(x, 0), w - 1)) * 4
+            return Float(bgra[i + (isBGRA ? 2 - k : k)]) / 255
+        }
+        let big = try PictureScaler.upscaled(troll, device: device)
+        let values = readBack(big)
+        var outside = 0, worst: Float = 0
+        for y in 0..<(4 * h) {
+            for x in 0..<(4 * w) {
+                for k in 0..<3 {
+                    var lo: Float = 1, hi: Float = 0
+                    for sy in (y / 4 - 2)...(y / 4 + 2) {
+                        for sx in (x / 4 - 2)...(x / 4 + 2) {
+                            let v = original(sx, sy, k)
+                            lo = min(lo, v)
+                            hi = max(hi, v)
+                        }
+                    }
+                    let v = values[(y * 4 * w + x) * 3 + k]
+                    let off = max(lo - v, v - hi)
+                    if off > 0.002 { outside += 1; worst = max(worst, off) }
+                }
+            }
+        }
+        check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
+              big.width == 4 * w && big.height == 4 * h && outside == 0, "\(outside) values outside, worst by \(worst)")
+    }
+
+    /// A 16-bit floating-point number (as the graphics chip stores it) as an ordinary one.
+    private static func floatFromHalf(_ bits: UInt16) -> Float {
+        let sign: Float = bits & 0x8000 != 0 ? -1 : 1
+        let exponent = Int((bits >> 10) & 0x1F), fraction = Float(bits & 0x3FF)
+        if exponent == 0 { return sign * fraction / 1024 * pow(2, -14) }
+        if exponent == 31 { return fraction == 0 ? sign * .infinity : .nan }
+        return sign * (1 + fraction / 1024) * pow(2, Float(exponent - 15))
     }
 
     /// Play Demo's running order (added 2026-11-24): the script, run silently against the music,

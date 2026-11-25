@@ -41,7 +41,7 @@ libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdPar
 **Play Demo** (in the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
 the original music, changing parts on the same music cues the 1993 demo waited for. It is a skeleton for now:
 the parts this project has built appear as its scenes, cut where the original part ended; picture parts show
-the original pictures (for now smoothly stretched in the Modern look); every other part shows a title card
+the original pictures (in the Modern look made larger by Super-xBR, a pixel-art scaler); every other part shows a title card
 naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes

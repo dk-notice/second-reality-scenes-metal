@@ -228,6 +228,18 @@ A scene may also give a `currentCanvasSize` when its canvas changes as it runs; 
 window it is one scene, which shows other scenes, pictures and title cards in turn (`Demo/`; see
 [demo-timeline.md](demo-timeline.md#play-demo-how-the-app-follows-this-table)).
 
+## Pictures in the Modern look
+
+Some scenes and parts show a picture from the 1993 demo (the Ships horizon, the Glenz plate, Play
+Demo's pictures). The 1993 look shows it as it was, as hard-edged pixels. The Modern look runs it once
+through **Super-xBR** (`Core/PictureScaler.swift`), a pixel-art scaler by Hyllian: it finds the edges
+between the picture's pixels and redraws them as smooth lines and curves, making the picture 4 times
+larger (320x200 becomes 1280x800); that is then scaled smoothly to the screen. It only blends the
+original's colours, never invents new detail, and a self-test check makes sure no new pixel is brighter
+or darker than the original pixels around it. Chosen by the user (2026-11-24) over a plain smooth
+stretch, sharp pixels and xBR level 2, after side-by-side pictures (`--scaler-compare`); AI-upscaled
+pictures were tried earlier and dropped.
+
 ## House rules for scenes
 
 These came out of building the first scenes.

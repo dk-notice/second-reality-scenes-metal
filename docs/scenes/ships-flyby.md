@@ -126,9 +126,10 @@ from one picture to the next (see "Kept quirks").
 
 **Modern look.**
 
-- The **background** is the same picture, drawn first and scaled up smoothly (neighbouring pixels are
-  blended, instead of each becoming a hard-edged block). It is still a 320x200 picture, so it looks
-  soft next to the sharp ships. The band's top and bottom edges are kept crisp.
+- The **background** is the same picture, made 4 times larger by Super-xBR (a pixel-art scaler, see [how-it-works.md](../how-it-works.md#pictures-in-the-modern-look)) when the scene starts, then
+  drawn first, scaled smoothly to the screen. Edges such as the hill line become clean curves instead of
+  pixel steps; it is still somewhat softer than the sharp ships. The band's top and bottom edges are kept
+  crisp. (Until 2026-11-24 it was the original picture smoothly stretched, which looked blurrier.)
 - The **ships** are drawn by the engine's modern renderer (`VisuModernRenderer`): real triangles at
   the display's resolution, a depth buffer between objects, the original's own back-to-front order
   within an object, the original's lighting rule without rounding to whole colour numbers, smoothed
@@ -153,7 +154,7 @@ picture; no such file is shipped.
 | Ships | polygons filled by the engine, whole-pixel corners | the same, replayed | triangles on the graphics chip, corners in decimals, smooth edges |
 | What is in front | objects sorted by one point each; polygons in prepared orders | the same | depth buffer between objects; the same prepared orders within one |
 | Shading | whole colour numbers: bands, and 4-pixel blocks in gentle gradients | the same | smooth |
-| Background | picture copied in every frame | the same | the same picture, smoothly scaled (or a replacement file) |
+| Background | picture copied in every frame | the same | the same picture, 4x by Super-xBR, then smoothly scaled (or a replacement file) |
 | Motion | 70 animation frames a second; a slow PC skipped frames | every frame, one per step | glides between frames |
 | Start | waits for the music, then appears over the previous part's horizon | one second of empty horizon | the same |
 | End | on the animation's end or a music cue; horizon stays | loops after 592 steps | the same |

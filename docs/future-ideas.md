@@ -74,7 +74,7 @@ scope beyond "purely calculated and 3D scenes" to the picture-based scenes too.
    To confirm before the repository is made public: that the songs are covered by the same public-domain
    release as the code.
 2. **Picture-based scenes**, with the 1993 look using the original pictures and the modern look using
-   the original pictures through a pixel-art scaler, or re-made from source where possible (the user
+   the original pictures through a pixel-art scaler (Super-xBR, built 2026-11-24), or re-made from source where possible (the user
    decided against AI-upscaled artwork, 2026-11-24). About eleven: opening credits, explosion, title picture, the picture with
    the TV switch-off, mountain scroller, lens, rotozoomer, water scroller, jelly logo, end picture, credits,
    end scroller. Most are small; the lens and rotozoomer have the most substance.
