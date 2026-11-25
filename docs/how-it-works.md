@@ -246,6 +246,14 @@ stretch, sharp pixels and xBR level 2, after side-by-side pictures (`--scaler-co
 4x for crisper outlines in fullscreen (it is made while the app runs, so the program does not grow); AI-upscaled
 pictures were tried earlier and dropped.
 
+A scene that shows an original picture uses the shared toolkit in `Core/PictureLayer.swift`:
+`ScenePicture` holds a picture in both versions (the original, and the Super-xBR one, made on first
+use), and `PictureLayer` draws it over the canvas with an optional fade towards white or black. In the
+1993 look the fade follows the original's own whole-number rule (each colour level c becomes
+(63·a + (64 − a)·c) / 64 towards white), so it gives exactly the colours a 1993 VGA card showed; a
+self-test check holds it to that. In the Modern look the fade is smooth and laid on top of the
+Super-xBR picture, so the scaler's edge choices do not change as a picture fades.
+
 ## House rules for scenes
 
 These came out of building the first scenes.

@@ -220,6 +220,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   checks (274): the flash follows the rows given; a silent Play Demo run gives Techno Bars the music's
   row on all 1,260 of its steps (on the step it appears, it has not been told yet: by design, as a
   new scene is seen at its first step). Part-change log lines now only in the running app.
+- STEP 2 DONE: `Core/PictureLayer.swift`: `ScenePicture` (original + Super-xBR 8x on first use,
+  `prepareUpscaled()` to make it ahead) and `PictureLayer` (draws over the canvas with `PictureFade`:
+  1993 look = the original's whole-number rule, Modern = smooth, laid on after scaling). Play Demo's
+  pictures now go through it (only the picture showing is kept). 1 self-test check (275): 1993 fades
+  to white and black match the rule on 60 pixels (proven to fail, 46 of 60, with rounding instead).
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.

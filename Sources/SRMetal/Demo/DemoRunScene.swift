@@ -77,10 +77,10 @@ final class DemoRunScene: DemoScene {
     private let nearest: MTLSamplerState
     private let loader: MTKTextureLoader
 
-    /// The original pictures (small: kept once loaded), and for the Modern look the same made 8x
-    /// larger by Super-xBR (2560x1600 or 2560x3200; made once, when first shown).
-    private var pictures: [String: MTLTexture] = [:]
-    private var upscaledPictures: [String: MTLTexture] = [:]
+    /// Pictures are shown through the shared toolkit (`PictureLayer`). Only the one showing is kept:
+    /// its Modern-look version is up to 2560x3200 (made when first drawn).
+    private let pictureLayer: PictureLayer
+    private var pictures: [String: ScenePicture] = [:]
     private var cards: [String: (modern: MTLTexture, classic: MTLTexture)] = [:]
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource) throws {
@@ -89,6 +89,7 @@ final class DemoRunScene: DemoScene {
         self.music = music
         self.sequencer = DemoSequencer(music: music)
         self.loader = MTKTextureLoader(device: device)
+        self.pictureLayer = try PictureLayer(device: device, pixelFormat: pixelFormat)
 
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + """
         fragment float4 picture_fragment(CanvasOut in [[stage_in]],
@@ -159,7 +160,7 @@ final class DemoRunScene: DemoScene {
     var currentCanvasSize: SIMD2<Float>? {
         switch shown {
         case .scene(_, let size): return size
-        case .picture(let name): return picture(name).map { SIMD2(Float($0.width), Float($0.height)) } ?? SIMD2(320, 200)
+        case .picture(let name): return picture(name)?.size ?? SIMD2(320, 200)
         case .card, .black: return SIMD2(320, 200)
         }
     }
@@ -177,7 +178,8 @@ final class DemoRunScene: DemoScene {
         case .black:
             return
         case .picture(let name):
-            texture = frame.look == .modern ? (upscaledPicture(name) ?? picture(name)) : picture(name)
+            if let picture = picture(name) { pictureLayer.draw(picture, into: encoder, look: frame.look) }
+            return
         case .card(let title):
             let pair = card(title)
             texture = frame.look == .modern ? pair?.modern : pair?.classic
@@ -207,7 +209,7 @@ final class DemoRunScene: DemoScene {
             }
         case .picture(let name):
             shown = .picture(name)
-            upscaledPictures = upscaledPictures.filter { $0.key == name }   // only the one showing
+            pictures = pictures.filter { $0.key == name }   // only the one showing
         case .card(let title):
             shown = .card(title)
         case .black:
@@ -222,19 +224,11 @@ final class DemoRunScene: DemoScene {
         .generateMipmaps: false
     ]
 
-    private func upscaledPicture(_ name: String) -> MTLTexture? {
-        if let texture = upscaledPictures[name] { return texture }
-        guard let original = picture(name), let texture = try? PictureScaler.upscaled(original, device: device) else { return nil }
-        upscaledPictures[name] = texture
-        return texture
-    }
-
-    private func picture(_ name: String) -> MTLTexture? {
-        if let texture = pictures[name] { return texture }
-        guard let url = DemoPictures.url(name),
-              let texture = try? loader.newTexture(URL: url, options: Self.loadOptions) else { return nil }
-        pictures[name] = texture
-        return texture
+    private func picture(_ name: String) -> ScenePicture? {
+        if let picture = pictures[name] { return picture }
+        guard let picture = try? ScenePicture(named: name, device: device) else { return nil }
+        pictures[name] = picture
+        return picture
     }
 
     /// A title card naming a part not built yet, drawn once per look.

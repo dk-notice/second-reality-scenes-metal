@@ -31,6 +31,7 @@ enum CoreChecks {
             try smoothTrianglesDrawn(check, device: device, queue: queue)
             try snapshots(check)
             try pictureScaler(check, device: device, queue: queue)
+            try pictureFades(check, device: device, queue: queue)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")
         }
@@ -189,6 +190,35 @@ enum CoreChecks {
         }
         check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
               big.width == scale * w && big.height == scale * h && outside == 0, "\(outside) values outside, worst by \(worst)")
+    }
+
+    /// The shared picture-and-fade toolkit (added 2026-11-24): in the 1993 look a fade gives exactly the
+    /// colour levels the original's whole-number rule gives, towards white and towards black.
+    private static func pictureFades(_ check: (String, Bool, String) -> Void, device: MTLDevice, queue: MTLCommandQueue) throws {
+        let levels = [0, 1, 2, 17, 31, 32, 33, 50, 62, 63]   // 1993 colour levels, one per pixel
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: levels.count, height: 1, mipmapped: false)
+        guard let texture = device.makeTexture(descriptor: descriptor) else { throw Snapshot.Failure.couldNotDraw }
+        // Red = the level, green = 63 - level, blue = a third of it: three different values per pixel.
+        let rgba: [UInt8] = levels.flatMap { level -> [UInt8] in
+            [byteFromVGA(level), byteFromVGA(63 - level), byteFromVGA(level / 3), 255]
+        }
+        texture.replace(region: MTLRegionMake2D(0, 0, levels.count, 1), mipmapLevel: 0, withBytes: rgba, bytesPerRow: levels.count * 4)
+        let picture = ScenePicture(texture, device: device)
+        let layer = try PictureLayer(device: device, pixelFormat: Renderer.pixelFormat)
+        var wrong = 0, tried = 0
+        for fade in [PictureFade.none, .white(1), .white(32), .white(63), .black(20), .black(63)] {
+            let drawn = try draw(width: levels.count, height: 1, device: device, queue: queue) { encoder in
+                layer.draw(picture, into: encoder, look: .classic, fade: fade)
+            }
+            for (x, level) in levels.enumerated() {
+                let expected = [level, 63 - level, level / 3].map { byteFromVGA(fade.classicLevel($0)) }
+                let got = [drawn[x * 4 + 2], drawn[x * 4 + 1], drawn[x * 4]]   // stored blue, green, red
+                tried += 1
+                if got != expected { wrong += 1 }
+            }
+        }
+        check("Pictures: 1993-look fades to white and black give exactly the original rule's colours",
+              wrong == 0, "\(wrong) of \(tried) pixels differ")
     }
 
     /// A 16-bit floating-point number (as the graphics chip stores it) as an ordinary one.
