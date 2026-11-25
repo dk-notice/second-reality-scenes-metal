@@ -118,6 +118,17 @@ enum SceneCatalog {
     static let all: [SceneEntry] = [
         // In the order the demo shows them; the hidden starfield (an extra, not in the normal run) last.
         SceneEntry(
+            id: "opening-credits",
+            title: "Opening Credits",
+            credit: "Wildfire",
+            // The card's 400 lines, each its own memory row. Steps here count from the scene's start, 70
+            // steps before the first title (`OpeningCreditsModel.standaloneStart`).
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 71, 100, 270, 500, 1060, 1260, 1610, 1611, 1680, 2330, 2361, 2530, 3600, 4480, 4481, 4546],
+            thumbnailStep: 2530,
+            make: { device, format in try OpeningCreditsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "ships-flyby",
             title: "Ships Fly-by",
             credit: "Psi",

@@ -80,7 +80,7 @@ enum DemoScript {
         // ---- Song 1 (MUSIC0, tempo 120) from section 0 ----
         // ALKU (as released): three titles, each on its sync (1-3) or when the one before has faded out;
         // the scroll from sync 4 to its end and the hand-over to the ships (see OpeningCreditsModel).
-        s += [.part("Opening credits"), .playSong(.first, order: 0), .show(.card("Opening credits"))]
+        s += [.part("Opening credits"), .playSong(.first, order: 0), .show(.scene("opening-credits"))]
         for cue in 1...3 { s += [until { $0.sync >= cue }, .frames(427)] }
         s += [until { $0.sync >= 4 }, .frames(2947)]
         s += [.part("Ships fly-by"), .show(.picture("02-ships-horizon")),

@@ -102,9 +102,10 @@ def shade(y, x):
     return (v & 3) << 6 if y < 29 else v
 
 
-def text_image(lines, rows, shift):
+def text_image(lines, rows, down, shift):
     """{(x, line): bits} for centred lines: prtc / addtext (both centre on 160 with w = sum(width + 2) / 2).
-    Titles draw `rows` 29 rows at their place; pages 32 rows, shown 2 pixels right (`shift`)."""
+    Titles draw 29 rows at their place; pages 32 rows from the text buffer, which shows from line 100
+    (`down`), 2 pixels right (`shift`)."""
     out = {}
     for top, text in lines:
         x = 160 - sum(GLYPH_WIDTH[c] + 2 for c in text) // 2 + shift
@@ -114,7 +115,7 @@ def text_image(lines, rows, shift):
                 for dy in range(rows):
                     v = shade(dy, sx + dx)
                     if v:
-                        out[(x + dx, top + dy)] = out.get((x + dx, top + dy), 0) | v
+                        out[(x + dx, down + top + dy)] = out.get((x + dx, down + top + dy), 0) | v
             x += GLYPH_WIDTH[c] + 2
     return out
 
@@ -208,7 +209,7 @@ def screen(step):
     """The 1993 screen on a step: 320 x 400 x 3 VGA levels (0...63)."""
     pal, position, lines = state(step)
     is_page = any(lines is p for p in PAGES)
-    bits = text_image(lines, 32 if is_page else 29, 2 if is_page else 0) if lines else {}
+    bits = text_image(lines, 32 if is_page else 29, 100 if is_page else 0, 2 if is_page else 0) if lines else {}
     # Titles are drawn while the scroll is at 0 (and the picture is in memory, behind black colours).
     out = bytearray(320 * 400 * 3)
     for line in range(400):

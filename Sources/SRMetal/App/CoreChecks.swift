@@ -28,6 +28,7 @@ enum CoreChecks {
         if SelfTest.wants("demo play-demo timeline techno-bars interference troll switch-off end-picture title-picture end-scroller") { demoTimeline(check) }
         if SelfTest.wants("demo play-demo from here") { demoFromHere(check) }
         if SelfTest.wants("rotozoomer") { rotozoomerTiming(check) }
+        if SelfTest.wants("opening-credits opening") { openingCredits(check) }
         if SelfTest.wants("credits") { credits(check) }
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
@@ -50,6 +51,7 @@ enum CoreChecks {
             if SelfTest.wants("plasma-cube plasma cube demo") { try plasmaCubeInDemo(check, device: device) }
             if SelfTest.wants("plasma demo") { try plasmaInDemo(check, device: device) }
             if SelfTest.wants("interference techno lead-in demo") { try interferenceInDemo(check, device: device) }
+            if SelfTest.wants("opening-credits opening demo") { try openingCreditsInDemo(check, device: device) }
             if SelfTest.wants("credits demo") { try creditsInDemo(check, device: device) }
             if SelfTest.wants("city-3d city jelly-logo demo") { try cityInDemo(check, device: device) }
             if SelfTest.wants("glenz-vectors glenz title-picture demo") { try glenzInDemo(check, device: device) }
