@@ -115,7 +115,7 @@ enum DemoScript {
               until { $0.plus == -11 }, .frames(65)]
         s += [.part("3D sine landscape"), .show(.scene("sine-landscape")), until { $0.plus >= 0 },
               until(cap: 4444) { -7 <= $0.plus && $0.plus <= -1 }]
-        s += [.part("Jelly logo"), .show(.picture("15-jelly-logo")), .frames(86), until { $0.plus >= 4 }, .frames(700)]
+        s += [.part("Jelly logo"), .show(.scene("jelly-logo")), .frames(86), until { $0.plus >= 4 }, .frames(700)]
         // ---- Song 1 again, from section 18 ----
         s += [.part("3D city"), .playSong(.first, order: 18), .show(.scene("city-3d")), .frames(100),
               until { $0.order > 18 }, .frames(1801 * 2 + 16)]

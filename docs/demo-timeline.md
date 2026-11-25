@@ -29,7 +29,7 @@ already has for the part.
 | 12 | Bouncing dots (`MINVBALL`) | 2 | 6:12.9 | 6:49.8 | 36.9 s | **Scene** |
 | 13 | Water scroller (`RAYSCRL`) | 2 | 6:49.8 | 7:19.2 | 29.5 s | Picture, font |
 | 14 | 3D sine landscape (`3DSINFLD`) | 2 | 7:19.2 | 7:48.3 | 29.1 s | **Scene** |
-| 15 | Jelly logo (`JPLOGO`) | 2 | 7:48.3 | 7:59.6 | 11.3 s | Picture |
+| 15 | Jelly logo (`JPLOGO`) | 2 | 7:48.3 | 7:59.6 | 11.3 s | **Scene** (2026-11-25) |
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
 | 17 | End picture (`ENDLOGO`) | 1 | 8:55.3 | 9:03.8 | 8.6 s | **Scene** (2026-11-24) |
 | 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | 21 pictures, font (stopgaps) |
@@ -63,7 +63,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
   | Title picture, end picture | Their own scenes (2026-11-24): out of white, as the original; the end picture waits for its music cue and fades to black |
-  | Mountain, water, jelly logo | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
+  | Jelly logo | Its own scene (2026-11-25): slides in, waits for its music cue, then 700 steps of jelly |
+  | Mountain, water | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |

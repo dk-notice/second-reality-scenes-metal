@@ -88,7 +88,9 @@ arranging its tables so that an off-screen position lands somewhere invisible.
 ### Rewrite the program as it runs
 
 Some parts change their own machine code. The dot tunnel writes the current colour directly into an
-instruction before each ring. The jelly logo goes further and generates its drawing code at run time.
+instruction before each ring. A related trick: the jelly
+logo's line-stretching code (`ZOOM.INC`, one straight run of instructions per line width) was written by
+another program (`DOL.C`) before the part was built.
 
 ### The inner loop is assembly
 

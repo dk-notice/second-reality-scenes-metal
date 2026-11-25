@@ -250,6 +250,16 @@ enum SceneCatalog {
             make: { device, format in try SineLandscapeScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "jelly-logo",
+            title: "Jelly Logo",
+            credit: "Psi",
+            // 320x400, like the original.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 2, 3, 40, 84, 85, 86, 121, 122, 125, 130, 140, 146, 200, 300, 500, 506, 820, 855],
+            thumbnailStep: 146,
+            make: { device, format in try JellyLogoScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "city-3d",
             title: "3D City",
             credit: "Psi",
