@@ -307,7 +307,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   pictures = tool at 28 steps, loop after 1090, Play Demo phase sync; plus 28 GPU-vs-processor checkpoints.
   `--motion-check lens modern`: one jump, the loop back to black. `--demo-timeline` unchanged.
 - Seen by Claude: snapshots of both looks at steps 45, 60, 380, 600 (they agree closely), reference PNGs.
-  NOT seen by the user in the running app yet; not compared with the original running.
+  Seen by the user in the running app ("looks fine", 2026-11-24); merged into main and pushed the same
+  day. Not compared with the original running.
 
 ## Rotozoomer notes (2026-11-24)
 - Original: `LENS/MAIN.C` part3 + `LENS/ASM.ASM` `_rotate` (Psi). `Scenes/Rotozoomer/`: `RotozoomerModel`
