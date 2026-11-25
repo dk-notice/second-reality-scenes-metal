@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -241,8 +241,17 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   the original fades; checked). 28 new self-test checks (320). Play Demo shows both scenes; all part
   starts unchanged. `docs/scenes/title-and-end-pictures.md`. Credit "Future Crew": who drew the two
   pictures is not recorded in our docs.
-  NEXT (suggested order): the troll scroll-in plus the screen switch-off (PANIC), then the end
-  scroller (fonts decision), then the rotozoomer.
+  TROLL AND SWITCH-OFF DONE (2026-11-24, user: "push and continue"): `PictureLayer` gained a sideways
+  offset and a brighten amount (`PictureFade.add`). `Scenes/Troll/` (`TrollModel`: KOE.C's xpos/xposa
+  scroll, ripple shake with the shared sine table, palfade flash one refresh after its shake value;
+  music cue section 35 row 48 via demoUpdate; 35-step wait and 300-step hold alone) and
+  `Scenes/SwitchOff/` (`SwitchOffModel`: per refresh a 400-entry row map, white fade, colour 0 level,
+  wiped line ranges, dot level, worked out from SHUTDOWN.C's register tricks; own shader; colour 0 =
+  the troll's only pure black, kept black; colour 1 = white; 70-step lead-in alone, none in the demo).
+  Modern switch-off: explicit gradients + anisotropic sampler (without them the band edges showed
+  grey lines across the screen). 39 new self-test checks (361), incl. scroll 53 + shake 50 (matches
+  the timing research) and the band list. Play Demo uses both; part starts unchanged.
+  NEXT (suggested order): the end scroller (fonts decision first), then the rotozoomer.
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.

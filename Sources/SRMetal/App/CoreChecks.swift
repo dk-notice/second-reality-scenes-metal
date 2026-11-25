@@ -291,6 +291,26 @@ enum CoreChecks {
         check("Play Demo: the title picture is fully in after 161 steps, the end picture after 163, then holds for the music cue and fades out",
               titleAlmost == 128 && title.phase == .end && holding == .hold && stillHolding == .hold && end.phase == .fadeOut,
               "\(titleAlmost) \(title.phase) \(holding) \(stillHolding) \(end.phase)")
+        // The troll: from the music cue, the scroll takes 53 refreshes and the shake 50 (as in the timing
+        // research, tools/demo_timeline.py's "53 + 50"); the flash is 45 on the shake's second refresh.
+        var troll = TrollModel()
+        troll.musicCue = true
+        var scrollSteps = 0, shakeSteps = 0, firstFlash = -1
+        for _ in 0..<400 {
+            troll.tick()
+            if troll.phase == .scroll { scrollSteps += 1 }
+            if troll.phase == .shake { shakeSteps += 1; if firstFlash < 0 && troll.flash > 0 { firstFlash = troll.flash } }
+        }
+        check("Play Demo: the troll scrolls in over 53 refreshes, then shakes for 50 with a flash from 45",
+              scrollSteps == 53 && shakeSteps == 50 && firstFlash == 45 && troll.xpos == 320,
+              "\(scrollSteps) + \(shakeSteps), flash \(firstFlash), ends at \(troll.xpos)")
+        // The switch-off: bands 32, 26 ... 3 (each 5/6 of the last), one line at refresh 14, a dot from 61,
+        // 191 refreshes in all (121 + the original's sleep(1)).
+        let line = SwitchOffModel.frame(at: 14), dot = SwitchOffModel.frame(at: 61)
+        check("Play Demo: the screen switch-off collapses through bands 32, 26, 21, 17, 14, 11, 9, 7, 5, 4, 3 to a line and a dot, 191 refreshes",
+              SwitchOffModel.bands == [32, 26, 21, 17, 14, 11, 9, 7, 5, 4, 3] && SwitchOffModel.length == 191
+                && line.rows.filter { $0 >= 0 }.count == 2 && line.rows[200] == 133 && dot.dot == 63
+                && SwitchOffModel.frame(at: 1).colour0 == 63, "\(SwitchOffModel.bands)")
         let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
         check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))

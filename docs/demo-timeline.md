@@ -19,8 +19,8 @@ already has for the part.
 | 4 | Title picture (`BEGLOGO`) | 1 | 1:46.6 | 1:48.9 | 2.3 s | **Scene** (2026-11-24) |
 | 5 | Glenz vectors (`GLENZ`) | 2 | 1:48.9 | 2:32.6 | 43.7 s | **Scene** |
 | 6 | Dot tunnel (`TUNNELI`) | 2 | 2:32.6 | 2:47.7 | 15.1 s | **Scene** |
-| 7 | Rings, interference, techno bars, troll (`TECHNO`) | 2 | 2:47.7 | 3:44.7 | 56.9 s | **3 scenes** + troll picture |
-| 8 | Screen switches off (`PANICEND`) | 2 | 3:44.7 | 3:47.4 | 2.7 s | — |
+| 7 | Rings, interference, techno bars, troll (`TECHNO`) | 2 | 2:47.7 | 3:44.7 | 56.9 s | **4 scenes** (troll: 2026-11-24) |
+| 8 | Screen switches off (`PANICEND`) | 2 | 3:44.7 | 3:47.4 | 2.7 s | **Scene** (2026-11-24) |
 | — | (the loader waits for the next "+++" in the music) | 2 | 3:47.4 | 3:51.1 | 3.7 s | — |
 | 9 | Mountain scroller (`MNTSCRL`) | 2 | 3:51.1 | 4:20.2 | 29.1 s | Picture, font |
 | 10 | Lens, then rotozoomer (`LNS&ZOOM`) | 2 | 4:20.2 | 5:05.6 | 45.4 s | Picture |
@@ -56,13 +56,14 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 
   | Part | Shown now |
   |---|---|
-  | Opening credits, switch-off, rotozoomer, end scroller | A title card naming the part |
+  | Opening credits, rotozoomer, end scroller | A title card naming the part |
+  | Troll, screen switch-off | Their own scenes (2026-11-24): the troll scrolls in on its music cue, shakes and flashes; the screen collapses to a line and a dot |
   | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
   | Title picture, end picture | Their own scenes (2026-11-24): out of white, as the original; the end picture waits for its music cue and fades to black |
   | Mountain, lens, water, jelly logo | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
-  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the troll picture, each at the original's moment |
+  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 

@@ -92,9 +92,9 @@ enum DemoScript {
               .show(.black), .frames(5), until { $0.plus >= -3 }, until { $0.row & 7 == 7 }]
         for _ in 0..<4 { s += [.frames(21), until { $0.row & 7 == 7 }, .frames(4)] }
         s += [.show(.scene("techno-bars")), .frames(420), .frames(840), until(cap: 700) { $0.frame > 2520 },
-              .show(.picture("07-troll")), until { $0.order > 35 || ($0.order == 35 && $0.row > 48) },
+              .show(.scene("troll")), until { $0.order > 35 || ($0.order == 35 && $0.row > 48) },
               .frames(53 + 50), until(cap: 420) { -6 < $0.plus && $0.plus < 16 }]
-        s += [.part("Screen switches off"), .show(.card("Screen switches off")), .frames(121 + 70)]
+        s += [.part("Screen switches off"), .show(.scene("switch-off")), .frames(SwitchOffModel.length)]
         s += [.part("Loader waits for the music"), .show(.black), until { $0.plus < 0 }, until { $0.plus > 0 }]
         s += [.part("Mountain scroller"), .show(.picture("09-mountain-background")), .frames(64),
               until { $0.plus >= 0 }, .frames(127), until { $0.plus == -11 }, .frames(65)]

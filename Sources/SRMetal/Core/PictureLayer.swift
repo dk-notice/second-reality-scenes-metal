@@ -104,6 +104,9 @@ struct PictureFade {
     var towardWhite: Bool
     var keep: Float              // may be fractional in the Modern look (smooth fades)
     var outOf: Float
+    /// Added to every colour level afterwards, at most 63 (the troll's landing flash: `palfade` in
+    /// TECHNO/KOE.C adds 45, 42, ... 0).
+    var add: Float = 0
 
     static let none = PictureFade(towardWhite: true, keep: 1, outOf: 1)
     /// `amount` (0...63) of the way towards white in 64ths, as the explosion's table gives it.
@@ -113,10 +116,13 @@ struct PictureFade {
     /// Keeping `keep` of `outOf` parts of the picture, the rest black.
     static func toBlack(keep: Float, outOf: Float) -> PictureFade { PictureFade(towardWhite: false, keep: keep, outOf: outOf) }
 
+    /// Brightened by `add` levels (0...63), as the troll's flash did.
+    static func brighten(_ add: Float) -> PictureFade { PictureFade(towardWhite: true, keep: 1, outOf: 1, add: add) }
+
     /// The 1993 result for one colour level, worked out on the processor (for checks and references).
     func classicLevel(_ level: Int) -> Int {
         let k = Int(keep.rounded(.down)), n = Int(outOf), target = towardWhite ? 63 : 0
-        return (target * (n - k) + level * k) / n
+        return min((target * (n - k) + level * k) / n + Int(add.rounded(.down)), 63)
     }
 }
 
@@ -133,6 +139,9 @@ final class PictureLayer {
         var outOf: Float
         var target: Float
         var classic: Float
+        var add: Float
+        var offsetX: Float
+        var unused = SIMD2<Float>(0, 0)
     }
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
@@ -156,10 +165,15 @@ final class PictureLayer {
         nearest = try sampler(.nearest)
     }
 
-    func draw(_ picture: ScenePicture, into encoder: MTLRenderCommandEncoder, look: Look, fade: PictureFade = .none) {
+    /// `offsetX`: how far the picture is moved left, in canvas pixels (the troll scrolling in); what
+    /// lies beyond the picture's edges is black (colour level 0), and is faded like the picture.
+    func draw(_ picture: ScenePicture, into encoder: MTLRenderCommandEncoder, look: Look, fade: PictureFade = .none,
+              offsetX: Float = 0) {
         let classic = look == .classic
         var uniforms = Uniforms(keep: classic ? fade.keep.rounded(.down) : fade.keep, outOf: fade.outOf,
-                                target: fade.towardWhite ? 63 : 0, classic: classic ? 1 : 0)
+                                target: fade.towardWhite ? 63 : 0, classic: classic ? 1 : 0,
+                                add: classic ? fade.add.rounded(.down) : fade.add,
+                                offsetX: offsetX / picture.size.x)
         encoder.setRenderPipelineState(pipeline)
         encoder.setFragmentTexture(classic ? picture.original : picture.upscaled, index: 0)
         encoder.setFragmentSamplerState(classic ? nearest : smooth, index: 0)
@@ -173,20 +187,24 @@ final class PictureLayer {
         float outOf;     // ... out of this many; the rest is the target
         float target;    // 63 (white) or 0 (black), in 1993 colour levels
         float classic;   // 1: whole 1993 levels and the original's rounding; 0: smooth
+        float add;       // levels added afterwards (at most 63)
+        float offsetX;   // the picture moved left by this much of its width
+        float2 unused;
     };
 
     fragment float4 picture_layer_fragment(CanvasOut in [[stage_in]], texture2d<float> tex [[texture(0)]],
                                            sampler smp [[sampler(0)]], constant PictureFadeUniforms &u [[buffer(0)]]) {
-        float3 c = tex.sample(smp, in.uv).rgb;
+        float2 uv = float2(in.uv.x + u.offsetX, in.uv.y);
+        float3 c = (uv.x < 0.0 || uv.x >= 1.0) ? float3(0.0) : tex.sample(smp, uv).rgb;
         if (u.classic > 0.5) {
             // Back to the 1993 level (0...63), faded with whole numbers as the original did, and shown
             // as the VGA card showed that level.
             float3 level = round(c * 63.0);
-            float3 faded = floor((u.target * (u.outOf - u.keep) + level * u.keep) / u.outOf);
+            float3 faded = min(floor((u.target * (u.outOf - u.keep) + level * u.keep) / u.outOf) + u.add, 63.0);
             return float4(round(faded * 255.0 / 63.0) / 255.0, 1.0);
         }
         float3 target = float3(u.target / 63.0);
-        return float4(mix(target, c, u.keep / u.outOf), 1.0);
+        return float4(min(mix(target, c, u.keep / u.outOf) + u.add / 63.0, 1.0), 1.0);
     }
     """
 }

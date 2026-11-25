@@ -130,6 +130,24 @@ enum SceneCatalog {
             make: { device, format in try TechnoBarsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "troll",
+            title: "Troll",
+            credit: "Psi; picture by Pixel",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 34, 35, 40, 60, 70, 80, 88, 89, 90, 95, 104, 105, 120, 140, 300],
+            thumbnailStep: 200,
+            make: { device, format in try TrollScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "switch-off",
+            title: "Screen Switches Off",
+            credit: "Wildfire",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 70, 71, 72, 73, 76, 80, 83, 84, 85, 100, 130, 131, 132, 135, 150, 180, 200, 260],
+            thumbnailStep: 75,
+            make: { device, format in try SwitchOffScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "bouncing-dots",
             title: "Bouncing Dots",
             credit: "Psi",
