@@ -22,7 +22,7 @@ already has for the part.
 | 7 | Rings, interference, techno bars, troll (`TECHNO`) | 2 | 2:47.7 | 3:44.7 | 56.9 s | **4 scenes** (troll: 2026-11-24) |
 | 8 | Screen switches off (`PANICEND`) | 2 | 3:44.7 | 3:47.4 | 2.7 s | **Scene** (2026-11-24) |
 | — | (the loader waits for the next "+++" in the music) | 2 | 3:47.4 | 3:51.1 | 3.7 s | — |
-| 9 | Mountain scroller (`MNTSCRL`) | 2 | 3:51.1 | 4:20.2 | 29.1 s | Picture, font |
+| 9 | Mountain scroller (`MNTSCRL`) | 2 | 3:51.1 | 4:20.2 | 29.1 s | **Scene** (2026-11-25) |
 | 10 | Lens, then rotozoomer (`LNS&ZOOM`) | 2 | 4:20.2 | 5:05.6 | 45.4 s | **2 scenes** (lens, rotozoomer: 2026-11-24) |
 | 11 | Plasma (`PLZPART`, first half) | 2 | 5:05.6 | 5:39.9 | 34.3 s | **Scene** |
 | 11 | Plasma cube (`PLZPART`, second half) | 2 | 5:39.9 | 6:12.9 | 33.0 s | **Scene** |
@@ -64,7 +64,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
   | Title picture, end picture | Their own scenes (2026-11-24): out of white, as the original; the end picture waits for its music cue and fades to black |
   | Jelly logo | Its own scene (2026-11-25): slides in, waits for its music cue, then 700 steps of jelly |
-  | Mountain, water | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
+  | Mountain scroller | Its own scene (2026-11-25): the leaves fade in, the scroll starts and the fade-out begins on the music cues |
+  | Water | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
@@ -165,7 +166,7 @@ The music player (STMIK) is not in the source release, so two details had to be 
 | TECHNO | music plus ≥ -4 (`TECHNO/KOE.C` 213) | troll waits section > 35 or 35 row > 48 (638-648), then ≤ 420 refreshes or -6 < music plus < 16 (704-709) |
 | PANICEND | — | 121 refreshes + `sleep(1)` (`PANIC/SHUTDOWN.C`) |
 | loader | music plus < 0, then > 0 (`MAIN/U2.ASM` 828-850) | |
-| MNTSCRL | 64-refresh fade, music plus ≥ 0 (`FOREST/READ2.PAS` 153-159) | music plus = -11, then 65 refreshes (196-207) |
+| MNTSCRL | 64-refresh fade, music plus ≥ 0 (`FOREST/READ2.PAS` 153-159), 127 refreshes | music plus = -11, then 65 refreshes (196-207) |
 | LNS&ZOOM | music plus ≥ -6 (`LENS/MAIN.C` 104) | 300 + wait music plus ≥ -20 + 720 + rotozoomer until music plus > -4 (211-213) |
 | PLZ | music plus ≥ 0 (`PLZPART/PLZ.C` 68) | music frame > 2259, then ~64 refreshes (79-91) |
 | VECT | music plus ≥ 13 (`PLZPART/VECT.C` 116) | -4 ≤ music plus < 0 (119-120) |

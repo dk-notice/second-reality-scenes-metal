@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Goal
 A native macOS app that re-creates scenes from Second Reality (Future Crew, 1993) from scratch,
@@ -51,7 +51,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   may start ANOTHER copy with the same identity (an older one quit at once on the new `--from` option). After
   merging into main, rebuild in the main folder; to be sure which copy starts: `open -n <full path to the .app>`.
   Main's app was rebuilt after merging Play Demo from Here (2026-11-24, 445 checks pass there). Start-up options go after `--args`: `--look classic|modern`,
-  `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|sine-landscape|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
+  `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|mountain-scroller|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|sine-landscape|jelly-logo|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -437,15 +437,15 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   Still open: review findings 3, 5, 6 (harmless today); skip the black waits when starting "from here"?;
   the troll flash question; the jelly logo's white border left out.
 
-## Mountain scroller research (2026-11-25, branch claude/mountain-scroller-plan-caeaad; PLAN SHOWN, NOT YET APPROVED, no code)
+## Mountain scroller notes (2026-11-25, branch claude/mountain-scroller-plan-caeaad; plan approved by the user and BUILT)
 - Original: `FOREST/READ2.PAS` + `ROUTINES.ASM` (`putrouts`), Trug. There is NO font and no text string: the
   text is ONE PICTURE, `O2.SCI` (640 wide, rows 0-30 used, values 0-7, "ANOTHER WAY TO SCROLL"; = our
   `09-mountain-font`). A 237x31 window of it is laid over the hills through `POS1-3.DAT`: per window cell
   a count and screen addresses; screen = background + (value + 128 if value > 0), wrapping in a byte.
   One table per refresh (1, 2, 3, 1, ...); after table 3 the window moves one column (text column `scp`
   from 133, stuck at 639 = an inked column, so the last L's bar smears on for the part's last seconds).
-- Palette: 0-31 = hills/sky blues, 128-159 = the same with text on, 160+ = copy of 32+ (so text never shows
-  on leaves). Fade 1 (64 refreshes) brings in everything EXCEPT 0-31 and 128-159 (leaves on black); the
+- Palette: 0-31 = hills/sky blues, 128-159 = the same with text on, 160+ = copy of 32+ (a leaf pixel under text
+  only shifts to a neighbouring leaf green: 646 pixels, a faint shimmer; first noted wrongly as "never shows"). Fade 1 (64 refreshes) brings in everything EXCEPT 0-31 and 128-159 (leaves on black); the
   hills and the text fade in together during the first 127 scroll refreshes (colours 0-176, a level every
   2nd refresh). The wait for music plus >= 0 is a busy loop with no refresh wait.
 - FOUND: the port's data = the source files byte for byte (POS1-3, HILLBACK.CLX, O2.SCI), and `MAIN/DATA/O2.SCI`
@@ -460,10 +460,37 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   A prototype (plane fitted through each pixel's neighbours, blended) gives smooth text over the hills.
 - Step pairing worked out (rule: set before wait n shows on step n - 1): step 0 black; step y + 1 = leaves
   at level y (y 0-63); scroll draw j shows on step 65 + j. Fade-out: 65 palette settings but only 64
-  further waits after the cue's own wait; the script has 65 (one step; proposed: leave the script alone).
-- Font sheets for the user's decision: `build/scaler-compare/mountain/` in that worktree (text-flat-whole,
-  text-flat-zoom, text-in-place; candidates Herculanum, Arial Rounded MT Bold, Phosphate Solid). Made by
-  throwaway scripts (not kept). Claude's advice: Super-xBR (it is hand-drawn lettering, not a typeface).
+  further waits after the cue's own wait (see below: the script's 65 is right).
+- Font sheets: `build/scaler-compare/mountain/` in that worktree (text-flat-whole, text-flat-zoom,
+  text-in-place; candidates Herculanum, Arial Rounded MT Bold, Phosphate Solid), made by throwaway scripts.
+  DECIDED (user, 2026-11-25): the original text picture through Super-xBR (hand-drawn lettering, no font).
+- BUILT: `Data/Mountain/` (POS1-3.DAT, HILLBACK.CLX, O2.SCI unchanged, 161 KB, README with SHA-256;
+  build.sh copies it). HILLBACK.CLX and O2.SCI ship too, not only the tables: the scene needs the colour
+  NUMBERS and the whole palette, which the exported PNGs do not carry. `Scenes/MountainScroller/`:
+  `MountainData` (loading, `smoothMap`), `MountainScrollerModel` (kept screen, window, fades, cues),
+  `MountainScrollerScene` (1993: IndexedCanvas; Modern: own shader). Sidebar: before the Lens. Play Demo:
+  `.show(.scene("mountain-scroller"))`; `--demo-timeline` unchanged.
+- Timeline on its own: step 0 black, 1-64 leaves, scroll draw j on step 65 + j, fade-out from draw 1906
+  (measured: where the demo's cue falls; the first guess 1780 was wrong), 65 fade steps, loop (2,036).
+  The script's 65 after the cue is RIGHT (the pairing shift absorbs the wait I thought was missing).
+- Modern: background, hill mask (colour < 32), hill colour numbers (carried under the leaf edges) and the
+  text each 8x by Super-xBR; text colour = palette 128 + number + value, blended. Smooth map: planes fitted
+  through the CROSSINGS between neighbouring pixels one step apart (exact values), not pixel middles
+  (those left the text's outer edge on the pixel grid); grown 3 pixels outwards. STRAYED (Modern only): no
+  shimmer on leaves under the text; hills reach full colour (1993 stops at level 62); at hill folds the
+  text's edge follows the 320x200 grid.
+- `tools/mountain_reference.py`: structure facts, table order, palette facts, replay; CRCs at 29 steps.
+  Self-test: 8 new checks + 31 generic ones (513 in all, all pass): file CRCs, tables disjoint/15,592,
+  smooth map (91% in their third, 99% in their row), 1993 pictures = tool, loop, Play Demo sync (scroll on
+  the script's cue step, fade on its second, lens 65 later), standalone fade draw = the demo's. Proven to
+  fail: window moved a draw early, hill fade a draw early, scroll a step early, tables in the other order,
+  fade cue loosened. `--motion-check mountain-scroller modern`: no jumps.
+- Docs: `docs/scenes/mountain-scroller.md` with 3 pictures; README, demo-timeline updated.
+- Seen by Claude: snapshots of both looks at step 665 (they agree), Modern at 50, 110, 1960, Play Demo at
+  step 16900. NOT seen by the user in the app yet; not merged, not pushed. After merging: rebuild main's app.
+- NEXT (agreed order): credits, opening credits (font decisions first), water last. Still open: review
+  findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
+  logo's white border.
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,

@@ -57,6 +57,7 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 | Rings, Interference | Psi | [docs/scenes/rings-and-interference.md](docs/scenes/rings-and-interference.md) |
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Troll, Screen Switches Off | Psi; Wildfire | [docs/scenes/troll-and-switch-off.md](docs/scenes/troll-and-switch-off.md) |
+| Mountain Scroller | Trug | [docs/scenes/mountain-scroller.md](docs/scenes/mountain-scroller.md) |
 | Lens | Psi | [docs/scenes/lens.md](docs/scenes/lens.md) |
 | Rotozoomer | Psi | [docs/scenes/rotozoomer.md](docs/scenes/rotozoomer.md) |
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
@@ -73,7 +74,7 @@ Fly-by and the 3D City, share the original's 3D engine, which was built and chec
 code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
 out of scope at first. Since Play Demo exists (2026-11-24) the remaining parts are being added one at a
 time, starting with the Explosion (the original's hand-drawn animation), the title and end pictures, the troll and the screen
-switch-off, the end scroller, the lens, the rotozoomer and the jelly logo. The ideas are in
+switch-off, the end scroller, the lens, the rotozoomer, the jelly logo and the mountain scroller. The ideas are in
 [docs/future-ideas.md](docs/future-ideas.md).
 
 Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
@@ -84,7 +85,8 @@ calculated), and they fly over the original's hand-painted horizon picture, kept
 is likewise the original's models and recorded flight, with no picture. The Explosion is the original's
 hand-drawn animation frames, the Title and End Pictures are the original pictures, and the Lens and the
 Rotozoomer use the original lens picture (the Lens also one original table, see
-[Data/Lens/](Data/Lens/README.md)), and the Jelly Logo the original painting.
+[Data/Lens/](Data/Lens/README.md)), and the Jelly Logo the original painting. The Mountain Scroller uses the original background, its
+text picture and three position tables that cannot be calculated ([Data/Mountain/](Data/Mountain/README.md)).
 
 ## Build and run
 
@@ -138,7 +140,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |
@@ -278,8 +280,9 @@ anniversary. Everything here was worked out from that release:
 - Fabien Sanglard's code review of the original: <https://fabiensanglard.net/second_reality/>
 
 No code from the original or from those ports is included here. The scenes were re-implemented from the
-original's logic, and tables the original shipped as data files are calculated instead (one exception: the
-lens's table 4, which cannot be, see [Data/Lens/](Data/Lens/README.md)).
+original's logic, and tables the original shipped as data files are calculated instead (two exceptions: the
+lens's table 4 and the mountain scroller's three position tables, which cannot be, see
+[Data/Lens/](Data/Lens/README.md) and [Data/Mountain/](Data/Mountain/README.md)).
 
 The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see
