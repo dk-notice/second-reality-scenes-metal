@@ -171,8 +171,8 @@ declared at the bottom of `InterferenceScene.swift`.
 - **No white-out in Rings.** The original faded the rings in, then carried on adding brightness until the
   whole screen was white, and ended after 256 steps. Here Rings stops at full brightness and keeps flowing.
 - **Interference loops seamlessly.** The original cut away on a music cue: by the demo's timeline, worked
-  out later, 669 steps in (when the music's frame counter, started with Rings, reached 925; an earlier
-  estimate here said about 980). Here it runs 1024 steps. The two pictures' paths advance 5 and 7 places per step through a 1024-place sine table,
+  out later, 989 steps in (when the music's frame counter, started with Rings, reached 925 music
+  ticks; it was first read as screen refreshes, 669 steps). Here it runs 1024 steps. The two pictures' paths advance 5 and 7 places per step through a 1024-place sine table,
   so after 1024 steps both are exactly where they started, as are the wave and the colour rotation. The
   wave also shrinks back to nothing over the last 240 steps, which the original did not do. The self-test
   checks that the scene returns to its exact first frame.
@@ -181,8 +181,10 @@ declared at the bottom of `InterferenceScene.swift`.
 ### Inside Play Demo
 
 Play Demo (2026-11-24) shows Rings for 256 steps, as long as the original's, then Interference until the
-music's frame counter reaches 925, which is 669 steps: it is cut at full wobble, before this scene's own
-shrinking-back and loop are reached. The scenes themselves are unchanged there: Rings still has no
+music's frame counter reaches 925. That counter counts music ticks, 52 a second (found 2026-11-25 in
+the player's library; see `docs/demo-timeline.md`), so the interference shows for 989 steps, measured
+from the script's silent run. (It was first read as screen refreshes, which cut it at 669 steps, 4.6 s
+early.) The scenes themselves are unchanged there: Rings still has no
 white-out, and neither waits for the music.
 
 One thing that is not a difference: the circles are round in pixels, and the canvas is shown at 4:3 as on a

@@ -72,7 +72,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | 3D city | Its own scene: the jelly logo's last picture fading to white, the white window, the wait for section 19, the flight, the shifted whitening into the end picture (2026-11-25) |
   | Glenz | Its own scene: the title picture held until its music cue, the wipe to grey behind black bars, the plate, the pause to music frame 333, the glenz, black until the tunnel (2026-11-25) |
   | Tunnel, dots | The project's scene, started at the part's start and cut at its end; they fit exactly |
-  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (sections 1 and 2: the original's third section never got to run, see the scene's page), then the Troll scene, each at the original's moment |
+  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (all three sections: the third cut by the music, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 
@@ -80,7 +80,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   as the newer ones do (2026-11-25; each scene's page has an "Inside Play Demo" section). On its own
   each keeps its standalone timing, which loops and differs from the original on purpose. The Dot
   Tunnel (1,060 steps) and Bouncing Dots (2,580) fit their parts exactly and needed nothing; Techno
-  Bars was right as it was (the original's third section never got to run). The end scroller runs,
+  Bars' third section was added later the same day (the counter it waits on counts music ticks, see
+  below). The end scroller runs,
   with the music playing, until the demo is stopped (Escape).
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
@@ -121,7 +122,7 @@ end picture.
   - **the sync table** (`dis_sync`, `sync_10`): a fixed list of song positions numbered 1...10, used
     by the opening credits and the explosion.
   - **the section and row** themselves (ships, city, techno's troll, water).
-  - **the music frame counter** (`dis_getmframe`): see below.
+  - **the music frame counter** (`dis_getmframe`): music ticks since the part last set it (see below).
 - Other parts simply run for a fixed number of screen refreshes (tunnel 1,060; credits 7,602).
 
 ## Two questions the source could not answer, settled by simulation
@@ -136,6 +137,21 @@ The music player (STMIK) is not in the source release, so two details had to be 
    sine landscape's speed) shows the landscape at 441-467 s; the simulation gives 439-468 s with
    screen refreshes and 469-533 s with ticks. This answers the old question in
    `docs/scenes/plasma.md` in favour of 1/70 s, as this project built it.
+
+   **Later found: it counts music ticks** (2026-11-25). The player's library ships compiled
+   (`MAIN/STMIK.300`), and its symbol table names the counter `np_zframe`. It is increased in one
+   place only, the routine at 4353h, which runs once per music tick and is the one that moves the song
+   on a row. With a Gravis Ultrasound or no sound card the player was polled once a screen refresh and
+   ran a tick whenever a 16-bit sum of its "speed adjust" overflowed (5165h); `MAIN/U2.ASM` 769-774
+   sets that to 45000 for song 1 and 48700 for song 2, which is 48.07 and 52.02 ticks a second: the
+   songs' tempos 120 and 130 (2 x tempo / 5 ticks a second). The script counts it the same way
+   (`DemoSequencer.tickCounter`, and `Music.tk` in the simulation).
+
+   So far only the techno part reads it as ticks (the interference ends at 925, the bars at 2520). No
+   part start moves: both of its waits are followed by waits for song positions. Glenz and the plasma
+   still read it as refreshes: in ticks the Glenz pause would be about 1.6 s longer, and the plasma as
+   its source stands would then run past the plasma cube's cue, as described above, so the released
+   plasma may differ from its source. Not yet looked into (an open question).
 2. **Is the player's section number the section playing, or the next one?** Most likely the one
    playing: against the same recording the landscape comes out at 439-468 s this way, and
    431-460 s the other way.

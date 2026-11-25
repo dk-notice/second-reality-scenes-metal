@@ -25,8 +25,12 @@ struct DemoMusicState {
     var plus: Int
     /// DIS's sync value (see `MusicPosition.sync`).
     var sync: Int
-    /// DIS's music frame counter (`dis_getmframe`): steps since the part last reset it.
+    /// Screen refreshes since the part last reset DIS's music frame counter. Glenz and the plasma
+    /// still read the counter this way (an open question: see `docs/demo-timeline.md`).
     var frame: Int
+    /// DIS's music frame counter (`dis_getmframe`) as the player really kept it: MUSIC TICKS since the
+    /// part last reset it (see `DemoSequencer.tickCounter`). The techno part reads this.
+    var ticks: Int
     /// A section number a part noted down (the water scroller waits for the next section).
     var noted: Int
 }
@@ -91,10 +95,10 @@ enum DemoScript {
         // TECHNO: rings, interference, the lead-in to the bars on four beats, the bars, the troll.
         s += [.part("Rings, interference, techno bars, troll"), .show(.black), until { $0.plus >= -4 },
               .show(.scene("rings")), .resetFrameCounter, .frames(256),
-              .show(.scene("interference")), until { $0.frame >= 925 },
+              .show(.scene("interference")), until { $0.ticks >= 925 },
               .show(.black), .frames(5), until { $0.plus >= -3 }, until { $0.row & 7 == 7 }]
         for _ in 0..<4 { s += [.frames(21), until { $0.row & 7 == 7 }, .frames(4)] }
-        s += [.show(.scene("techno-bars")), .frames(420), .frames(840), until(cap: 700) { $0.frame > 2520 },
+        s += [.show(.scene("techno-bars")), .frames(420), .frames(840), until(cap: 700) { $0.ticks > 2520 },
               .show(.scene("troll")), until { $0.order > 35 || ($0.order == 35 && $0.row > 48) },
               .frames(53 + 50), until(cap: 420) { -6 < $0.plus && $0.plus < 16 }]
         s += [.part("Screen switches off"), .show(.scene("switch-off")), .frames(SwitchOffModel.length)]
@@ -183,7 +187,18 @@ final class DemoSequencer {
     /// Steps already spent on the current step (for `.frames` and an `.until`'s cap).
     private var spent = 0
     private var frameCounter = 0
+    /// The player's music frame counter (`np_zframe`), which counts music ticks: found in the player's
+    /// library (`MAIN/STMIK.300`, the routine at 4353h that also moves the song on a row). With a
+    /// Gravis Ultrasound or no sound card the player was polled once a screen refresh and ran a tick
+    /// only when a 16-bit sum of its "speed adjust" overflowed (5165h); `MAIN/U2.ASM` 769-774 sets that
+    /// to 45000 for song 1 and 48700 for song 2: 48.07 and 52.02 ticks a second (tempo 120 and 130).
+    private(set) var tickCounter = 0
+    private var tickSum = 0
+    private var tickAdjust = 0
     private var noted = 0
+
+    /// The player's "speed adjust" for each song (`MAIN/U2.ASM` 769-774).
+    static func speedAdjust(_ song: Song) -> Int { song == .first ? 45_000 : 48_700 }
 
     init(music: DemoMusicSource, steps: [DemoStep] = DemoScript.steps) {
         self.music = music
@@ -201,6 +216,9 @@ final class DemoSequencer {
         index = other.index
         spent = other.spent
         frameCounter = other.frameCounter
+        tickCounter = other.tickCounter
+        tickSum = other.tickSum
+        tickAdjust = other.tickAdjust
         noted = other.noted
     }
 
@@ -234,7 +252,7 @@ final class DemoSequencer {
         return DemoMusicState(order: p.order, row: p.row,
                               plus: MusicPosition.plus(orderList: music.orderList, order: p.order, row: p.row),
                               sync: MusicPosition.sync(order: p.order, row: p.row),
-                              frame: frameCounter, noted: noted)
+                              frame: frameCounter, ticks: tickCounter, noted: noted)
     }
 
     /// One 1/70 s step: does every step of the script that takes no time, up to the first one that
@@ -251,8 +269,12 @@ final class DemoSequencer {
             case .playSong(let song, let order):
                 music.play(song, fromOrder: order)
                 frameCounter = 0   // a new song: DIS's counter starts again
+                tickCounter = 0
+                tickSum = 0
+                tickAdjust = Self.speedAdjust(song)
             case .resetFrameCounter:
                 frameCounter = 0
+                tickCounter = 0   // the sum runs on: the part sets only the counter
             case .noteSection:
                 noted = music.position.order
             case .frames(let count):
@@ -272,6 +294,8 @@ final class DemoSequencer {
     private func passTime() {
         time += 1
         frameCounter += 1
+        tickSum += tickAdjust
+        if tickSum >= 65_536 { tickSum -= 65_536; tickCounter += 1 }
         music.stepPassed()
     }
 }

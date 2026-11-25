@@ -163,14 +163,16 @@ still not counted.
 - **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats);
   Play Demo holds black for those four beats. The picture that scrolls in afterwards is now a scene of
   its own, the [Troll](troll-and-switch-off.md) (2026-11-24).
-- **Inside Play Demo it is cut by the music**, as the original was, and section 3 is not seen at all
-  (measured 2026-11-25 from the script's silent run; an earlier estimate here said "about 3 seconds").
-  Sections 1 and 2 always run their full 420 and 840 refreshes (`doit1`, `doit2` only count refreshes).
-  Only section 3 looks at the music's frame counter (`KOE.C` 495-500: past 2520 it sets its slide to
-  zero, and on the next pass it stops). That counter was started with the rings, and the bars begin at
-  1,437 on it, so it already stands at 2,697 when section 3 begins: the original drew one pass of it at
-  most and went on to the troll. Play Demo shows the scene for exactly those 1,260 steps, so the circling
-  and the slide-off (on its own from step 1908) are seen only when the scene runs on its own.
+- **Inside Play Demo it is cut by the music**, as the original was. Sections 1 and 2 always run their
+  full 420 and 840 refreshes (`doit1`, `doit2` only count refreshes). Only section 3 looks at the music's
+  frame counter (`KOE.C` 495-500: past 2520 it sets its slide to zero, and on the next pass it stops).
+  That counter was started with the rings and counts MUSIC TICKS, 52 a second in this song (found
+  2026-11-25 in the player's library; see `docs/demo-timeline.md`). Play Demo shows the scene for
+  1,955 steps (measured from the script's silent run): section 3 for 695, so the circling is seen and
+  the slide-off (on its own from step 1908) begins just before the cut. (Until 2026-11-25 the counter
+  was read as screen refreshes, which cut the scene at 1,260 steps and hid section 3.)
+- Not reproduced: on its very last pass the original set the slide to zero, a black picture for one
+  refresh, before the troll part took over; Play Demo goes straight to the troll's first step.
 - **It loops.** After sliding off, the scene starts again from section 1.
 
 ### Quirks that were kept

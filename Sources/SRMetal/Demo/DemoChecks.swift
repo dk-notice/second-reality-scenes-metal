@@ -138,9 +138,43 @@ extension CoreChecks {
         } else {
             check("End scroller: its text and font are there", false, "")
         }
+        demoTechnoTicks(check)
         let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
         check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))
+    }
+
+    /// The music frame counter counts music ticks, not screen refreshes (found 2026-11-25 in the player's
+    /// library, `MAIN/STMIK.300`), and the techno part reads it that way: the interference runs until 925
+    /// ticks after the rings began, the bars until 2520.
+    static func demoTechnoTicks(_ check: (String, Bool, String) -> Void) {
+        // The rate: a tick when the 16-bit sum of the player's speed adjust overflows, once a refresh.
+        let script: [DemoStep] = [.playSong(.second, order: 0), .frames(70 * 60), .playSong(.first, order: 0), .frames(70 * 60), .hold]
+        let rate = DemoSequencer(music: SilentMusic(), steps: script)
+        var perMinute: [Int] = []
+        for step in 1...(70 * 120) {
+            rate.tick()
+            if step == 70 * 60 || step == 70 * 120 { perMinute.append(rate.tickCounter) }
+        }
+        check("Play Demo: the music frame counter counts music ticks, 52 a second in song 2 and 48 in song 1 (speed adjust 48700, 45000)",
+              perMinute == [3121, 2883], "\(perMinute) in a minute each")
+        // The techno part in a silent run: what shows, from which step, for how long.
+        let sequencer = DemoSequencer(music: SilentMusic())
+        var shows: [(visual: DemoVisual, step: Int)] = []
+        sequencer.onShow = { [unowned sequencer] visual in shows.append((visual, sequencer.time)) }
+        while !sequencer.finished && sequencer.time < 70 * 60 * 15 { sequencer.tick() }
+        func length(_ id: String) -> Int {
+            guard let i = shows.firstIndex(where: { $0.visual == .scene(id) }), i + 1 < shows.count else { return -1 }
+            return shows[i + 1].step - shows[i].step
+        }
+        // Measured from this silent run (2026-11-25). Counting refreshes gave 669 and 1,260 (section three
+        // never seen); with ticks the interference ends on the beat before the lead-in's cue and the bars
+        // just before the troll's.
+        let interference = length("interference"), bars = length("techno-bars")
+        let barsSectionThree = bars - TechnoBarsModel.sectionOneTicks - TechnoBarsModel.sectionTwoTicks
+        check("Play Demo: the interference shows 989 steps (to 925 music ticks), the techno bars 1,955 (their third section 695, to 2520 ticks)",
+              interference == 989 && bars == 1955 && barsSectionThree == 695,
+              "interference \(interference), bars \(bars)")
     }
 
     // MARK: - Play Demo from here (added 2026-11-24)
