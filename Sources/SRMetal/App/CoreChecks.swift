@@ -311,6 +311,15 @@ enum CoreChecks {
               SwitchOffModel.bands == [32, 26, 21, 17, 14, 11, 9, 7, 5, 4, 3] && SwitchOffModel.length == 191
                 && line.rows.filter { $0 >= 0 }.count == 2 && line.rows[200] == 133 && dot.dot == 63
                 && SwitchOffModel.frame(at: 1).colour0 == 63, "\(SwitchOffModel.bands)")
+        // SHUTDOWN.C waits once more (a third dis_waitb) after the quarter squash and before the band loop,
+        // whose first wait comes before band 32: so refresh 3 still shows the quarter squash, band 32 is at
+        // refresh 4 and band 4 at 13. Band 3 is made after the 14th wait and at once cut to the line, so it
+        // never shows. (Found in the code review of 2026-11-24: the bands had been one refresh early.)
+        func bandHeight(_ s: Int) -> Float { SwitchOffModel.frame(at: s).band.y }
+        check("Play Demo: the switch-off's quarter squash shows for refreshes 2 and 3, bands 32 ... 4 at refreshes 4 ... 13 (SHUTDOWN.C's waits)",
+              SwitchOffModel.frame(at: 3) == SwitchOffModel.frame(at: 2) && bandHeight(4) == 64 && bandHeight(13) == 8
+                && SwitchOffModel.frame(at: 4).whiteFade == 31 && SwitchOffModel.frame(at: 13).whiteFade == 59,
+              "refresh 3 band \(bandHeight(3)), 4: \(bandHeight(4)), 13: \(bandHeight(13))")
         // The end scroller (released text and font): a row every 2 refreshes, lines centred by the original's
         // rule, "[nn" = nn blank rows, "%" = back to the first line; the font has Y, Z and ä.
         if var scroller = try? EndScrollerModel.load() {

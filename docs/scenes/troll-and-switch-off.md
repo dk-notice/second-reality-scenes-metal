@@ -44,8 +44,9 @@ The switch-off program found the troll still on screen and played tricks with th
 | 0 | nothing yet | the troll |
 | 1 | show each memory row twice; start at row 100, where a quarter-height copy had just been made; colour 0 to white; palette 3/64 towards white | the troll squashed to half height on a white screen |
 | 2 | also skip every other row; colour 0 black again; 20/64 towards white | squashed to a quarter |
-| 3 to 13 | copy rows of the troll into a band of `a` rows (shown twice), a = 32, 26, 21, ... 3 (each 5/6 of the last); black above and below; (63 − a)/64 towards white | thinner and whiter bands |
-| 14 | wipe the two rows around the middle | one line: troll row 133, almost white |
+| 3 | nothing (the program waits once more before its band loop) | still squashed to a quarter |
+| 4 to 13 | copy rows of the troll into a band of `a` rows (shown twice), a = 32, 26, 21, ... 4 (each 5/6 of the last); black above and below; (63 − a)/64 towards white | thinner and whiter bands |
+| 14 | band a = 3, then at once wipe the two rows around the middle (so that band never shows) | one line: troll row 133, almost white |
 | 15 to 61 | each refresh, set 4 pixels at each end of the line to black, moving inwards | the line shrinks to the centre |
 | 61 to 190 | one pixel in colour 1 at the centre; its brightness follows a cosine over 60 refreshes; then `sleep(1)` | a dot that blinks twice and fades |
 
@@ -64,7 +65,9 @@ self-test checks the scroll takes 53 refreshes and the shake 50, the same as the
 **Switch-off** (`SwitchOffModel`): for each refresh, which troll row each of the 400 screen rows shows,
 how far the palette has washed out, which pixels of the line are wiped and the dot's brightness, all
 worked out from what the original told the card (table above). A self-test check holds the numbers: the
-bands, the line at refresh 14, the dot from 61, 191 refreshes.
+bands, the quarter squash held at refresh 3 and the first band at 4, the line at refresh 14, the dot from
+61, 191 refreshes. (Until the code review of 2026-11-24 the bands came one refresh early: the extra wait
+before the band loop had been missed.)
 
 **1993 look:** both scenes are drawn by whole pixels and the original's colour rules; the self-test compares
 the graphics chip with the same rules worked out on the processor at 35 moments: all identical.

@@ -11,10 +11,11 @@ import Metal
 /// - s = 0: the troll as the techno part left it.
 /// - s = 1: the troll squashed to half height in the middle of a WHITE screen (colour 0 set to white),
 ///   palette 3/64 towards white.
-/// - s = 2: squashed to a quarter, black around, 20/64 towards white.
-/// - s = 3...13: squashed into a band of 2a screen rows, a = 32, 26, 21, 17, 14, 11, 9, 7, 5, 4, 3 (each
+/// - s = 2, 3: squashed to a quarter, black around, 20/64 towards white (the original waits twice here).
+/// - s = 4...13: squashed into a band of 2a screen rows, a = 32, 26, 21, 17, 14, 11, 9, 7, 5, 4 (each
 ///   ×5/6), palette (63 − a)/64 towards white; troll row 400·b/a in band row b.
-/// - s = 14: one line left across the middle (troll row 133), 60/64 towards white.
+/// - s = 14: one line left across the middle (troll row 133), 60/64 towards white. (The last band, a = 3,
+///   is made after this refresh's wait and cut to the line at once, so it never shows.)
 /// - s = 15...61: the line is wiped from both ends inwards, 4 pixels a side per refresh.
 /// - s = 61...190: a single dot (colour 1) in the middle, which blinks twice (its brightness follows a
 ///   cosine over 60 refreshes), then a second (`sleep(1)`, 70 refreshes) with the dot almost dark.
@@ -77,12 +78,15 @@ struct SwitchOffModel {
             // Memory row 100 + y/2 shown (rows doubled); the squashed troll is in memory rows 150...249.
             return Frame(rows: rows { y in let m = 100 + y / 2; return (150...249).contains(m) ? (m - 150) * 4 : -1 },
                          whiteFade: 3, colour0: 63, wiped: none, dot: -1, band: SIMD4(100, 200, 0, 1))
-        case 2:
-            // Memory row 2·(y/2) shown.
+        case 2, 3:
+            // Memory row 2·(y/2) shown. The original waits once more before the band loop, so refresh 3
+            // still shows this.
             return Frame(rows: rows { y in let m = 2 * (y / 2); return (150...249).contains(m) ? (m - 150) * 4 : -1 },
                          whiteFade: 20, colour0: 0, wiped: none, dot: -1, band: SIMD4(150, 100, 0, 1))
-        case 3..<(3 + bands.count):
-            let a = bands[s - 3], top = 100 - a / 2
+        case 4..<(3 + bands.count):
+            // Band a is made just after the refresh it shows in. The last band (a = 3) is made after
+            // refresh 14's wait and cut to the line straight away, so it never shows.
+            let a = bands[s - 4], top = 100 - a / 2
             return Frame(rows: rows { y in let b = y / 2 - top; return (0..<a).contains(b) ? 400 * b / a : -1 },
                          whiteFade: 63 - a, colour0: 0, wiped: none, dot: -1,
                          band: SIMD4(Float(2 * top), Float(2 * a), 0, 1))
