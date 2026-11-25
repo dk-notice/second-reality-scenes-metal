@@ -139,6 +139,8 @@ final class DemoRunScene: DemoScene {
     var currentPart: String? { sequencer.currentPart }
     /// The scene showing now, if the part shows one (for checks).
     var sceneShowing: DemoScene? { if case .scene(let scene, _) = shown { return scene } else { return nil } }
+    /// The picture showing now, by its name in `artwork/`, if the part shows one (for checks).
+    var pictureShowing: String? { if case .picture(let name) = shown { return name } else { return nil } }
     /// The music's row as the parts see it now (for checks).
     var musicRow: Int { sequencer.musicState.row }
     /// The music as the parts see it now (for checks).

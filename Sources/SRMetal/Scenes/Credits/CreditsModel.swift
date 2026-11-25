@@ -174,6 +174,10 @@ struct CreditsModel {
         var view: Int { 4 * (start / 4) + (pan & 3) }
     }
 
+    /// How many steps the two slides really take (the tables' lengths), for the self-test to hold the
+    /// constants above to.
+    static var slideLengths: (in: Int, out: Int) { (slideIn.count, slideOut.count) }
+
     private static let slideIn: [Int] = {
         var ys: [Int] = []
         var y = 200 * 128

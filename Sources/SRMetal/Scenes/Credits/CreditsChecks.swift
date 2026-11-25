@@ -39,6 +39,7 @@ extension CoreChecks {
         check("Credits: 21 screens of 362 steps (1 + 102 sliding in + 200 still + 59 sliding out), then it starts again",
               CreditsModel.length == 7602 && model.step == 0
                 && 1 + CreditsModel.slideInSteps + CreditsModel.holdSteps + CreditsModel.slideOutSteps == 362
+                && CreditsModel.slideLengths == (CreditsModel.slideInSteps, CreditsModel.slideOutSteps)
                 && CreditsModel.registers(local: 103) == CreditsModel.registers(local: 302),
               "\(CreditsModel.length) steps, back to \(model.step)")
         // The text is written with 320-wide rows into 640-wide video memory: only the font's even rows
@@ -64,6 +65,16 @@ extension CoreChecks {
                 missing.append("\(index + 1)"); continue
             }
         }
+        // Picture 1 shows the opening credits' "Code" page: its capture step is on that page, fully faded in
+        // (a capture is the scene on its own after that many steps).
+        var opening = try? OpeningCreditsModel.load()
+        opening?.reset()
+        for _ in 0..<(CreditsModel.captures[0]?.step ?? 0) { opening?.tick() }
+        let onPage = opening?.shown()
+        check("Credits: picture 1's capture step shows the opening credits' \"Code\" page, fully faded in",
+              CreditsModel.captures[0]?.scene == "opening-credits" && onPage?.text == .page(2) && onPage?.textAmount == 1
+                && OpeningCreditsModel.pages[2].first?.text == "Code",
+              "step \(CreditsModel.captures[0]?.step ?? -1): \(String(describing: onPage?.text)) at strength \(onPage?.textAmount ?? -1)")
         let known = Set(SceneCatalog.all.map(\.id))
         let scenes = CreditsModel.captures.compactMap { $0?.scene }
         check("Credits: the Modern look's 21 captured pictures are in the app at 1280x960, from scenes that exist (picture 1 from the opening credits)",
@@ -93,6 +104,9 @@ extension CoreChecks {
                   CTFontCopyPostScriptName(CTFontCreateWithName(CreditsScene.fontName as CFString, 10, nil)) as String == "DINCondensed-Bold"
                     && abs((rows.first ?? 0) - 38) <= 1 && abs((rows.last ?? 0) - 110) <= 1,
                   "inked rows \(rows.first ?? -1)...\(rows.last ?? -1)")
+        } else {
+            check("Credits: Modern text in DIN Condensed Bold, capitals as tall as the 1993 letters (15 rows) on the same rows",
+                  false, "the text picture could not be made")
         }
     }
 }
