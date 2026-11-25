@@ -16,7 +16,7 @@ import Metal
 ///   ×5/6), palette (63 − a)/64 towards white; troll row 400·b/a in band row b.
 /// - s = 14: one line left across the middle (troll row 133), 60/64 towards white. (The last band, a = 3,
 ///   is made after this refresh's wait and cut to the line at once, so it never shows.)
-/// - s = 15...61: the line is wiped from both ends inwards, 4 pixels a side per refresh.
+/// - s = 15...61: the line is wiped from both ends inwards: 4 pixels a side blanked per refresh, moving in 3.
 /// - s = 61...190: a single dot (colour 1) in the middle, which blinks twice (its brightness follows a
 ///   cosine over 60 refreshes), then a second (`sleep(1)`, 70 refreshes) with the dot almost dark.
 struct SwitchOffModel {

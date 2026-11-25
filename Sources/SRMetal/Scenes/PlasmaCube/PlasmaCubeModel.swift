@@ -27,8 +27,6 @@ struct PlasmaCubeModel {
     // MARK: - Size and length
 
     static let width = 320
-    /// The mode showed each picture row on three monitor lines: 134 rows fill the 400 lines.
-    static let rows = 134
     static let canvasHeight = 400
 
     /// Steps this version runs before the original's first frame, so the cube starts fully below

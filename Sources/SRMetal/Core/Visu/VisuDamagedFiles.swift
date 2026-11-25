@@ -2,7 +2,7 @@ import Foundation
 
 /// A check that damaged data files cannot crash the program.
 ///
-/// The 3D engine is the only part of the app that reads files, and the files are full of counts
+/// The 3D engine's files (`Data/Visu`; other scenes' data files have their own load checks) are full of counts
 /// and positions that the loader has to trust: "this block is so long", "this polygon uses corner
 /// number so-and-so". A file cut short, or with one number wrong, must be turned away with a clear
 /// error (`VisuError.badFile`); and whatever does get through must draw without stepping outside

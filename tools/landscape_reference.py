@@ -5,9 +5,10 @@ This reads the original's generated inner loop (COMAN/THELOOP.INC) as text and c
 instructions one at a time in a tiny x86 interpreter, driven by MAIN.C's frame logic and the original
 table files (W1DTA.BIN, W2DTA.BIN, SIN1024.INC). It prints a CRC-32 checksum of the 320x200 screen
 (colour numbers) at the steps asked for; those numbers are what App/SelfTest.swift expects from the
-Swift replay. It also writes each of those frames as referenceNNNN.png in the current folder.
+Swift replay. With --png DIR it also writes each of those frames as DIR/referenceNNNN.png (a scratch
+folder outside the repository).
 
-Usage:  python3 tools/landscape_reference.py [--every N] [path-to-COMAN-folder] step [step ...]
+Usage:  python3 tools/landscape_reference.py [--every N] [--png DIR] [path-to-COMAN-folder] step [step ...]
         e.g. python3 tools/landscape_reference.py 100 200 700 1300 1978 2046   (takes a few minutes)
 
 Steps are 1/70 s. One picture is drawn every N steps (default 2), as on a PC that needed N screen
@@ -20,7 +21,10 @@ import struct, re, sys, zlib, os
 args=sys.argv[1:]
 D=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','secondreality','COMAN','')
 EVERY=2   # steps per drawn picture; must match SineLandscapeModel.ticksPerPicture
-if args and args[0]=='--every': args.pop(0); EVERY=int(args.pop(0))
+PNG_DIR=None   # where to write the frames as pictures; None: only the checksums are printed
+while args and args[0] in ('--every','--png'):
+    if args.pop(0)=='--every': EVERY=int(args.pop(0))
+    else: PNG_DIR=args.pop(0)
 if args and not args[0].isdigit(): D=os.path.join(args.pop(0),'')
 w1=open(D+'W1DTA.BIN','rb').read(); w2=open(D+'W2DTA.BIN','rb').read()
 vals=[]
@@ -165,4 +169,5 @@ if __name__=='__main__':
     want=[int(v) for v in args]
     out=frames(max(want),set(want),sinkstart=2048-130-2*EVERY,every=EVERY)
     pal=palette()
-    for f,s in out.items(): png('reference%04d.png'%f,s,pal)
+    if PNG_DIR:
+        for f,s in out.items(): png(os.path.join(PNG_DIR,'reference%04d.png'%f),s,pal)

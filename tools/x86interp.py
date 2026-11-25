@@ -8,6 +8,7 @@ four bit planes and (optionally) its colour registers. It is used by
   tools/plasmacube_reference.py   (base layer only)
   tools/glenz_reference.py        (base layer + MASM layer)
   tools/visu_reference.py         (base layer + MASM layer + its own additions)
+  tools/starfield_reference.py    (base layer + MASM layer)
 
 Layers:
   1. the base: memory, registers, flags, a parser for IDEAL-style operands, about 35 instructions

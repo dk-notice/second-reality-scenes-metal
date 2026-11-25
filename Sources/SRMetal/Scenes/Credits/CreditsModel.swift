@@ -70,7 +70,8 @@ struct CreditsModel {
         ["GRAPHICS - PIXEL", "MUSIC - SKAVEN", "CODE - WILDFIRE"],
     ]
 
-    /// The pictures' names in `artwork/` (the same pictures, exported), for the Modern look's stand-ins.
+    /// The pictures' names in `artwork/` (the same pictures, exported): what the Modern look shows when a
+    /// captured picture is missing, and for picture 21 while it is being captured.
     static let pictureNames = DemoScript.creditsPictures
 
     /// What each picture is in the Modern look (user, 2026-11-25): the scene it shows, captured in its

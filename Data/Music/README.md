@@ -30,3 +30,12 @@ To get standard S3M files to open in a tracker or player:
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --music-info --write <folder>
 ```
+
+## SHA-256
+
+To check the two files (run in this folder): `shasum -a 256 -c` with these lines.
+
+```text
+aacdb968ae9ebf07bfa02af129fb43f1b15101ab3a94c95b7f5fe69840d28fe1  MUSIC0.S3M
+3393f848a4840b53aa247c4158e414bad848879e7f6059e214631c310e8dde54  MUSIC1.S3M
+```

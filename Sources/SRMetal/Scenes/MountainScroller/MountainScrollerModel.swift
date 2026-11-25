@@ -75,7 +75,6 @@ struct MountainData {
 /// On its own: no wait; the fade-out starts on the same scroll draw as in the demo; then it starts again
 /// (2,036 steps).
 struct MountainScrollerModel {
-    static let width = 320, height = 200
     static let fadeInSteps = 64
     static let hillFadeDraws = 127
     static let fadeOutSteps = 65
@@ -103,8 +102,6 @@ struct MountainScrollerModel {
     private var window: [UInt8]
     private var nextColumn = 133
     private var table = 0
-    /// Scroll draws done.
-    private(set) var draws = 0
     /// Inside Play Demo: the music's "music plus", given before each step. nil on its own.
     var musicPlus: Int?
 
@@ -129,7 +126,6 @@ struct MountainScrollerModel {
         }
         nextColumn = 133
         table = 0
-        draws = 0
     }
 
     mutating func tick() {
@@ -167,7 +163,6 @@ struct MountainScrollerModel {
                 screen[address] = background[address] &+ value
             }
         }
-        draws += 1
         if table == 2 {
             // move(font[1], font[0], ...): every row's first column falls off, the next row's comes in at
             // its end and is overwritten by the new column at once.

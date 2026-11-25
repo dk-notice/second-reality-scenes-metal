@@ -86,8 +86,9 @@ enum DemoTimelineCommand {
     }
 
     static func time(_ step: Int) -> String {
-        let seconds = Double(step) / 70
-        return String(format: "%d:%04.1f", Int(seconds) / 60, seconds.truncatingRemainder(dividingBy: 60))
+        // Rounded to tenths first, so 59.96 s shows as 1:00.0, not 0:60.0.
+        let tenths = Int((Double(step) / 7).rounded())
+        return String(format: "%d:%02d.%d", tenths / 600, tenths % 600 / 10, tenths % 10)
     }
 
     static func run(arguments: [String]) -> Bool {

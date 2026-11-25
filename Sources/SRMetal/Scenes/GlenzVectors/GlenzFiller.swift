@@ -37,8 +37,6 @@ struct GlenzFiller {
     /// Every pixel's colour number in the previous frame (the original kept the previous frame's
     /// list of colour changes, which holds the same information).
     private var previous = [UInt8](repeating: 0, count: width * height)
-    /// How many edges so far started below the bottom of the screen and were left out.
-    private(set) var edgesBelowScreen = 0
 
     mutating func begin() {
         for row in 0..<Self.height { starting[row].removeAll(keepingCapacity: true) }
@@ -69,7 +67,6 @@ struct GlenzFiller {
                 // in a 256-entry table and never looked at rows past 199. The reference tool
                 // confirms no edge in this scene starts on row 256 or lower, which would have
                 // been written outside that table.)
-                edgesBelowScreen += 1
                 continue
             }
             if let same = starting[y1].firstIndex(where: { $0.endRow == y2 && $0.x == x && $0.step == step }) {

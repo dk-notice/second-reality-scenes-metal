@@ -1,7 +1,7 @@
 import Foundation
 
 /// `SRMetal --credits-captures <folder>`: renders the credits' Modern-look pictures (`CreditsModel.captures`)
-/// from this project's scenes into the folder, as `cap02.png` ... `cap21.png`. `build.sh` runs it with the
+/// from this project's scenes into the folder, as `cap01.png` ... `cap21.png`. `build.sh` runs it with the
 /// app's `Resources/Credits/Modern` folder. Picture 21 shows the credits screen itself, so it is made last:
 /// its own picture there is the released one through Super-xBR.
 enum CreditsCapturesCommand {

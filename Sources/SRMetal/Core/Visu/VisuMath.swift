@@ -83,18 +83,6 @@ enum VisuMath {
         return multiply(multiply(t.y, t.x), t.z)
     }
 
-    /// `calc_setrmatrix_rotxyz`: (X * Y) * Z.
-    static func rotationXYZ(x: UInt16, y: UInt16, z: UInt16) -> [Int32] {
-        let t = axisTurns(x: x, y: y, z: z)
-        return multiply(multiply(t.x, t.y), t.z)
-    }
-
-    /// `calc_setrmatrix_rotzyx`: (Z * Y) * X.
-    static func rotationZYX(x: UInt16, y: UInt16, z: UInt16) -> [Int32] {
-        let t = axisTurns(x: x, y: y, z: z)
-        return multiply(multiply(t.z, t.y), t.x)
-    }
-
     /// ACALC `rotatesingle`: one position through a turn. Full 64-bit products and sum, shifted
     /// right by 14, of which the low 32 bits are kept.
     static func turn(_ m: [Int32], _ x: Int32, _ y: Int32, _ z: Int32) -> (Int32, Int32, Int32) {

@@ -283,17 +283,11 @@ struct BouncingDotsModel {
 
     // MARK: - Colours (VGA scale, 0...63 per channel)
 
-    /// The three colours a dot is made of at a given shade (0...15): unused/black, edge, middle.
+    /// The two colours a dot is made of at a given shade (0...15): its edge and its middle.
     static func dotColours(shade: Double) -> (edge: SIMD3<Double>, middle: SIMD3<Double>) {
         let brightness = 100 + shade * 9
         return (SIMD3(8, 40 * brightness / 256, 45 * brightness / 256),
                 SIMD3(16, 55 * brightness / 256, 60 * brightness / 256))
-    }
-
-    /// Brightness of the floor at a given distance down from the horizon (0 = at the horizon).
-    static func floorGrey(row: Double) -> Double {
-        let c = 64 - 256 / (row + 4)
-        return c * c / 64 / 4
     }
 
     static let shadowGrey = 11
@@ -320,7 +314,7 @@ struct BouncingDotsModel {
 
     /// How much is being taken off every colour right now (0 = full brightness, 64 = black).
     /// Fades in at the start and out at the end.
-    var fade: Double { Double(fadeLevel(at: Double(ticks))) }
+    var fade: Double { fadeLevel(at: Double(ticks)) }
 
     private func fadeLevel(at time: Double) -> Double {
         if time < Double(Self.fadeInTicks) {

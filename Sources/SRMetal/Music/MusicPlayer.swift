@@ -6,7 +6,7 @@ import os
 /// audio system's own thread.
 ///
 /// That thread must never wait: if it misses its moment the sound clicks. So the song it reads from
-/// is guarded by a lock the audio thread only TRIES to take; in the rare moment the menu is
+/// is guarded by a lock the audio thread only TRIES to take; in the rare moment Play Demo is
 /// changing the song, it plays a block of silence instead of waiting. Songs are loaded and
 /// freed on the main thread, never on the audio thread.
 ///
@@ -29,12 +29,8 @@ final class MusicPlayer {
     private var source: AVAudioSourceNode?
     private var sampleRate = 48_000
 
-    /// The song now playing (nil when stopped or finished). Main thread only.
-    private(set) var nowPlaying: Song?
     /// The order list of the song now playing (empty when stopped). Main thread only.
     private(set) var orderList: [Int] = []
-    /// Called on the main thread when a song plays to its end.
-    var onFinished: (() -> Void)?
 
     /// Starts `song` from the beginning of section `order` (normally 0), `skipping` seconds into it,
     /// in the given sound, replacing whatever was playing. Song 1 plays at the demo's tempo (see
@@ -58,7 +54,6 @@ final class MusicPlayer {
             return old
         }
         _ = old
-        nowPlaying = song
         orderList = list
     }
 
@@ -70,7 +65,6 @@ final class MusicPlayer {
             return old
         }
         _ = old
-        nowPlaying = nil
         orderList = []
         engine.pause()
     }
@@ -157,12 +151,11 @@ final class MusicPlayer {
         }
     }
 
-    /// A song reached its end. Only stops if that song is still the one loaded: the menu may have
+    /// A song reached its end. Only stops if that song is still the one loaded: Play Demo may have
     /// started another in the meantime.
     private func songFinished(_ which: ObjectIdentifier) {
         let stillLoaded = shared.withLock { state in state.song.map(ObjectIdentifier.init) == which }
         guard stillLoaded else { return }
         stop()
-        onFinished?()
     }
 }

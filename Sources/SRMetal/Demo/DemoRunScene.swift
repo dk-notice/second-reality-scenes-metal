@@ -49,7 +49,7 @@ final class LiveDemoMusic: DemoMusicSource {
 }
 
 /// Play Demo: the whole demo, part after part, following `DemoScript` with the original music.
-/// To the window it is one more scene; inside, it shows whichever stand-in the script asks for.
+/// To the window it is one more scene; inside, it shows whichever scene or picture the script asks for.
 final class DemoRunScene: DemoScene {
     /// Play Demo's id on the command line (`--scene play-demo`, `--snapshot play-demo ...`).
     static let id = "play-demo"
@@ -250,7 +250,7 @@ final class DemoRunScene: DemoScene {
         return made
     }
 
-    /// A title card naming a part not built yet, drawn once per look.
+    /// A title card naming a scene that could not be started (the reason is in the log), drawn once per look.
     private func card(_ title: String) -> ScenePicture? {
         if let card = cards[title] { return card }
         guard let big = Self.cardImage(title, width: 1600, height: 1200, smooth: true),
@@ -281,7 +281,7 @@ final class DemoRunScene: DemoScene {
             CTLineDraw(ct, context)
         }
         line(title, size: 22, grey: 0.92, y: 104)
-        line("not built yet: stand-in", size: 10, grey: 0.5, y: 84)
+        line("could not be started", size: 10, grey: 0.5, y: 84)
         return context.makeImage()
     }
 }
