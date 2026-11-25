@@ -252,6 +252,16 @@ enum SceneCatalog {
             make: { device, format in
                 try FadingPictureScene(picture: "17-end-picture", timing: FadingPictureScene.endTiming, device: device, pixelFormat: format)
             }
+        ),
+        SceneEntry(
+            id: "end-scroller",
+            title: "End Scroller",
+            credit: "Future Crew",
+            // The original's 640x400 screen.
+            canvasSize: SIMD2(640, 400),
+            checkpoints: [0, 2, 3, 50, 51, 400, 799, 800, 801, 1500, 3000, 6001],
+            thumbnailStep: 1300,
+            make: { device, format in try EndScrollerScene(device: device, pixelFormat: format) }
         )
     ]
 }

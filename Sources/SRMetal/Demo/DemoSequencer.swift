@@ -120,7 +120,7 @@ enum DemoScript {
               until(cap: 5000) { $0.plus > -16 }, .frames(64)]
         s += [.part("Credits")]
         for picture in creditsPictures { s += [.show(.picture(picture)), .frames(362)] }
-        s += [.part("End scroller"), .show(.card("End scroller")), .hold]
+        s += [.part("End scroller"), .show(.scene("end-scroller")), .hold]   // until the demo is stopped (a key, in 1993)
         return s
     }()
 

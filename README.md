@@ -60,6 +60,7 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 | Glenz Vectors | Psi | [docs/scenes/glenz-vectors.md](docs/scenes/glenz-vectors.md) |
 | Ships Fly-by | Psi | [docs/scenes/ships-flyby.md](docs/scenes/ships-flyby.md) |
 | Explosion | Trug, Wildfire | [docs/scenes/explosion.md](docs/scenes/explosion.md) |
+| End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
 | Title Picture, End Picture | Future Crew | [docs/scenes/title-and-end-pictures.md](docs/scenes/title-and-end-pictures.md) |
 | 3D City | Psi | [docs/scenes/city-3d.md](docs/scenes/city-3d.md) |
 
@@ -68,7 +69,7 @@ Fly-by and the 3D City, share the original's 3D engine, which was built and chec
 code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
 out of scope at first. Since Play Demo exists (2026-11-24) the remaining parts are being added one at a
 time, starting with the Explosion (the original's hand-drawn animation), the title and end pictures, the troll and the screen
-switch-off. The ideas are in
+switch-off, and the end scroller. The ideas are in
 [docs/future-ideas.md](docs/future-ideas.md).
 
 Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
@@ -129,7 +130,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `explosion`, `title-picture`, `city-3d`, `end-picture`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `explosion`, `title-picture`, `city-3d`, `end-picture`, `end-scroller`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -264,6 +265,13 @@ original's logic, and tables the original shipped as data files are calculated i
 The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see
 [ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside library in the program.
+
+The end scroller's text and font are the RELEASED demo's, taken unchanged from the data of the C++ port
+**SecondReality++** (<https://github.com/XorJS/SecondRealityPlusPlus>, public domain under the
+Unlicense), whose authors extracted them from the released demo; the source release has only an earlier
+version. See [Data/EndScroller/README.md](Data/EndScroller/README.md). No code was taken from the port.
+The end scroller's Modern look uses SuperClarendon, a typeface that comes with macOS (not included in
+this project).
 
 The xBR level 2 and Super-xBR picture scalers (`Sources/SRMetal/Core/PictureScaler.swift`) are written
 for Metal from Hyllian's published shaders (libretro "slang-shaders", copyright 2011-2022 Hyllian),

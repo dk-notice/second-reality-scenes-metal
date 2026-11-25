@@ -311,6 +311,49 @@ enum CoreChecks {
               SwitchOffModel.bands == [32, 26, 21, 17, 14, 11, 9, 7, 5, 4, 3] && SwitchOffModel.length == 191
                 && line.rows.filter { $0 >= 0 }.count == 2 && line.rows[200] == 133 && dot.dot == 63
                 && SwitchOffModel.frame(at: 1).colour0 == 63, "\(SwitchOffModel.bands)")
+        // The end scroller (released text and font): a row every 2 refreshes, lines centred by the original's
+        // rule, "[nn" = nn blank rows, "%" = back to the first line; the font has Y, Z and ä.
+        if var scroller = try? EndScrollerModel.load() {
+            let font = scroller.font
+            let glyphs = [UInt8]("YZa".utf8) + [0x84]
+            let firstLine = scroller.lines[0]
+            let fresh = scroller
+            for _ in 0..<(2 * 30) { scroller.tick() }
+            let rows = scroller.rowsDrawn
+            // The newest row (the 30th) is the bottom one, so row 5 of the first line is 24 rows above it.
+            let screen = scroller.screen
+            let r = EndScrollerModel.height - 1 - 24
+            let firstInk = (0..<EndScrollerModel.width).first { screen[r * EndScrollerModel.width + $0] != 0 }
+            // Find a gap line and the loop line, and check how many rows they take.
+            let gapIndex = scroller.lines.firstIndex { $0.first == UInt8(ascii: "[") }
+            let loopIndex = scroller.lines.firstIndex { $0.first == UInt8(ascii: "%") }
+            var looped = false
+            var probe = fresh
+            var seenLoop = false
+            for _ in 0..<(2 * 40_000) {
+                probe.tick()
+                if let last = probe.placed.last, last.line == loopIndex { seenLoop = true }
+                if seenLoop, let last = probe.placed.last, last.line == 0 { looped = true; break }
+            }
+            check("End scroller: a row every 2 refreshes, the first line centred as the original did, the font has Y, Z, ä; the text loops at its % line",
+                  rows == 30 && glyphs.allSatisfy { font.width[Int($0)] > 0 } && gapIndex != nil && loopIndex != nil && looped
+                    && firstInk.map { $0 >= font.lineStart(firstLine) } == true,
+                  "rows \(rows), first ink \(firstInk ?? -1) from \(font.lineStart(firstLine)), loop line \(loopIndex ?? -1), looped \(looped)")
+            if let gapIndex {
+                var gap = fresh
+                while gap.placed.last.map({ $0.line != gapIndex - 1 }) ?? true { gap.tick() }
+                // The line before the gap started; it takes 25 rows, then the gap, then the next line.
+                let before = gap.placed.last!.firstRow
+                while gap.placed.last!.firstRow == before { gap.tick() }
+                let next = gap.placed.last!
+                let height = Int(String(bytes: gap.lines[gapIndex][1...2], encoding: .ascii) ?? "") ?? -1
+                check("End scroller: a \"[nn\" line is nn blank rows (line \(gapIndex): \(height))",
+                      next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
+                      "next line \(next.line) after \(next.firstRow - before) rows")
+            }
+        } else {
+            check("End scroller: its text and font are there", false, "")
+        }
         let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
         check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))

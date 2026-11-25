@@ -33,7 +33,7 @@ already has for the part.
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
 | 17 | End picture (`ENDLOGO`) | 1 | 8:55.3 | 9:03.8 | 8.6 s | **Scene** (2026-11-24) |
 | 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | 21 pictures, font (stopgaps) |
-| 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | until a key | — | Font, text |
+| 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | until a key | — | **Scene** (2026-11-24; released text and font) |
 
 The hidden starfield (`DDSTARS`) is not in the normal run: the loader plays it only when chosen
 specially, over song 1 from section 70.
@@ -56,7 +56,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 
   | Part | Shown now |
   |---|---|
-  | Opening credits, rotozoomer, end scroller | A title card naming the part |
+  | Opening credits, rotozoomer | A title card naming the part |
+  | End scroller | Its own scene (2026-11-24), until the demo is stopped |
   | Troll, screen switch-off | Their own scenes (2026-11-24): the troll scrolls in on its music cue, shakes and flashes; the screen collapses to a line and a dot |
   | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |

@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -264,7 +264,18 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   640x400 16-colour mode, one pixel row scrolled every 2 refreshes (35 a second), lines centred, glyph
   gap 2 px, space 16 px; it runs until a key. Font comparison sheets (sharp / Super-xBR / SuperClarendon
   / Georgia, modern fonts sized to 14-row capitals and the original line widths) in
-  `build/scaler-compare/fonts/`. WAITING for the user: which text+font version, and which font look.
+  `build/scaler-compare/fonts/`.
+  DECIDED (user, 2026-11-24): the RELEASED text and font (from the port's data, credited); Modern look in
+  SuperClarendon (macOS font, "looks very close"; embedding a free font remains possible if wanted).
+  DONE: `Data/EndScroller/` (ENDSCROL.TXT, ENDFONT.BIN, README with provenance and checksums; build.sh
+  copies it). `Scenes/EndScroller/`: `EndScrollerModel` (MAIN.C's ring of 401 rows, a row every 2
+  refreshes, centring (639 - sum(w + 2)) / 2 counting the CR, 16-px space, `[nn` gaps, `%` loop),
+  `EndScrollerScene` (1993: IndexedCanvas, 4 greys; Modern: each line rendered once in SuperClarendon at
+  4x width, 1.2 tall pixel shape, caps 14 rows on row 14, natural spacing, glides). 16 new self-test
+  checks (377). Play Demo shows it from 10:52.4 until stopped. Other text parts' fonts (opening credits,
+  credits, mountain, water) are NOT decided yet: compare when reached.
+  NEXT (suggested order): the rotozoomer; then the bigger ones (lens, jelly logo, mountain scroller,
+  credits, opening credits; water last).
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.

@@ -68,6 +68,10 @@ mkdir -p "$APP/Contents/Resources/Artwork"
 cp artwork/original/rgb/*.png "$APP/Contents/Resources/Artwork/"
 cp -R artwork/original/rgb/explosion "$APP/Contents/Resources/Artwork/"
 
+# The end scroller's text and font, as released (see Data/EndScroller/README.md).
+mkdir -p "$APP/Contents/Resources/EndScroller"
+cp Data/EndScroller/ENDSCROL.TXT Data/EndScroller/ENDFONT.BIN "$APP/Contents/Resources/EndScroller/"
+
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 codesign --force --sign - "$APP" >/dev/null
 
