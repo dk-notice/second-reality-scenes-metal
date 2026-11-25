@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (techno part's timing fixed, seen by the user and merged; the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (techno part's timing fixed; credits built; both seen by the user and merged; the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -40,7 +40,14 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    captured from the scenes by `build.sh` (`--credits-captures`; moments in `CreditsModel.captures`, chosen
    with `--credits-match`, ships at 360 by eye, picture 21 recursive, picture 1 Super-xBR until the
    opening credits exist: then capture it and update `CreditsModel.captures[0]`). Play Demo shows it.
-2. OPENING CREDITS (part 1, `ALKU`): research and plan, font decision first. Today: a title card for 73 s.
+2. OPENING CREDITS (part 1, `ALKU/MAIN.C` with `TWEAK.ASM`, `ASMYT.ASM`, `COPPER.ASM`), NEXT: research and
+   plan, font decision first. Today: a title card for 73 s. Its timing is in `docs/demo-timeline.md`
+   (texts on sync 1-4, the scroll waits for sync up to 9; the end, "60 refreshes", is an approximation).
+   Lessons from the credits: compare the source with the RELEASED `MAIN/DATA/ALKU.EXE` (unpack with
+   `deark -m pklite`; the credits' pictures and texts differed); check how `tw_putpixel` and the CRTC row
+   width relate (the credits' text showed every other row; ALKU has its own TWEAK.ASM); the horizon and font
+   are exported (`artwork/original/01-opening-*`). When built, capture it for the credits' picture 1
+   (`CreditsModel.captures[0]`, find the step with `--credits-match 1 <scene id>`).
 3. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
