@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (documentation audited against the program this day; trimmed this day: the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (techno part's timing fixed on a branch, waiting for the user's look; the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -23,7 +23,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   `DemoHandover`). Seen by the user and merged 2026-11-25. Their standalone lengths differ from the
   original parts on purpose and stay: Glenz 2,360, Plasma 2,323, Plasma Cube 2,048, Sine Landscape
   2,048, 3D City 3,639, Ships 592.
-- Self-test: 571 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- ON BRANCH `claude/play-demo-timing-issues-df6e91`, waiting for the user to look in the app (not merged):
+  the music frame counter counts MUSIC TICKS (found in the player's library `MAIN/STMIK.300`; 48/52 a
+  second from its "speed adjust"), so inside Play Demo the interference now runs 989 steps (was 669) with
+  full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
+  `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
+- Self-test: 577 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25.
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
@@ -39,6 +44,10 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 3. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
+- Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
+  would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue: the
+  released `PLZPART.EXE` may differ from the source (its pklite unpack came out damaged; not read yet).
+  See `docs/demo-timeline.md`, "Later found: it counts music ticks".
 - Code review findings left as they are: (3) a resumed part's name is lost if a new part starts on the
   first step; (5) the music-skip check runs only at 44.1 kHz, the player at 48; (6) a failed
   `SilentMusic.play` keeps the old song's details. All harmless today.
@@ -135,6 +144,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - Fewer dependencies is better: libopenmpt is the only one (static, built from source by `build.sh`).
 
 ## Working rules learned (each one cost a mistake once)
+- The music frame counter (`dis_getmframe`) counts music ticks, not refreshes: settled from the player's
+  compiled library, not by simulation. When the source cannot answer, look in the compiled files first.
 - STEP PAIRING: what the program set up before its n-th wait for the screen shows on step n - 1. Work it
   out from each part's own source; do not assume it equals another part's.
 - A scene on its own has no music: NO stand-in pause where the demo waits for a cue, unless the original
