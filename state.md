@@ -48,6 +48,17 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    width relate (the credits' text showed every other row; ALKU has its own TWEAK.ASM); the horizon and font
    are exported (`artwork/original/01-opening-*`). When built, capture it for the credits' picture 1
    (`CreditsModel.captures[0]`, find the step with `--credits-match 1 <scene id>`).
+   RESEARCH DONE 2026-11-25 (branch `claude/alku-credits-research-2aa19e`), waiting on the user's font choice
+   and OK of the plan: released `ALKU.EXE` is PKLITE over LZEXE (`deark -m pklite`, then `-m lzexe`); picture
+   identical to the source, font 3 pixels tidied (the "&"), texts the same; the third title is "in" + a
+   Dolby Surround logo (two font glyphs). Code differs: titles draw 29 font rows (source 32), the loop runs
+   while a <= 320, mode-0 scroll after the last page, and a NEW ENDING that copies the final screen into the
+   ships part's 320x200 layout (colours 192+): the ships' horizon is exactly this horizon's right half, so
+   the hand-over is seamless. Rows are 176 bytes in both `tw_putpixel` and the CRTC: text at full height,
+   400 lines. Start address and fine scroll are written together just before retrace (no lag); palette at
+   retrace. The scroll starts on cue 4 (step 2,658) and moves 1 px per 9 steps to 320: the part really
+   ends at about step 5,605 (80.1 s), not 72.9 s; nothing later moves. Font sheets:
+   `build/scaler-compare/opening-font-page.png`, `opening-font-title.png` (in that worktree).
 3. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
