@@ -139,6 +139,8 @@ struct PictureFade {
     /// Added to every colour level afterwards, at most 63 (the troll's landing flash: `palfade` in
     /// TECHNO/KOE.C adds 45, 42, ... 0).
     var add: Float = 0
+    /// A target level other than white or black (GLENZ's wipe fades to grey 30).
+    var targetLevel: Float?
 
     static let none = PictureFade(towardWhite: true, keep: 1, outOf: 1)
     /// `amount` (0...63) of the way towards white in 64ths, as the explosion's table gives it.
@@ -153,7 +155,7 @@ struct PictureFade {
 
     /// The 1993 result for one colour level, worked out on the processor (for checks and references).
     func classicLevel(_ level: Int) -> Int {
-        let k = Int(keep.rounded(.down)), n = Int(outOf), target = towardWhite ? 63 : 0
+        let k = Int(keep.rounded(.down)), n = Int(outOf), target = targetLevel.map { Int($0) } ?? (towardWhite ? 63 : 0)
         return min((target * (n - k) + level * k) / n + Int(add.rounded(.down)), 63)
     }
 }
@@ -207,7 +209,7 @@ final class PictureLayer {
               offsetX: Float = 0) {
         let classic = look == .classic
         var uniforms = Uniforms(keep: classic ? fade.keep.rounded(.down) : fade.keep, outOf: fade.outOf,
-                                target: fade.towardWhite ? 63 : 0, classic: classic ? 1 : 0,
+                                target: fade.targetLevel ?? (fade.towardWhite ? 63 : 0), classic: classic ? 1 : 0,
                                 add: classic ? fade.add.rounded(.down) : fade.add,
                                 offsetX: offsetX / picture.size.x)
         encoder.setRenderPipelineState(pipeline)

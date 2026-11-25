@@ -18,35 +18,33 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
-- Self-test: 569 checks, all pass. `--demo-timeline`: every part starts on the step the research
+  Since 2026-11-25 (branch above, not merged) every scene follows its original part's own timing inside it.
+- Self-test: 571 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository).
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
   the original program running.
 
 ## Next steps
-1. OLDER SCENES IN PLAY DEMO (IN PROGRESS on branch `claude/older-scenes-timing-demo-23da19`; plan approved
-   by the user 2026-11-25). Each scene follows the original part's waits inside Play Demo through
-   `demoUpdate`; `DemoScript.steps` is NOT touched; standalone behaviour stays; one commit a scene with its
-   check (`Scenes/<Name>/<Name>Checks.swift`) and docs; the user looks at each (`--from <scene>`) before the merge.
-   - DONE: Techno Bars (right as it was: the original's section 3 never ran, its frame counter stood at
-     2,697 against a limit of 2,520; docs corrected). Ships Fly-by (no pause, frames 0-520). Sine Landscape
-     (black 24 steps until "music plus" >= 0, sinks while a pass reads -29...-1, sunk 18 steps before the cut). Plasma Cube (empty screen 312 steps until "music plus" >= 13 and on the cue
-     step, then the original's frame n on the n-th step, fresh start without the 16-step lead-in, 1,998 frames). Plasma (WHITE 74 steps until "music plus" >= 0,
-     the first palette fades DOWN from white in 127 refreshes, falls a refresh after music frame 723/1491/
-     1875/2259, empty after the fourth; `fadepal`'s starting value is not in the source, taken as 63).
-     3D City (lead-in over the jelly's last screen handed over by `DemoHandover`, window, cue on section 19,
-     frame f at cue + 2f, 16 whitening steps with the palette written from colour 255).
-   - NONE of these five has been seen by the user in the app yet (`--scene play-demo --from ships-flyby`,
-     `plasma`, `plasma-cube`, `sine-landscape`).
-   - TO DO, in this order, with what was found (steps are from the part's start, measured from the script):
-     - Glenz: the title picture held 457 steps until "music plus" >= -19, then `zoomer2`'s 47-step wipe
-       (bars of colour 255 close in from top and bottom, colours 0-127 fade to grey 30), the 177-step plate
-       drop, the glenz at music frame 333 (so the original's pause was about 110 steps, NOT 156: the frame
-       counter is reset before the wipe), black for the last 134 steps. READ 2026-11-25: the title picture uses only
-       colours 0-79, so the WHOLE picture fades to grey (30 of 63) over the wipe's first 32 steps; the bars
-       are BLACK (`BEG.C` sets colour 255 black); they stop at rows 260 and 274 of 400, leaving a grey strip
-       until the screen is cleared on step 47. Told to the user; waiting for their OK before building.
+1. OLDER SCENES IN PLAY DEMO: BUILT, WAITING FOR THE USER'S LOOK, NOT MERGED (branch
+   `claude/older-scenes-timing-demo-23da19`, one commit a scene, plan approved 2026-11-25). Every scene
+   built before Play Demo now follows the original part's waits there through `demoUpdate`;
+   `DemoScript.steps` was NOT touched (`--demo-timeline` unchanged); standalone behaviour unchanged. Each
+   scene's page has an "Inside Play Demo" section with the step table; checks in `Scenes/<Name>/<Name>Checks.swift`.
+   - Techno Bars: right as it was (the original's section 3 never ran: frame counter 2,697 against 2,520).
+   - Ships Fly-by: no pause, frames 0-520. Sine Landscape: black until "music plus" >= 0, sinks on the music.
+   - Plasma Cube: empty until "music plus" >= 13, then the original's frames. Plasma: white until "music
+     plus" >= 0, the first palette fades DOWN from white; `fadepal`'s starting value is not in the source
+     (taken as 63; written on the page).
+   - 3D City: the jelly logo hands over its last screen (`DemoHandover`, new in the scene contract), the
+     lead-in whitens it, `fadeset`'s window, the wait for section 19, frame f at cue + 2f, the whitening
+     written from colour 255 (each colour shows the next one's levels).
+   - Glenz: the title picture held until "music plus" >= -19, `zoomer2`'s wipe (black bars, grey 30), the
+     plate, a 111-step pause (not 156), black until the tunnel.
+   - NEXT: the user looks at each in the worktree's app (`open -n <worktree>/build/SRMetal.app --args
+     --scene play-demo --from <ships-flyby | glenz-vectors | plasma | sine-landscape | jelly-logo>`;
+     `--look classic` for the 1993 look); then merge into main, rebuild main's app, push when approved
+     (main was one commit ahead of GitHub before this branch).
    - Standalone lengths that differ from the original part on purpose and stay: Glenz 2,360 (35-step pause,
      loops), Plasma 2,323 (fades from black), Plasma Cube 2,048 (16-step lead-in), Sine Landscape 2,048 (own
      sink time), 3D City 3,639 (own fades), Ships 592 (70-step pause).

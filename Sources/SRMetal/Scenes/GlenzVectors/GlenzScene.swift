@@ -16,6 +16,13 @@ import simd
 ///        whatever is behind it, which is exactly what its 16 palette entries held.
 final class GlenzScene: DemoScene {
     private(set) var model = GlenzModel()
+    /// Inside Play Demo: the title picture held and wiped away before the plate (nil on its own).
+    private(set) var leadIn: GlenzLeadIn?
+    private let title: ScenePicture?
+    private let titleNumbers: (colours: [SIMD3<Int>], numbers: [UInt8])?
+    private let pictureLayer: PictureLayer
+    private let tallCanvas: IndexedCanvas
+    private let blackenPipeline: MTLRenderPipelineState
     private let indexedCanvas: IndexedCanvas
     private let floorTexture: MTLTexture
     private let floorSampler: MTLSamplerState
@@ -113,13 +120,54 @@ final class GlenzScene: DemoScene {
             $0.sourceRGBBlendFactor = .zero
             $0.destinationRGBBlendFactor = .oneMinusDestinationAlpha
         }
+        blackenPipeline = try pipeline(smoothVertex, smoothFragment, writes: colourOnly) {
+            // Black where covered: what is behind is kept by 1 - coverage.
+            $0.sourceRGBBlendFactor = .one
+            $0.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        }
+        // Play Demo's lead-in: the title picture (the title part has usually made its Modern version already).
+        title = try? ScenePicture.shared(named: Self.titleName, device: device)   // only Play Demo needs it
+        titleNumbers = ScenePicture.colourNumbers(Self.titleName, limit: 255)
+        pictureLayer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
+        tallCanvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat, width: 320, height: 400)
+    }
+
+    static let titleName = "04-title"
+
+    var inLeadIn: Bool { leadIn.map { !$0.finished } ?? false }
+
+    func demoUpdate(_ context: DemoContext) {
+        if context.justShown, let titleNumbers, titleNumbers.numbers.count == 320 * 400 {
+            leadIn = GlenzLeadIn(title: titleNumbers.numbers, levels: titleNumbers.colours)
+            model.configureForDemo()
+        }
+        leadIn?.update(music: context.music, justShown: context.justShown)
     }
 
     func reset() { model.reset() }
-    func tick() { model.tick() }
-    func classicReferenceFrame() -> [UInt8] { model.classicReferenceFrame() }
+    func tick() {
+        if leadIn != nil {
+            leadIn!.tick()
+            if leadIn!.finished { model.tick() }   // the plate's first picture comes with pass 47
+            return
+        }
+        model.tick()
+    }
+
+    func classicReferenceFrame() -> [UInt8] {
+        if inLeadIn, let classic = leadIn?.classic {
+            return classic.numbers.flatMap { n -> [UInt8] in
+                (0..<3).map { byteFromVGA(Int(classic.levels[Int(n) * 3 + $0])) }
+            }
+        }
+        return model.classicReferenceFrame()
+    }
 
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
+        if inLeadIn, let leadIn {
+            drawLeadIn(leadIn, into: encoder, frame: frame)
+            return
+        }
         if frame.look == .classic {
             let palette = (0..<256).map { (i: Int) -> SIMD4<Float> in
                 SIMD4(Float(model.colours[i * 3]), Float(model.colours[i * 3 + 1]), Float(model.colours[i * 3 + 2]), 63) / 63
@@ -182,6 +230,38 @@ final class GlenzScene: DemoScene {
 
         // 5. Leave the spare channel as the rest of the app expects it.
         wholeCanvas(spareSetPipeline, colour: SIMD4(0, 0, 0, 1))
+    }
+
+    /// Play Demo's lead-in: the title picture, then the wipe (see `GlenzLeadIn`).
+    private func drawLeadIn(_ leadIn: GlenzLeadIn, into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
+        guard frame.look == .modern, let title else {
+            let classic = leadIn.classic
+            let palette = (0..<256).map { (i: Int) -> SIMD4<Float> in
+                SIMD4(Float(classic.levels[i * 3]), Float(classic.levels[i * 3 + 1]), Float(classic.levels[i * 3 + 2]), 63) / 63
+            }
+            tallCanvas.draw(into: encoder, indices: classic.numbers, palette: palette)
+            return
+        }
+        let view = leadIn.modern(alpha: frame.alpha)
+        var fade = PictureFade(towardWhite: false, keep: Float(GlenzLeadIn.fadeParts) - view.grey, outOf: Float(GlenzLeadIn.fadeParts))
+        fade.targetLevel = Float(GlenzLeadIn.greyLevel)
+        pictureLayer.draw(title, into: encoder, look: .modern, fade: fade)
+        guard let bars = view.bars else { return }
+        let toPixels = frame.targetSize / frame.canvasSize
+        var list: [SmoothTriangles.Vertex] = []
+        // One triangle per bar, its other two edges far outside the canvas: two triangles would leave a
+        // faint seam along their shared edge (this blending multiplies, it does not add up).
+        func bar(edge: Float, away: Float) {
+            SmoothTriangles.append(SIMD2<Float>(-2000, edge) * toPixels, SIMD2<Float>(2320, edge) * toPixels,
+                                   SIMD2<Float>(160, away) * toPixels, colour: SIMD4(0, 0, 0, 1), to: &list)
+        }
+        bar(edge: bars.top, away: -4000)
+        bar(edge: bars.bottom, away: 4200)
+        var targetSize = frame.targetSize
+        encoder.setRenderPipelineState(blackenPipeline)
+        encoder.setVertexBytes(list, length: MemoryLayout<SmoothTriangles.Vertex>.stride * list.count, index: 0)
+        encoder.setVertexBytes(&targetSize, length: MemoryLayout<SIMD2<Float>>.stride, index: 1)
+        encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: list.count)
     }
 
     private static let shaderSource = """

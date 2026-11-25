@@ -227,6 +227,10 @@ struct GlenzModel {
     /// The plate position last drawn, in rows; nil before anything is drawn.
     private(set) var plateShown: Int?
     private var pause = 0
+    /// The pause's length (`pauseSteps` on its own; `GlenzLeadIn.demoPause` inside Play Demo), and whether
+    /// the scene starts again after `lengthInTicks` (not inside Play Demo).
+    private(set) var pauseLength = GlenzModel.pauseSteps
+    private(set) var loops = true
     private(set) var script = GlenzScript()
     /// True once the original's main loop has begun.
     private(set) var mainStarted = false
@@ -249,6 +253,12 @@ struct GlenzModel {
 
     mutating func reset() { self = GlenzModel() }
 
+    /// Inside Play Demo: the original's pause, set by the music's frame counter, and no second run.
+    mutating func configureForDemo() {
+        pauseLength = GlenzLeadIn.demoPause
+        loops = false
+    }
+
     // MARK: - One step
 
     private enum Event { case nothing, plate(Int), beginMainLoop, frame }
@@ -270,9 +280,9 @@ struct GlenzModel {
                 return .plate(plateY / 16)
             }
         }
-        if pause < Self.pauseSteps {
+        if pause < pauseLength {
             pause += 1
-            if pause == Self.pauseSteps {
+            if pause == pauseLength {
                 mainStarted = true
                 return .beginMainLoop
             }
@@ -284,7 +294,7 @@ struct GlenzModel {
 
     mutating func tick() {
         ticks += 1
-        if ticks >= Self.lengthInTicks {
+        if loops && ticks >= Self.lengthInTicks {
             reset()
             return
         }
@@ -579,7 +589,7 @@ struct GlenzModel {
     /// the restart it is this model unchanged: nothing glides across the restart.
     private func oneStepOn() -> GlenzModel {
         var next = self
-        if ticks + 1 < Self.lengthInTicks { _ = next.advance() }
+        if !loops || ticks + 1 < Self.lengthInTicks { _ = next.advance() }
         return next
     }
 

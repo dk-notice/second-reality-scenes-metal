@@ -70,22 +70,18 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Plasma cube | Its own scene: an empty screen until its music cue, then the original's frames from the first, black at the cut (2026-11-25) |
   | Plasma | Its own scene: white until its music cue, the first palette fading down from white, the falls on the music's frame counter, empty after the fourth (2026-11-25) |
   | 3D city | Its own scene: the jelly logo's last picture fading to white, the white window, the wait for section 19, the flight, the shifted whitening into the end picture (2026-11-25) |
-  | Glenz, tunnel, dots | The project's scene, started at the part's start and cut at its end |
+  | Glenz | Its own scene: the title picture held until its music cue, the wipe to grey behind black bars, the plate, the pause to music frame 333, the glenz, black until the tunnel (2026-11-25) |
+  | Tunnel, dots | The project's scene, started at the part's start and cut at its end; they fit exactly |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (sections 1 and 2: the original's third section never got to run, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 
-  The scenes in the "started at the part's start and cut at its end" row keep their own standalone
-  timing (they loop and differ from the original on purpose), so one may loop or be cut mid-way; the
-  others follow the original part's own steps and music cues. The end scroller runs, with the music
-  playing, until the demo is stopped (Escape).
-
-  What that means for the older scenes today (part length against the scene's own length, in steps):
-  Glenz 3,057 against 2,360 begins a
-  second run before the cut; the
-  Dot Tunnel (1,060) and Bouncing Dots (2,580) fit exactly. Making these scenes follow the original
-  part's cues, as the newer scenes do, is in progress (2026-11-25). Done: Ships Fly-by (no pause, the
-  whole flight), the Sine Landscape (waits for its cue, sinks on the music), the Plasma (white until its cue, the fade down from white), the 3D City (the lead-in over the jelly logo, the flight from the cue, the whitening), the Plasma Cube (waits for its cue, the original's frames) and Techno Bars (confirmed right as it was: sections 1 and 2, 1,260 steps).
+  Every scene built before Play Demo now follows the original part's own steps and music cues there,
+  as the newer ones do (2026-11-25; each scene's page has an "Inside Play Demo" section). On its own
+  each keeps its standalone timing, which loops and differs from the original on purpose. The Dot
+  Tunnel (1,060 steps) and Bouncing Dots (2,580) fit their parts exactly and needed nothing; Techno
+  Bars was right as it was (the original's third section never got to run). The end scroller runs,
+  with the music playing, until the demo is stopped (Escape).
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
