@@ -1,3 +1,5 @@
+import AppKit
+import CoreText
 import Foundation
 
 /// Self-test checks for the Credits (run by `CoreChecks.run`; the scene's generic checks are in
@@ -44,8 +46,52 @@ extension CoreChecks {
         let a = model.font.glyphs["G"]!, x = 160 - model.font.width("GRAPHICS - MARVEL") / 2
         let evenRow = (0..<a.width).map { memory[8 * 640 + x + $0] }
         let oddRow = (0..<a.width).map { memory[8 * 640 + 320 + x + $0] }
+        creditsModern(check, model: model)
         check("Credits: the text shows every other font row (written with 320-wide rows into 640-wide video memory)",
               evenRow == (0..<a.width).map { model.font.shade("G", column: $0, row: 0) }
                 && oddRow == (0..<a.width).map { model.font.shade("G", column: $0, row: 1) } && evenRow != oddRow, "")
+    }
+
+    /// The Modern look: its pictures captured by `build.sh`, its layout where the 1993 look's is, its text
+    /// as tall as the 1993 letters.
+    static func creditsModern(_ check: (String, Bool, String) -> Void, model: CreditsModel) {
+        // Every capture the table names was made, at the capture size (only when run from the built app).
+        var missing: [String] = []
+        for (index, capture) in CreditsModel.captures.enumerated() where capture != nil {
+            guard let url = CreditsScene.capture(index), let image = NSImage(contentsOf: url)?.cgImage(forProposedRect: nil, context: nil, hints: nil),
+                  image.width == CreditsModel.captureSize.width, image.height == CreditsModel.captureSize.height else {
+                missing.append("\(index + 1)"); continue
+            }
+        }
+        let known = Set(SceneCatalog.all.map(\.id))
+        let scenes = CreditsModel.captures.compactMap { $0?.scene }
+        check("Credits: the Modern look's 20 captured pictures are in the app at 1280x960, from scenes that exist (picture 1 is made the plain way)",
+              missing.isEmpty && CreditsModel.captures.count == 21 && CreditsModel.captures[0] == nil
+                && scenes.count == 20 && scenes.allSatisfy(known.contains),
+              missing.isEmpty ? "" : "missing: " + missing.joined(separator: ", "))
+        // Held, the Modern picture covers exactly the 1993 picture's place (x 80...239, lines 0...199), and the
+        // text area starts on the line after the split, as the 1993 text does. Mid-slide it follows the fine
+        // scroll (the 1993 picture's start address lags it by a step).
+        var held = model
+        while held.local != 250 { held.tick() }
+        let screen = held.classicScreen()
+        let first = (0..<CreditsModel.width).first { screen[$0] != 0 } ?? -1
+        let last = (0..<CreditsModel.width).last { screen[$0] != 0 } ?? -1
+        let layout = CreditsScene.modernLayout(local: 250, alpha: 0)
+        let sliding = CreditsScene.modernLayout(local: 10, alpha: 0)
+        check("Credits: Modern look, held, the picture is where the 1993 picture is and the text starts where the 1993 text does",
+              layout.picture == SIMD4(Float(first), 0, Float(last + 1), 200) && layout.textTop == Float(held.registers.split + 1)
+                && sliding.picture.x == Float(400 - CreditsModel.registers(local: 10).pan),
+              "1993 picture x \(first)...\(last), Modern \(layout.picture); text from \(layout.textTop)")
+        // DIN Condensed Bold's capitals 30 lines (15 rows) tall from line 16 + 42 i of the text area: in the
+        // text picture (2.4 pixels a line), "GRAPHICS - MARVEL" inks rows 38...110.
+        if let image = CreditsScene.textImage(["GRAPHICS - MARVEL"]), let data = image.dataProvider?.data,
+           let bytes = CFDataGetBytePtr(data) {
+            let rows = (0..<image.height).filter { y in (0..<image.width).contains { bytes[y * image.bytesPerRow + $0] > 128 } }
+            check("Credits: Modern text in DIN Condensed Bold, capitals as tall as the 1993 letters (15 rows) on the same rows",
+                  CTFontCopyPostScriptName(CTFontCreateWithName(CreditsScene.fontName as CFString, 10, nil)) as String == "DINCondensed-Bold"
+                    && abs((rows.first ?? 0) - 38) <= 1 && abs((rows.last ?? 0) - 110) <= 1,
+                  "inked rows \(rows.first ?? -1)...\(rows.last ?? -1)")
+        }
     }
 }

@@ -90,6 +90,10 @@ cp Data/Mountain/HILLBACK.CLX Data/Mountain/O2.SCI Data/Mountain/POS?.DAT "$APP/
 mkdir -p "$APP/Contents/Resources/Water"
 cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT "$APP/Contents/Resources/Water/"
 
+# The credits' Modern-look pictures, captured from the scenes themselves (Modern look), at the moments
+# in CreditsModel.captures. Made here, not kept in git: they always match the scenes as built.
+"$APP/Contents/MacOS/SRMetal" --credits-captures "$APP/Contents/Resources/Credits/Modern" || exit 1
+
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 # codesign refuses a folder carrying Finder information. When the project sits in a synced folder
 # (Documents with iCloud, say), the sync can tag the app folder, sometimes again right after the tags

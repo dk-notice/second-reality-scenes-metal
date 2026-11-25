@@ -30,6 +30,9 @@ enum Main {
         if CommandLine.arguments.contains("--music-render") {
             exit(MusicRenderCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        if CommandLine.arguments.contains("--credits-captures") {
+            exit(CreditsCapturesCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--credits-match") {
             exit(CreditsMatchCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
