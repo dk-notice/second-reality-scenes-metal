@@ -68,6 +68,10 @@ mkdir -p "$APP/Contents/Resources/Artwork"
 cp artwork/original/rgb/*.png "$APP/Contents/Resources/Artwork/"
 cp -R artwork/original/rgb/explosion "$APP/Contents/Resources/Artwork/"
 
+# The credits' pictures and font, as released (see Data/Credits/README.md).
+mkdir -p "$APP/Contents/Resources/Credits"
+cp Data/Credits/CREDPICS.BIN Data/Credits/CREDFONT.BIN "$APP/Contents/Resources/Credits/"
+
 # The end scroller's text and font, as released (see Data/EndScroller/README.md).
 mkdir -p "$APP/Contents/Resources/EndScroller"
 cp Data/EndScroller/ENDSCROL.TXT Data/EndScroller/ENDFONT.BIN "$APP/Contents/Resources/EndScroller/"
