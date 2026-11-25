@@ -27,11 +27,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   program running.
 
 ## Next steps
-1. CODE REVIEW AND SIMPLIFY (agreed 2026-11-25, in its own session): review the opening-credits work
-   (commits f40f208..6988dbf: `Scenes/OpeningCredits/`, `Demo/DemoSequencer.swift`,
-   `App/DemoTimelineCommand.swift`, `App/CoreChecks.swift`, `Scenes/Credits/CreditsModel.swift` and
-   `CreditsChecks.swift`, `tools/alku_reference.py`, `tools/demo_timeline.py`, `build.sh`); findings first,
-   fixes only after the user's OK.
+1. CODE REVIEW AND SIMPLIFY, UNDER WAY on branch `claude/opening-credits-review-88459f` (started
+   2026-11-25). Widened by the user from the opening-credits work to the WHOLE PROJECT, done by six
+   read-only review agents, one per chunk (Core; App + Demo + Music; scenes in three groups; tools and
+   build.sh), with the opening-credits work (commits f40f208..6988dbf) given the most care. Starting
+   point: 626 checks pass, every part on time. Findings first, fixes only after the user's OK; then
+   the user runs /simplify; the user sees the result in the app before the merge.
 2. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
 
 ## Open questions (not to be started unasked)
