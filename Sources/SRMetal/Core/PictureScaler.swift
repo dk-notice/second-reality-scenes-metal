@@ -3,7 +3,8 @@ import Metal
 
 /// Scales a small original picture (e.g. 320x200) up for the Modern look, on the graphics chip.
 /// Four ways were compared (2026-11-24, `--scaler-compare`); the user chose Super-xBR, which the app
-/// now uses for every picture (`upscaled(_:device:)`): made once, 4x, then stretched smoothly.
+/// now uses for every picture (`upscaled(_:device:)`): made once, 8x (chosen over 4x the same day for
+/// crisper outlines in fullscreen), then stretched smoothly.
 ///
 /// - `smooth`: ordinary bilinear stretching (each screen pixel mixes the four nearest picture pixels).
 /// - `sharp`: hard-edged blocks, with only the block edges softened ("sharp bilinear"), so the blocks
@@ -34,8 +35,11 @@ final class PictureScaler {
         }
     }
 
-    /// The Modern look's pictures: `picture` (8-bit, at its original size) made 4 times larger by
-    /// Super-xBR, once, with smaller copies for showing it small. Draw it with a smooth (linear,
+    /// How much larger `upscaled` makes a picture: 8x, three Super-xBR rounds.
+    static let modernScale = 8
+
+    /// The Modern look's pictures: `picture` (8-bit, at its original size) made `modernScale` times larger
+    /// by Super-xBR, once, with smaller copies for showing it small. Draw it with a smooth (linear,
     /// mipmapped) sampler. Safe to call from any thread; waits for the graphics chip.
     static func upscaled(_ picture: MTLTexture, device: MTLDevice) throws -> MTLTexture {
         let scaler = try shared(device)
@@ -43,7 +47,8 @@ final class PictureScaler {
             throw RendererError.noCommandQueue
         }
         var result = picture
-        for round in 0..<2 { result = scaler.superXBRRound(result, commands: commands, last: round == 1) }
+        let rounds = modernScale.trailingZeroBitCount   // each round doubles: 8x is 3 rounds
+        for round in 0..<rounds { result = scaler.superXBRRound(result, commands: commands, last: round == rounds - 1) }
         if result.mipmapLevelCount > 1, let blit = commands.makeBlitCommandEncoder() {
             blit.generateMipmaps(for: result)
             blit.endEncoding()

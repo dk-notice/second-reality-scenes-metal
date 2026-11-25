@@ -56,7 +56,7 @@ final class GlenzScene: DemoScene {
         }
         texture.replace(region: MTLRegionMake2D(0, 0, GlenzFloorArt.width, GlenzFloorArt.height), mipmapLevel: 0,
                         withBytes: bytes, bytesPerRow: GlenzFloorArt.width * 4)
-        // Made 4x larger by Super-xBR (see `PictureScaler`), then scaled smoothly to the screen.
+        // Made 8x larger by Super-xBR (see `PictureScaler`), then scaled smoothly to the screen.
         floorTexture = try PictureScaler.upscaled(texture, device: device)
         let samplerDescriptor = MTLSamplerDescriptor()
         samplerDescriptor.minFilter = .linear

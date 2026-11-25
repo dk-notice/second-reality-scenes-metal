@@ -139,8 +139,8 @@ enum CoreChecks {
             let big = try PictureScaler.upscaled(flat, device: device)
             let values = readBack(big)
             let worst = zip(values, (0..<values.count).map { Float([200, 90, 30][$0 % 3]) / 255 }).map { abs($0 - $1) }.max() ?? 1
-            check("Picture scaler: Super-xBR makes a picture exactly 4 times larger, and leaves a flat colour unchanged",
-                  big.width == 64 && big.height == 64 && worst < 0.002, "largest change \(worst)")
+            check("Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged",
+                  big.width == 16 * PictureScaler.modernScale && big.height == 16 * PictureScaler.modernScale && worst < 0.002, "largest change \(worst)")
         }
 
         // On a real picture (the troll: dithering, gradients, hard edges) every new pixel stays within
@@ -160,26 +160,35 @@ enum CoreChecks {
         }
         let big = try PictureScaler.upscaled(troll, device: device)
         let values = readBack(big)
-        var outside = 0, worst: Float = 0
-        for y in 0..<(4 * h) {
-            for x in 0..<(4 * w) {
+        let scale = PictureScaler.modernScale
+        // The lowest and highest value of each colour among the original pixels within 2 of each pixel.
+        var lowest = [Float](repeating: 1, count: w * h * 3), highest = [Float](repeating: 0, count: w * h * 3)
+        for y in 0..<h {
+            for x in 0..<w {
                 for k in 0..<3 {
-                    var lo: Float = 1, hi: Float = 0
-                    for sy in (y / 4 - 2)...(y / 4 + 2) {
-                        for sx in (x / 4 - 2)...(x / 4 + 2) {
+                    for sy in (y - 2)...(y + 2) {
+                        for sx in (x - 2)...(x + 2) {
                             let v = original(sx, sy, k)
-                            lo = min(lo, v)
-                            hi = max(hi, v)
+                            lowest[(y * w + x) * 3 + k] = min(lowest[(y * w + x) * 3 + k], v)
+                            highest[(y * w + x) * 3 + k] = max(highest[(y * w + x) * 3 + k], v)
                         }
                     }
-                    let v = values[(y * 4 * w + x) * 3 + k]
-                    let off = max(lo - v, v - hi)
+                }
+            }
+        }
+        var outside = 0, worst: Float = 0
+        for y in 0..<(scale * h) {
+            for x in 0..<(scale * w) {
+                let near = ((y / scale) * w + x / scale) * 3
+                for k in 0..<3 {
+                    let v = values[(y * scale * w + x) * 3 + k]
+                    let off = max(lowest[near + k] - v, v - highest[near + k])
                     if off > 0.002 { outside += 1; worst = max(worst, off) }
                 }
             }
         }
         check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
-              big.width == 4 * w && big.height == 4 * h && outside == 0, "\(outside) values outside, worst by \(worst)")
+              big.width == scale * w && big.height == scale * h && outside == 0, "\(outside) values outside, worst by \(worst)")
     }
 
     /// A 16-bit floating-point number (as the graphics chip stores it) as an ordinary one.

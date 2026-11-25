@@ -920,6 +920,10 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   values, with Super-xBR's own clamp removed). Docs pictures remade: ships-flyby-modern/-bigship/-near,
   glenz-vectors-squash-modern. Seen by Claude in snapshots: ships, glenz plate, troll. NOT seen by the
   user in the running app yet.
+  8X (user, 2026-11-24): after a 4x-vs-8x comparison at 5K-fullscreen size (8x crisper on hard outlines,
+  e.g. the title's eyes; same on soft brushwork), the app now uses 8x (`PictureScaler.modernScale`,
+  three rounds; still rgba16Float). The user's concern is the PROGRAM's size, not memory: the 8x
+  pictures are made at run time (well under 0.1 s each), so the app is unchanged in size.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,

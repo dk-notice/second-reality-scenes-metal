@@ -73,8 +73,8 @@ final class DemoRunScene: DemoScene {
     private let nearest: MTLSamplerState
     private let loader: MTKTextureLoader
 
-    /// The original pictures (small: kept once loaded), and for the Modern look the same made 4x
-    /// larger by Super-xBR (1280x800 or 1280x1600; made once, when first shown).
+    /// The original pictures (small: kept once loaded), and for the Modern look the same made 8x
+    /// larger by Super-xBR (2560x1600 or 2560x3200; made once, when first shown).
     private var pictures: [String: MTLTexture] = [:]
     private var upscaledPictures: [String: MTLTexture] = [:]
     private var cards: [String: (modern: MTLTexture, classic: MTLTexture)] = [:]

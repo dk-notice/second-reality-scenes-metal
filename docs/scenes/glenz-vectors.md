@@ -209,7 +209,7 @@ simply held to columns 1...319).
 three groups. `GlenzScene` draws them as triangles with smooth edges (`Core/SmoothTriangles.swift`)
 in this order, each with a different blending rule on the graphics chip:
 
-1. The plate, from the picture (made 4 times larger by Super-xBR when the scene starts, then smoothly
+1. The plate, from the picture (made 8 times larger by Super-xBR when the scene starts, then smoothly
    scaled; see [how-it-works.md](../how-it-works.md#pictures-in-the-modern-look)).
 2. The "4" bit. Blue back faces of the first glenz and "4" back faces of the second are drawn into the
    picture's spare fourth channel with a blend that works as XOR for on/off values, so two overlapping
@@ -235,7 +235,7 @@ and the chip is handed triangles already placed on the screen; nothing here need
 | Transparency | XOR of colour numbers + palette | the same, replayed | blending that follows the same rule |
 | Lighting | on-screen area, via 16 palette entries per face | the same | on-screen area, per face |
 | Edges | hard | hard | smooth |
-| Plate | picture, rows squeezed | the same picture | the same picture, 4x by Super-xBR, then smoothly scaled |
+| Plate | picture, rows squeezed | the same picture | the same picture, 8x by Super-xBR, then smoothly scaled |
 | Start | after a lead-in tied to the previous scene and the music | plate drops in from black | the same |
 | End | black until a music cue | loops after 2360 steps | the same |
 

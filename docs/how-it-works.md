@@ -233,11 +233,12 @@ window it is one scene, which shows other scenes, pictures and title cards in tu
 Some scenes and parts show a picture from the 1993 demo (the Ships horizon, the Glenz plate, Play
 Demo's pictures). The 1993 look shows it as it was, as hard-edged pixels. The Modern look runs it once
 through **Super-xBR** (`Core/PictureScaler.swift`), a pixel-art scaler by Hyllian: it finds the edges
-between the picture's pixels and redraws them as smooth lines and curves, making the picture 4 times
-larger (320x200 becomes 1280x800); that is then scaled smoothly to the screen. It only blends the
+between the picture's pixels and redraws them as smooth lines and curves, making the picture 8 times
+larger in three doubling rounds (320x200 becomes 2560x1600); that is then scaled smoothly to the screen. It only blends the
 original's colours, never invents new detail, and a self-test check makes sure no new pixel is brighter
 or darker than the original pixels around it. Chosen by the user (2026-11-24) over a plain smooth
-stretch, sharp pixels and xBR level 2, after side-by-side pictures (`--scaler-compare`); AI-upscaled
+stretch, sharp pixels and xBR level 2, after side-by-side pictures (`--scaler-compare`), and 8x over
+4x for crisper outlines in fullscreen (it is made while the app runs, so the program does not grow); AI-upscaled
 pictures were tried earlier and dropped.
 
 ## House rules for scenes

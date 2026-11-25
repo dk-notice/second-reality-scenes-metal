@@ -51,7 +51,7 @@ final class ShipsFlybyScene: DemoScene {
         descriptor.colorAttachments[0].pixelFormat = pixelFormat
         backgroundPipeline = try device.makeRenderPipelineState(descriptor: descriptor)
 
-        // The original picture made 4x larger by Super-xBR (see `PictureScaler`), unless a replacement exists.
+        // The original picture made 8x larger by Super-xBR (see `PictureScaler`), unless a replacement exists.
         backgroundTexture = try Self.replacementBackground(device: device)
             ?? PictureScaler.upscaled(Self.originalBackground(model: model, device: device), device: device)
 
@@ -153,7 +153,7 @@ final class ShipsFlybyScene: DemoScene {
         float4 band;   // top and bottom of the picture's band (0...1 down the canvas), half a picture row
     };
 
-    // The background picture (4x by Super-xBR), scaled smoothly to the screen. Outside the band the screen is black, and the
+    // The background picture (8x by Super-xBR), scaled smoothly to the screen. Outside the band the screen is black, and the
     // band's top and bottom edges are kept sharp (the smooth scaling must not blend picture
     // with the black bar next to it).
     fragment float4 ships_background_fragment(CanvasOut in [[stage_in]],
