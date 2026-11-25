@@ -222,10 +222,11 @@ final class DemoRunScene: DemoScene {
         case .scene(let id):
             guard let entry = SceneCatalog.all.first(where: { $0.id == id }) else { shown = .black; return }
             do {
+                let previous = sceneShowing?.handover
                 let scene = try entry.make(device, pixelFormat)
                 // Told the music on the step it first shows (before the script checks its next cue), so a
                 // scene that waits for a cue already met starts on the same step as the script.
-                scene.demoUpdate(DemoContext(music: musicAtShow ?? sequencer.musicState, justShown: true))
+                scene.demoUpdate(DemoContext(music: musicAtShow ?? sequencer.musicState, justShown: true, previous: previous))
                 shown = .scene(scene, entry.canvasSize)
             } catch {
                 NSLog("SR Metal: Play Demo could not start scene \(id): \(error)")

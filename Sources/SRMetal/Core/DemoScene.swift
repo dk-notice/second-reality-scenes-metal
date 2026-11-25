@@ -53,12 +53,29 @@ protocol DemoScene: AnyObject {
     /// example the techno bars' flash on the beat). Shown on its own, a scene is never called this and
     /// keeps its own clock. The default does nothing.
     func demoUpdate(_ context: DemoContext)
+    /// Only while Play Demo runs: what this scene leaves on the 1993 screen for the scene shown after it,
+    /// where the original's next part started from the screen and palette the last one left (U2E.C reads
+    /// JPLOGO's). nil, the default: nothing offered.
+    var handover: DemoHandover? { get }
 }
 
 extension DemoScene {
     func prepare(commands: MTLCommandBuffer, frame: FrameInfo) {}
     var currentCanvasSize: SIMD2<Float>? { nil }
     func demoUpdate(_ context: DemoContext) {}
+    var handover: DemoHandover? { nil }
+}
+
+/// A part's last 1993 screen, handed to the next part (see `DemoScene.handover`).
+struct DemoHandover {
+    /// Video memory from its start as colour numbers, 320 a row, `height` rows.
+    var numbers: [UInt8]
+    var height: Int
+    /// The 256 colours as last given to the card, VGA levels 0...63.
+    var levels: [SIMD3<Int>]
+    /// The same picture in the Modern look, every colour except colour 0 raised by the given number of
+    /// levels (at most to 63), as a palette fade towards white raises them. nil: none.
+    var drawModern: ((MTLRenderCommandEncoder, FrameInfo, Float) -> Void)?
 }
 
 /// What Play Demo tells a scene each step (see `DemoScene.demoUpdate`).
@@ -68,6 +85,8 @@ struct DemoContext {
     /// True for the one extra call on the step the scene is first shown (before any `tick`); the other
     /// calls come just before each `tick`.
     var justShown = false
+    /// With `justShown`: what the scene shown before it left (see `DemoScene.handover`).
+    var previous: DemoHandover?
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.

@@ -99,3 +99,5 @@ steps; no rows stay black.
 - Modern: the bounce evenly spread, no black rows, unrounded widths.
 - The white border (overscan) is not drawn, as in every other scene.
 - Not compared with the original running.
+- Inside Play Demo it hands its last screen and palette to the 3D city, which fades them to white, as
+  `U2E.C` did with what `JPLOGO` left (2026-11-25; see the city's page).

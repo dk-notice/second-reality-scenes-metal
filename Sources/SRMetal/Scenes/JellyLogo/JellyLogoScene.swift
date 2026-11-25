@@ -23,6 +23,7 @@ final class JellyLogoScene: DemoScene {
         var startRow: Float
         var top: Float
         var bottom: Float
+        var lift: Float
     }
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
@@ -48,13 +49,26 @@ final class JellyLogoScene: DemoScene {
     func tick() { model.tick() }
     func demoUpdate(_ context: DemoContext) { model.musicPlus = context.music.plus }
 
+    /// The screen as JPLOGO leaves it for the city (U2E.C reads the palette from the card). The colours this
+    /// version numbers 59...255 are white, as in the picture file's own palette.
+    var handover: DemoHandover? {
+        DemoHandover(numbers: model.memory, height: 400,
+                     levels: levels + Array(repeating: SIMD3(63, 63, 63), count: 256 - levels.count),
+                     drawModern: { [self] encoder, frame, lift in drawModern(into: encoder, frame: frame, lift: lift) })
+    }
+
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
         if frame.look == .classic {
             let palette = levels.map { SIMD4<Float>(SIMD3<Float>($0) / 63, 1) }
             canvas.draw(into: encoder, indices: model.screen, palette: palette)
             return
         }
-        var uniforms = Uniforms(mode: 0, startRow: 0, top: 0, bottom: 0)
+        drawModern(into: encoder, frame: frame, lift: 0)
+    }
+
+    /// The Modern look; `lift`: levels added to every colour but the blank black (the city's lead-in).
+    private func drawModern(into encoder: MTLRenderCommandEncoder, frame: FrameInfo, lift: Float) {
+        var uniforms = Uniforms(mode: 0, startRow: 0, top: 0, bottom: 0, lift: lift / 63)
         switch model.modernView(alpha: frame.alpha) {
         case .black: break
         case .slide(let row): uniforms.mode = 1; uniforms.startRow = row
@@ -83,6 +97,7 @@ final class JellyLogoScene: DemoScene {
         float startRow;   // slide-in: the screen's start row (rows below the picture are black)
         float top;        // jelly: the picture's top and bottom edges, screen rows
         float bottom;
+        float lift;       // added to every picture colour, 0...1 (Play Demo: the city's lead-in)
     };
 
     // How much of [lo, hi) a pixel of width w around v covers (soft edges, one pixel wide).
@@ -118,7 +133,7 @@ final class JellyLogoScene: DemoScene {
         float2 uv = float2(clamp(70.0 + source, 70.5, 253.5) / 320.0, clamp(row, 0.5, 399.5) / 400.0);
         float3 c = pic.sample(smp, uv).rgb;
         c = mix(c, float3(1.0), inside(source, 184.0, 185.0, sw));   // the white edge column
-        return float4(c * cover, 1.0);
+        return float4(min(c + u.lift, 1.0) * cover, 1.0);
     }
     """
 }

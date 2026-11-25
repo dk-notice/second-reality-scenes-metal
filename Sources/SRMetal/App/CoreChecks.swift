@@ -48,6 +48,7 @@ enum CoreChecks {
             try landscapeInDemo(check, device: device)
             try plasmaCubeInDemo(check, device: device)
             try plasmaInDemo(check, device: device)
+            try cityInDemo(check, device: device)
             try demoFromHereShown(check, device: device)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")

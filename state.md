@@ -18,7 +18,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
-- Self-test: 566 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- Self-test: 569 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository).
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
@@ -35,16 +35,11 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      step, then the original's frame n on the n-th step, fresh start without the 16-step lead-in, 1,998 frames). Plasma (WHITE 74 steps until "music plus" >= 0,
      the first palette fades DOWN from white in 127 refreshes, falls a refresh after music frame 723/1491/
      1875/2259, empty after the fourth; `fadepal`'s starting value is not in the source, taken as 63).
-   - NONE of these four has been seen by the user in the app yet (`--scene play-demo --from ships-flyby`,
+     3D City (lead-in over the jelly's last screen handed over by `DemoHandover`, window, cue on section 19,
+     frame f at cue + 2f, 16 whitening steps with the palette written from colour 255).
+   - NONE of these five has been seen by the user in the app yet (`--scene play-demo --from ships-flyby`,
      `plasma`, `plasma-cube`, `sine-landscape`).
    - TO DO, in this order, with what was found (steps are from the part's start, measured from the script):
-     - 3D City: 100 steps of lead-in over the jelly logo's last picture (to white in 33, hold 16 + 2 + 16,
-       33 to black with the picture window's colours 253/254 kept white), 180 steps of waiting for section
-       19, the flight without this version's fades, then a 16-step whitening (+4 levels a step). Needs Play
-       Demo to hand a new scene the previous scene's last 1993 picture. READ 2026-11-25: `vid_init(11)`
-       (`VISU/AVIDM1.ASM` `m11_init`) sets no mode and clears nothing, so `fadeset`'s picture stays for the
-       180-step wait: a WHITE band on rows 25-174 (colours 253/254) between black borders; the flight then
-       cuts in on black. Told to the user; waiting for their OK before building.
      - Glenz: the title picture held 457 steps until "music plus" >= -19, then `zoomer2`'s 47-step wipe
        (bars of colour 255 close in from top and bottom, colours 0-127 fade to grey 30), the 177-step plate
        drop, the glenz at music frame 333 (so the original's pause was about 110 steps, NOT 156: the frame

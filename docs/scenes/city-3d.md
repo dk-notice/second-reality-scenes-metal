@@ -240,7 +240,7 @@ It takes about 8 seconds for this scene's whole loop and also reports how long a
   the ordering rule and the frame counting and agrees. The C program has never been compiled and
   run against this version.
 - **The start and end as the demo showed them** (the white fades, the white band, the music cue):
-  read from the source, not seen, and deliberately not reproduced.
+  read from the source, not seen. Reproduced inside Play Demo since 2026-11-25 (below); not on its own.
 - **The page queue and frame skipping** are not modelled; every frame is drawn.
 - **That the roll steps are rounding, not intent.** The whole-degree steps are plain in the numbers,
   and evening them out is a judgement that they are an artefact of how the flight was exported.
@@ -252,12 +252,49 @@ It takes about 8 seconds for this scene's whole loop and also reports how long a
   pictures, plus looking at samples. The user is the first to watch it move, and to judge the fade
   lengths.
 
+## Inside Play Demo
+
+Since 2026-11-25 the scene follows `U2E.C` there (lines 285-366 and 540-555). U2E.C started from the
+screen and palette the jelly logo left (it reads the palette back from the card, and leaves video
+memory alone), so Play Demo now hands a scene what the scene before it left (`DemoHandover`; only the
+jelly logo offers one). Step n is the n-th after the one the city is shown on; what the program sets
+up after its n-th wait shows on step n.
+
+| Steps | What shows |
+|---|---|
+| 0-33 | The jelly logo's last picture, colours 1-253 rising 2 levels a step to white; colour 0 (the blank black around the logo) stays |
+| 34-48 | The logo white on black |
+| 49 | `fadeset` has drawn the city's window into the first 200 rows of memory, still shown in the jelly's 400-line mode: the window squashed into the top half, the white logo's lower half below |
+| 50-67 | The mode doubles its lines (200): a white window, rows 25-174, with black corners in the borders, whose middle (colour 252) is white too |
+| 68-99 | The borders' middle fades to black (colours 1-252 fall 2 levels a step; 253 and 254 rise) |
+| 100 to the cue | The city's palette is set: the white window between black borders, until music section 19 (step 280 in a full run) |
+| cue, cue + 1 | The same window (the first page shown is the one it was drawn in) |
+| cue + 2 ... | The flight: animation frame f on step cue + 2f, as on its own, with no fades |
+| after frame 1801 | 16 steps of whitening: every colour 4 levels a step brighter, but written to the card from colour 255 on, so each colour shows the next one's levels (the background, colour 255, shows colour 0). The end picture takes over with the 16th |
+
+In `fadeset`, rows 0-24 never get columns 256-319 (the routine writes those 16 bytes 252 bytes further
+on, into a row it overwrites later). That corner keeps what the jelly left there: blank black, so it
+does not show; it is kept as memory anyway.
+
+**Modern look:** while the jelly's picture is on screen (steps 0-48) it is the jelly logo's own Modern
+picture, its colours raised smoothly by the same 2 levels a step; the window steps that follow are
+plain rectangles and drawn as the 1993 look draws them. The whitening at the end glides. Started "from
+here" at the city, there is no jelly picture: the lead-in starts from a white screen.
+
+Checked by the self-test, run from the jelly logo against the script's own numbers (100, section 18,
+1801 x 2 + 16): the start on the jelly's last picture, the lead-in's colours on steps 1, 10, 33, 67, 68,
+99 and 100 and its window on 49 and 50, the cue, frames 1 and 1801, the end picture's step, and the
+whitening's shifted palette. Each was proven to fail with its detail broken (a faster whitening, the
+flight one step early, the palette written without the shift).
+
+On its own the scene is unchanged (its own fades, 3,639 steps, then round again).
+
 ## Deliberate differences
 
-- **The start.** No fade to white and no white band. The picture fades up from black over the first
+- **The start**, on its own. No fade to white and no white band. The picture fades up from black over the first
   second while the white wall of the opening slides away, so the band is never fully white: the wall
   is still dim while it fills the picture.
-- **The end.** No flash to white and no end picture. The picture fades to black over the last 105
+- **The end**, on its own. No flash to white and no end picture. The picture fades to black over the last 105
   steps of the animation (the logo keeps turning as it fades), stays black for 35 steps, and the
   flight starts again.
 - **Every frame is drawn**, as on a PC fast enough never to skip, and each picture is shown the step
