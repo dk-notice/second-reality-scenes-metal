@@ -13,7 +13,7 @@ import Metal
 ///
 /// The xBR shaders are written for Metal from Hyllian's published shaders (libretro "slang-shaders",
 /// `edge-smoothing/xbr/shaders/xbr-lv2-standalone.slang` and `super-xbr/super-xbr-pass0..2.slang`,
-/// MIT licence, copyright 2011-2016 Hyllian), with the settings of their default presets.
+/// MIT licence, copyright 2011-2022 Hyllian; see ThirdParty/xBR-LICENSE.txt), with the settings of their default presets.
 final class PictureScaler {
     enum Method: String, CaseIterable {
         case smooth, sharp, xbrLv2 = "xbr-lv2", superXBR = "super-xbr"

@@ -259,10 +259,8 @@ Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause li
 [ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside library in the program.
 
 The xBR level 2 and Super-xBR picture scalers (`Sources/SRMetal/Core/PictureScaler.swift`) are written
-for Metal from Hyllian's published shaders (libretro "slang-shaders", copyright 2011-2016 Hyllian),
-used under the MIT licence: "Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software ... The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software."
+for Metal from Hyllian's published shaders (libretro "slang-shaders", copyright 2011-2022 Hyllian),
+used under the MIT licence: see [ThirdParty/xBR-LICENSE.txt](ThirdParty/xBR-LICENSE.txt).
 
 ## Licence
 
