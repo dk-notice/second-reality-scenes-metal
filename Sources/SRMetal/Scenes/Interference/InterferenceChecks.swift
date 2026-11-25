@@ -47,14 +47,16 @@ extension CoreChecks {
         // 988, measured from the script's silent run: 989 pictures counting the show step) the flash begins:
         // the picture holds and its palette goes 32, 64, 192, 256 of the way to white, then stays.
         let cue = music.indices.first { music[$0].ticks >= 925 } ?? -9
-        let held = cue > 0 && frames[cue...].allSatisfy { $0 == frames[cue - 1] } && frames[cue - 1] == cue
-        let lastColour = cue > 0 ? firstColour[cue - 1] : -1
+        // (Only if the run got that far: otherwise the check fails with its detail instead of crashing.)
+        let reached = cue > 0 && cue <= frames.count && cue + 5 <= firstColour.count && cue <= powers.count && powers.count > 700
+        let held = reached && frames[cue...].allSatisfy { $0 == frames[cue - 1] } && frames[cue - 1] == cue
+        let lastColour = reached ? firstColour[cue - 1] : -1
         let expected = [32, 64, 192, 256, 256].map { InterferenceModel.flashed(SIMD3(repeating: lastColour), mix: $0).x }
-        let flash = cue > 0 ? Array(firstColour[cue..<(cue + 5)]) : []
+        let flash = reached ? Array(firstColour[cue..<(cue + 5)]) : []
         check("Play Demo: the interference runs to the script's 925 music ticks with the wobble at full (no shrinking back, no loop), then holds its last picture while the palette flashes 32, 64, 192, 256 of the way to white over the script's 5 steps",
-              cue + 1 == 989 && held && powers[cue - 1] == 15 && powers[700...].allSatisfy { $0 == 15 }
+              reached && cue + 1 == 989 && held && powers[cue - 1] == 15 && powers[700...].allSatisfy { $0 == 15 }
                 && flash == expected,
-              "cue at \(cue), last frame \(cue > 0 ? frames[cue - 1] : -1), wobble \(cue > 0 ? powers[cue - 1] : -1), flash \(flash) (expected \(expected))")
+              "cue at \(cue), last frame \(reached ? frames[cue - 1] : -1), wobble \(reached ? powers[cue - 1] : -1), flash \(flash) (expected \(expected))")
 
         // The lead-in (KOE.C 230-316) follows the script's waits after those 5 steps: white until "music
         // plus" >= -3 and a row ending in 7; then each column takes the script's 21 steps (rows 1, 3, 6 ...

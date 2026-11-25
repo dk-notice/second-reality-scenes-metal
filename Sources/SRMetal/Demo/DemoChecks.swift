@@ -48,6 +48,8 @@ extension CoreChecks {
             }
             check("Play Demo: a scene is told the music's position each step (Techno Bars, \(compared) steps)",
                   compared > 1000 && agreed == compared, "\(agreed) of \(compared)")
+        } else {
+            check("Play Demo: a scene is told the music's position each step (Techno Bars)", false, "Play Demo could not be made")
         }
         // The title and end pictures: fully in after 161 and 163 steps (as the demo script counts), and
         // inside Play Demo the end picture holds until "music plus" goes above -16, then fades to black.
@@ -143,15 +145,17 @@ extension CoreChecks {
                     && scroller.lines.filter { !EndScrollerScene.modernText($0).contains("%") }.count == scroller.lines.count,
                   "loop line: \"\(loopIndex.map { EndScrollerScene.modernText(scroller.lines[$0]) } ?? "none")\"")
             if let gapIndex {
-                var gap = fresh
-                while gap.placed.last.map({ $0.line != gapIndex - 1 }) ?? true { gap.tick() }
-                // The line before the gap started; it takes 25 rows, then the gap, then the next line.
-                let before = gap.placed.last!.firstRow
-                while gap.placed.last!.firstRow == before { gap.tick() }
-                let next = gap.placed.last!
-                let height = Int(String(bytes: gap.lines[gapIndex][1...2], encoding: .ascii) ?? "") ?? -1
+                // Run to where the line before the gap starts; it takes 25 rows, then the gap, then the next
+                // line. (Both waits are bounded, so a text they do not fit fails the check instead of hanging.)
+                var gap = fresh, waited = 0
+                while gap.placed.last?.line != gapIndex - 1 && waited < 80_000 { gap.tick(); waited += 1 }
+                let before = gap.placed.last?.firstRow ?? -1
+                while gap.placed.last?.firstRow == before && waited < 80_000 { gap.tick(); waited += 1 }
+                let next = gap.placed.last ?? (line: -1, firstRow: -1)
+                let digits = gap.lines[gapIndex].dropFirst().prefix(2)
+                let height = Int(String(bytes: digits, encoding: .ascii) ?? "") ?? -1
                 check("End scroller: a \"[nn\" line is nn blank rows (line \(gapIndex): \(height))",
-                      next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
+                      waited < 80_000 && next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
                       "next line \(next.line) after \(next.firstRow - before) rows")
             }
         } else {

@@ -45,6 +45,9 @@ extension CoreChecks {
             let worst = zip(values, (0..<values.count).map { Float([200, 90, 30][$0 % 3]) / 255 }).map { abs($0 - $1) }.max() ?? 1
             check("Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged",
                   big.width == 16 * PictureScaler.modernScale && big.height == 16 * PictureScaler.modernScale && worst < 0.002, "largest change \(worst)")
+        } else {
+            check("Picture scaler: Super-xBR makes a picture exactly \(PictureScaler.modernScale) times larger, and leaves a flat colour unchanged",
+                  false, "the test picture could not be made")
         }
 
         // On a real picture (the troll: dithering, gradients, hard edges) every new pixel stays within
@@ -61,6 +64,11 @@ extension CoreChecks {
         let big = try PictureScaler.upscaled(troll, device: device)
         let values = readBack(big)
         let scale = PictureScaler.modernScale
+        guard values.count == scale * w * scale * h * 3 else {
+            check("Picture scaler: Super-xBR on the troll keeps every new pixel within the colours of the original pixels around it",
+                  false, "the scaled picture could not be read back (\(values.count) values)")
+            return
+        }
         // The lowest and highest value of each colour among the original pixels within 2 of each pixel.
         var lowest = [Float](repeating: 1, count: w * h * 3), highest = [Float](repeating: 0, count: w * h * 3)
         for y in 0..<h {

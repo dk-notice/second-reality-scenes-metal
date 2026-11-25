@@ -14,12 +14,14 @@ enum VisuDamagedFiles {
     struct Result {
         /// Damaged files tried, how many were turned away with an error, how many loaded.
         var tried = 0, refused = 0, loaded = 0
+        /// How many of those were the named cases (one known kind of damage each).
+        var named = 0
         /// Named cases that were expected to be turned away but loaded.
         var wronglyAccepted: [String] = []
         /// Made-up scribble polygons drawn, and how often the engine stopped one growing.
         var scribbles = 0, scribblesStopped = 0
         var summary: String {
-            "\(tried) damaged files: \(refused) turned away, \(loaded) loaded and drawn; "
+            "\(tried) damaged files (\(named) named cases): \(refused) turned away, \(loaded) loaded and drawn; "
                 + "\(scribbles) scribbled polygons drawn, \(scribblesStopped) corners refused"
         }
     }
@@ -237,9 +239,11 @@ enum VisuDamagedFiles {
         // 1. Named cases: one known kind of damage each.
         for (name, bytes) in namedObjectCases(files["\(scene).001"]!) where only == nil || name.contains(only!) {
             tryObject(name, bytes, mustRefuse: true)
+            result.named += 1
         }
         for (name, file, bytes, mustRefuse) in namedSceneCases(files, scene: scene) where only == nil || name.contains(only!) {
             tryScene(name, file: file, bytes, mustRefuse: mustRefuse)
+            result.named += 1
         }
         if let only {
             if "scribble".contains(only) {

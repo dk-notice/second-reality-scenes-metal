@@ -663,7 +663,10 @@ enum SelfTest {
                 // must stay small. (Measured over all cases when written: 5.0 at most, out of 255.)
                 var far: [String] = []
                 for name in ["ship-turn1", "ships-0060", "bigship-1", "logo-1", "city-0100", "city-0800", "city-1420"] {
-                    guard let test = VisuTestCases.all.first(where: { $0.name == name }) else { continue }
+                    guard let test = VisuTestCases.all.first(where: { $0.name == name }) else {
+                        far.append("\(name): no such test case")
+                        continue
+                    }
                     let difference = try VisuTestCommand.difference(test.kind)
                     if difference > 8 { far.append("\(name) \(difference)") }
                 }
@@ -674,6 +677,8 @@ enum SelfTest {
                     let moved = zip(still, between).reduce(0) { $0 + ($1.0 != $1.1 ? 1 : 0) }
                     check("VISU modern look glides between animation frames",
                           moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
+                } else {
+                    check("VISU modern look glides between animation frames", false, "no test case city-0800")
                 }
                 // The recording scales the big ship down as it leaves, and the original's light dims
                 // with that scale. The modern look must do the same (it once normalised the scale away:
@@ -683,6 +688,9 @@ enum SelfTest {
                     check("VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)",
                           lean.pixels > 50_000 && abs(lean.lean) < 2.5,
                           String(format: "modern is %+.2f of 255 brighter on average over %d ship pixels", lean.lean, lean.pixels))
+                } else {
+                    check("VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)",
+                          false, "no test case ships-0100")
                 }
 
                 // Both whole animations, every frame, through the 1993 replay: nothing the original
@@ -716,7 +724,8 @@ enum SelfTest {
                 // crash; and the engine must hold a polygon that clipping would grow without end.
                 let damaged = try VisuDamagedFiles.run()
                 check("VISU loader turns damaged data files away instead of crashing",
-                      damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty,
+                      damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty
+                        && damaged.named == 32,
                       damaged.wronglyAccepted.isEmpty ? damaged.summary : "not turned away: \(damaged.wronglyAccepted.joined(separator: ", "))")
                 // A palette byte above 63 (a damaged file): a VGA card used only its low six bits.
                 let loud = try VisuWorld(name: "U2A") { name in

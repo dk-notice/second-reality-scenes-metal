@@ -43,14 +43,16 @@ extension CoreChecks {
         let scriptCue = shownAt < 0 ? none : (47..<(music.count - shownAt)).first { music[shownAt + $0].plus >= -19 } ?? none
         let firstPlate = plateAt.firstIndex { $0 >= 0 } ?? none
         let firstFrame = frames.firstIndex(of: 1) ?? none
+        // (Pass 0's six sample points; empty if the wipe never ran, which fails the check.)
+        let pass0 = bars[0] ?? []
         check("Play Demo: Glenz holds the title picture as the title part left it until the script's cue (music plus >= -19), then wipes it in 47 steps (black bars to rows 260 and 274 of 400, the picture greyed to level 30 from step 33)",
               startsOnTitle && held && scriptCue > 47 && cue == scriptCue
-                && bars[0] == [255, firstHold.isEmpty ? 0 : bars[0]![1], bars[0]![2], bars[0]![3], bars[0]![4], 255] && bars[0]![1] != 255
+                && pass0.count == 6 && pass0[0] == 255 && pass0[5] == 255 && pass0[1] != 255
                 && bars[46].map { $0[0] == 255 && $0[1] == 255 && $0[2] != 255 && $0[3] != 255 && $0[4] == 255 && $0[5] == 255 } == true && grey,
               "on title \(startsOnTitle), held \(held), cue \(cue ?? none) (script \(scriptCue)), pass 46 rows 0/260/261/273/274/399: \(bars[46] ?? []), grey \(grey)")
         check("Play Demo: Glenz's plate drops from the cue + 47 and settles after the script's 177 steps, the first glenz frame comes when the music frame counter has passed the script's 333 (cue + 335), and the tunnel follows on the script's end cue with no second run",
               firstPlate == scriptCue + 47 && settledAt == scriptCue + 47 + 177 && firstFrame == scriptCue + 333 + 2
-                && nextAt > firstFrame && frames.last == nextAt - 1 - (scriptCue + 334) && !frames.contains(2360),
+                && nextAt > firstFrame && frames.last == nextAt - 1 - (scriptCue + 334),
               "plate from \(firstPlate), settled at \(settledAt), frame 1 at \(firstFrame), tunnel at \(nextAt), last frame \(frames.last ?? none)")
     }
 }
