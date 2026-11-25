@@ -64,8 +64,12 @@ def part(name, body):
 
 # ---- Song 1 (MUSIC0, tempo 120) from order 0 ----
 M = Music(load('s1from0.txt'), O1, 45000)
-def alku():   # ALKU/MAIN.C: waits sync 1..4, texts; scroll waits sync >= 4+tptr up to 9; then scroll ends (approx.)
-    until(lambda: M.sync() >= 9); frames(60)
+def alku():   # ALKU/MAIN.C as RELEASED (see docs/scenes/opening-credits.md): three titles, each on its sync
+    # (1, 2, 3) or when the one before has faded out (427 refreshes); the scroll starts on sync 4 and moves
+    # 1 pixel every 9 refreshes to 320 (2,881); the last fade (64) and the hand-over to the ships (2).
+    for c in (1, 2, 3):
+        until(lambda: M.sync() >= c); frames(427)
+    until(lambda: M.sync() >= 4); frames(2947)
 part('ALKU opening credits', alku)
 def u2a():    # VISU/C/U2A.C 229-276: start order>10 && row>46; end order>11 && row>54 or 521 frames
     until(lambda: M.np_ord() > 10 and M.row() > 46); s = T.t

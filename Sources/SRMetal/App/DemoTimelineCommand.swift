@@ -50,9 +50,9 @@ final class SilentMusic: DemoMusicSource {
 /// faster than real time, and checks every part starts at the step `tools/demo_timeline.py` gives.
 enum DemoTimelineCommand {
     /// Each part's start, in 1/70 s steps, from `tools/demo_timeline.py <folder> 0 frames`
-    /// (2026-11-24). The last number is when the credits end and the end scroller starts: 10:52.4.
+    /// (2026-11-24; the opening credits' real end, 2026-11-25). The last number is when the credits end and the end scroller starts: 10:52.4.
     static let expected: [(name: String, step: Int)] = [
-        ("Opening credits", 0), ("Ships fly-by", 5105), ("Explosion", 7087), ("Title picture", 7463),
+        ("Opening credits", 0), ("Ships fly-by", 5605), ("Explosion", 7087), ("Title picture", 7463),
         ("Glenz vectors", 7624), ("Dot tunnel", 10681), ("Rings, interference, techno bars, troll", 11741),
         ("Screen switches off", 15727), ("Loader waits for the music", 15918), ("Mountain scroller", 16177),
         ("Lens, then rotozoomer", 18213), ("Plasma", 21393), ("Plasma cube", 23792), ("Bouncing dots", 26103),
