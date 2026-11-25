@@ -204,6 +204,7 @@ final class OpeningCreditsScene: DemoScene {
         for (top, line) in lines where line != "[" && line != "]" {
             let attributed = NSAttributedString(string: line, attributes: [.font: ctFont, .foregroundColor: CGColor(gray: 1, alpha: 1)])
             let ct = CTLineCreateWithAttributedString(attributed)
+            context.textPosition = .zero            // (the bounds are measured from the current text position)
             let ink = CTLineGetImageBounds(ct, context)
             // The 1993 line's ink: from 160 - width / 2 (+ 2 on pages), width - 2 pixels wide.
             let left = CGFloat(160 - font.width(line) / 2 + right) * across

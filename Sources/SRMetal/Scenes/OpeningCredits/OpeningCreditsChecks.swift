@@ -85,17 +85,26 @@ extension CoreChecks {
         }
         let down = OpeningCreditsScene.down, across = OpeningCreditsScene.across
         func inked(_ y: Int) -> Bool { (0..<image.width).contains { bytes[y * image.bytesPerRow + $0] > 128 } }
-        // "Graphics": capitals from line 150 (+ 14 to the baseline) of the 400; ink across the 1993 line's width.
-        let band = Int(CGFloat(150) * down) - 4..<Int(CGFloat(150 + 14) * down) + 4
-        let rows = band.filter(inked)
-        let columns = (0..<image.width).filter { x in band.contains { bytes[$0 * image.bytesPerRow + x] > 128 } }
-        let left = CGFloat(160 - model.font.width("Graphics") / 2 + 2) * across
-        let width = CGFloat(model.font.width("Graphics") - 2) * across
-        check("Opening credits: Modern text in Superclarendon, capitals as tall as the 1993 ones (14 lines) on the same lines, as wide as the 1993 line",
-              CTFontCopyPostScriptName(CTFontCreateWithName(OpeningCreditsScene.fontName as CFString, 10, nil)) as String == "Superclarendon-Regular"
-                && abs(CGFloat(rows.first ?? 0) - 150 * down) <= 2 && abs(CGFloat(rows.last ?? 0) - 164 * down) <= 3
-                && abs(CGFloat(columns.first ?? 0) - left) <= 3 && abs(CGFloat((columns.last ?? 0) + 1) - (left + width)) <= 3,
-              "capitals on rows \(rows.first ?? -1)...\(rows.last ?? -1) (want \(Int(150 * down))...\(Int(164 * down))), ink x \(columns.first ?? -1)...\(columns.last ?? -1) (want \(Int(left))...\(Int(left + width)))")
+        // Each line of page 1: capitals from its line (+ 14 to the baseline) of the 400; ink across the 1993 line's
+        // width, 2 pixels right of centre.
+        var worst = "", ok = true
+        for (top, line) in OpeningCreditsModel.pages[0] {
+            let band = Int(CGFloat(100 + top) * down) - 4..<Int(CGFloat(100 + top + 14) * down) + 4
+            let rows = band.filter(inked)
+            let columns = (0..<image.width).filter { x in band.contains { bytes[$0 * image.bytesPerRow + x] > 128 } }
+            let left = CGFloat(160 - model.font.width(line) / 2 + 2) * across
+            let right = left + CGFloat(model.font.width(line) - 2) * across
+            let good = abs(CGFloat(rows.first ?? 0) - CGFloat(100 + top) * down) <= 2
+                && abs(CGFloat(rows.last ?? 0) - CGFloat(100 + top + 14) * down) <= 3
+                && abs(CGFloat(columns.first ?? 0) - left) <= 3 && abs(CGFloat((columns.last ?? 0) + 1) - right) <= 3
+            if !good || worst.isEmpty {
+                worst = "\(line): rows \(rows.first ?? -1)...\(rows.last ?? -1) (want \(Int(CGFloat(100 + top) * down))...\(Int(CGFloat(100 + top + 14) * down))), x \(columns.first ?? -1)...\(columns.last ?? -1) (want \(Int(left))...\(Int(right)))"
+            }
+            ok = ok && good
+        }
+        check("Opening credits: Modern text in Superclarendon, capitals as tall as the 1993 ones (14 lines) on the same lines, each line as wide as the 1993 line",
+              CTFontCopyPostScriptName(CTFontCreateWithName(OpeningCreditsScene.fontName as CFString, 10, nil)) as String == "Superclarendon-Regular" && ok,
+              worst)
     }
 
     /// Inside Play Demo the scene shows from the part's first step for the script's steps, its model in step
