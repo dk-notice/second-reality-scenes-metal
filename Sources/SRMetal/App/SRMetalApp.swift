@@ -115,6 +115,7 @@ struct StartupOptions {
                 else { problems.append("Unknown sidebar setting \"\(value)\" (use hidden or shown)") }
             }
         }
+        if demoStart != nil && !playDemo { problems.append("--from only works with --scene \(DemoRunScene.id)") }
     }
 }
 

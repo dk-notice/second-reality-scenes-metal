@@ -384,7 +384,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   main thread before the swap), mute (mixer volume, song keeps running), `justShown` (every scene but the
   lens only stores the value and it is overwritten before its first tick; switch-off's lead-in skip is
   unchanged), the sequencer hand-over (copies all its state), Shift-P not caught by the P key handler.
-- 7 findings shown to the user, NOT fixed yet (waiting for approval): (1) after a resume the music starts
+- FIXED (user chose 1, 2, 4, 7; 447 checks pass, each new/changed check proven to fail without its fix;
+  `--demo-timeline` unchanged; `--demo-live dot-tunnel`: next part +0 steps): (1) resume builds the scene,
+  then starts the music; (2) `>=`, and `DemoSequencer`/`fastForward` take an optional script so a check
+  can use a tiny one; (4) the lens check now compares each step with the script's own (note: the old
+  rotozoomer comparison already pinned the lens start, so (4) was less loose than reported); (7) `--from`
+  without `--scene play-demo` is reported. LEFT as they are: 3, 5, 6.
+- The 7 findings as shown: (1) after a resume the music starts
   before the first scene is built and before the clock runs (`DemoRunScene.resume`: play before show);
   (2) `fastForward` matches a part with `==` (two parts in one step would never be found); (3) resumed
   part name lost if a new part starts on the first step; (4) the lens-in-demo check is weaker than its

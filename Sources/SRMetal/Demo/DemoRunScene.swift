@@ -119,10 +119,12 @@ final class DemoRunScene: DemoScene {
         guard let ahead = DemoSequencer.fastForward(to: start) else { throw DemoError.noSuchStart("\(start)") }
         sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
         hookUp()
-        if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
         show(ahead.visual, musicAtShow: ahead.musicAtShow)
         partsStarted = sequencer.partStarts.count
         pendingPartNotice = true
+        // The music last: building the scene takes time (pictures made 8x, tables), and the song must not
+        // run ahead of the picture meanwhile. (The window's clock starts at its next frame, just after.)
+        if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
     }
 
     /// After a resume, the part already playing is announced on the first step (the app's hooks are

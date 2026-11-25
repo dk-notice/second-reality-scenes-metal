@@ -168,6 +168,8 @@ struct DemoFastForward {
 /// Follows `DemoScript.steps`. Call `tick()` once per 1/70 s step.
 final class DemoSequencer {
     let music: DemoMusicSource
+    /// The script followed: the demo's (checks may give a small one of their own).
+    let steps: [DemoStep]
     /// Called when the screen should change.
     var onShow: ((DemoVisual) -> Void)?
 
@@ -183,12 +185,16 @@ final class DemoSequencer {
     private var frameCounter = 0
     private var noted = 0
 
-    init(music: DemoMusicSource) { self.music = music }
+    init(music: DemoMusicSource, steps: [DemoStep] = DemoScript.steps) {
+        self.music = music
+        self.steps = steps
+    }
 
     /// Carries on where `other` is, with `music` instead of its music (which the caller starts at the
     /// same place).
     init(continuing other: DemoSequencer, music: DemoMusicSource) {
         self.music = music
+        steps = other.steps
         time = other.time
         partStarts = other.partStarts
         finished = other.finished
@@ -200,9 +206,9 @@ final class DemoSequencer {
 
     /// Runs the script silently (without drawing anything, so quickly: the whole demo takes about
     /// 0.2 s) up to the step on which `start` shows. nil if the script never gets there.
-    static func fastForward(to start: DemoStart) -> DemoFastForward? {
+    static func fastForward(to start: DemoStart, steps: [DemoStep] = DemoScript.steps) -> DemoFastForward? {
         let music = SilentMusic()
-        let sequencer = DemoSequencer(music: music)
+        let sequencer = DemoSequencer(music: music, steps: steps)
         var found: (DemoVisual, DemoMusicState)?
         var last: (DemoVisual, DemoMusicState)?
         sequencer.onShow = { [unowned sequencer] visual in
@@ -211,7 +217,7 @@ final class DemoSequencer {
         }
         while found == nil && !sequencer.finished && sequencer.time < 70 * 60 * 15 {
             sequencer.tick()
-            if case .part(let number) = start, sequencer.partStarts.count == number + 1 { found = last }
+            if case .part(let number) = start, sequencer.partStarts.count >= number + 1 { found = last }
         }
         sequencer.onShow = nil
         guard let (visual, state) = found else { return nil }
@@ -235,8 +241,8 @@ final class DemoSequencer {
     /// has to wait, then spends this step waiting on it. (As the Python simulation: conditions are
     /// read before the step's time passes.)
     func tick() {
-        while index < DemoScript.steps.count {
-            let step = DemoScript.steps[index]
+        while index < steps.count {
+            let step = steps[index]
             switch step {
             case .part(let name):
                 partStarts.append((name, time))

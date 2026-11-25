@@ -125,6 +125,14 @@ enum CoreChecks {
         }
         check("Play Demo from here: started at each of \(starts.count) points (\(DemoScript.sceneIDs.count) scenes, \(DemoScript.partNames.count - 1) parts), every later part starts on the same step as a full run",
               wrong.isEmpty, wrong.prefix(3).joined(separator: " | "))
+        // Found by the review (2026-11-24): a part that starts on the same step as the one after it (all its
+        // waits already met) was never found, so the demo fell back to its beginning.
+        let quick: [DemoStep] = [.part("A"), .show(.black), .frames(5), .part("B"), .part("C"), .show(.card("C")),
+                                 .frames(5), .hold]
+        let both = DemoSequencer.fastForward(to: .part(1), steps: quick)
+        check("Play Demo from here: a part that starts on the same step as the next one is still found",
+              both?.sequencer.partStarts.map(\.name) == ["A", "B", "C"] && both?.visual == .card("C"),
+              "\(String(describing: both?.sequencer.partStarts.map(\.name)))")
         check("Play Demo from here: the command line takes scene ids and part numbers, and refuses others",
               DemoStart(argument: "troll") == .scene("troll") && DemoStart(argument: "11") == .part(10)
                 && DemoStart(argument: "starfield") == nil && DemoStart(argument: "0") == nil
@@ -160,6 +168,14 @@ enum CoreChecks {
         let lensPhase = (lens.sceneShowing as? LensScene)?.model.phase
         let water = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(),
                                      from: .part(DemoScript.partNames.firstIndex(of: "Water scroller") ?? 0))
+        // Found by the review (2026-11-24): the music started before the first scene was built, so the song
+        // ran ahead of the picture by the building time. The music must start with the scene already there.
+        let recorder = RecordingMusic()
+        let run = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: recorder, from: .scene("troll"))
+        recorder.run = run
+        run.reset()   // a restart starts part-way again, through the same steps as the first start
+        check("Play Demo from here: the music starts only once the first scene is built",
+              recorder.sceneShownAtPlay == [true], "\(recorder.sceneShownAtPlay)")
         check("Play Demo from here: starts showing the chosen scene (troll), the lens uncovering at once, and a picture part (water)",
               troll.sceneShowing is TrollScene && troll.currentPart == "Rings, interference, techno bars, troll"
                 && lensPhase == .reveal && water.currentPart == "Water scroller" && water.sceneShowing == nil,
@@ -208,8 +224,10 @@ enum CoreChecks {
         // starts exactly 720 steps before the script shows the rotozoomer, the uncovering at least 300 before.
         let run = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic())
         var shownAt = -1, revealAt = -1, lensAt = -1, rotozoomerAt = -1, cueAtStart = false
+        var plusAt: [Int] = []   // the music each step's checks saw
         for step in 0..<22_000 {
             let plus = run.musicPlus   // the music this step's checks see (silent music moves on at its end)
+            plusAt.append(plus)
             run.tick()
             if let lens = run.sceneShowing as? LensScene {
                 if shownAt < 0 { shownAt = step; cueAtStart = plus >= LensModel.startCue }
@@ -220,10 +238,17 @@ enum CoreChecks {
                 break
             }
         }
+        // The steps the script itself gets past its waits: "until plus >= -6" (then 300 steps), "until plus
+        // >= -20" (then 720 steps, then the rotozoomer). Made exact by the review (2026-11-24).
+        func firstStep(from: Int, where cue: (Int) -> Bool) -> Int {
+            guard from >= 0 else { return -2 }
+            return (from..<plusAt.count).first { cue(plusAt[$0]) } ?? -2
+        }
+        let scriptReveal = firstStep(from: shownAt) { $0 >= LensModel.startCue }
+        let scriptLens = firstStep(from: scriptReveal + LensModel.revealSteps) { $0 >= LensModel.lensCue }
         check("Play Demo: the lens follows the script's music cues to the step (black, uncovering, lens, then the rotozoomer 720 steps later)",
-              shownAt >= 0 && revealAt == (cueAtStart ? shownAt : revealAt) && revealAt >= shownAt
-                && lensAt >= revealAt + 300 && rotozoomerAt == lensAt + 720,
-              "shown \(shownAt) (cue already \(cueAtStart)), uncovering \(revealAt), lens \(lensAt), rotozoomer \(rotozoomerAt)")
+              shownAt >= 0 && revealAt == scriptReveal && lensAt == scriptLens && rotozoomerAt == scriptLens + LensModel.lensSteps,
+              "shown \(shownAt) (cue already \(cueAtStart)), uncovering \(revealAt) (script \(scriptReveal)), lens \(lensAt) (script \(scriptLens)), rotozoomer \(rotozoomerAt)")
     }
 
     // MARK: - The music (libopenmpt and the demo's songs; added 2026-11-24)
@@ -691,10 +716,13 @@ enum CoreChecks {
               good.problems.isEmpty && good.look == .classic && good.sidebarHidden
                   && good.sceneIndex == SceneCatalog.all.firstIndex(where: { $0.id == "plasma" })
                   && options("").problems.isEmpty && options("").look == nil && options("").sceneIndex == nil
-                  && system.problems.isEmpty,
+                  && system.problems.isEmpty
+                  && options("--scene play-demo --from troll").problems.isEmpty
+                  && options("--from 11 --scene play-demo").demoStart == .part(10),
               (good.problems + system.problems).joined(separator: "; "))
         // Found by the review: all of these used to be ignored without a word.
-        let bad = ["--scene plasmacube", "--look 1993", "--scene", "--look --scene plasma", "--sidebar gone", "--selftests"]
+        let bad = ["--scene plasmacube", "--look 1993", "--scene", "--look --scene plasma", "--sidebar gone", "--selftests",
+                   "--from troll", "--scene plasma --from 3"]
         let accepted = bad.filter { options($0).problems.isEmpty }
         check("App: mistyped start-up options are reported, not ignored", accepted.isEmpty,
               accepted.joined(separator: "; "))
@@ -1051,4 +1079,19 @@ enum CoreChecks {
         texture.getBytes(&pixels, bytesPerRow: width * 4, from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
         return pixels
     }
+}
+
+/// A music source for checks: silent music that notes, each time a song is started, whether Play Demo
+/// already shows a scene.
+private final class RecordingMusic: DemoMusicSource {
+    private let silent = SilentMusic()
+    weak var run: DemoRunScene?
+    private(set) var sceneShownAtPlay: [Bool] = []
+    func play(_ song: Song, fromOrder order: Int, skipping seconds: Double) {
+        if run != nil { sceneShownAtPlay.append(run?.sceneShowing != nil) }
+        silent.play(song, fromOrder: order, skipping: seconds)
+    }
+    var position: MusicPosition { silent.position }
+    var orderList: [Int] { silent.orderList }
+    func stepPassed() { silent.stepPassed() }
 }
