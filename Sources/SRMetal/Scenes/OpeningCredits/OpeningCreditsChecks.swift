@@ -80,7 +80,7 @@ extension CoreChecks {
     static func openingCreditsModern(_ check: (String, Bool, String) -> Void, model: OpeningCreditsModel) {
         let down = OpeningCreditsScene.down, across = OpeningCreditsScene.across
         var worst = "", ok = true, linesMeasured = 0, logoClear = false
-        let texts: [OpeningCreditsModel.Text] = (0..<3).map { .title($0) } + (0..<4).map { .page($0) }
+        let texts = OpeningCreditsScene.allTexts
         for text in texts {
             guard let image = OpeningCreditsScene.textImage(text, font: model.font), let data = image.dataProvider?.data,
                   let bytes = CFDataGetBytePtr(data) else {
@@ -146,6 +146,12 @@ extension CoreChecks {
         var scene = run.sceneShowing as? OpeningCreditsScene
         if scene == nil { run.tick(); scene = run.sceneShowing as? OpeningCreditsScene }
         let startStep = scene?.model.step ?? -1
+        // The Modern look's pictures exist as soon as the scene does: none is left to be made on the frame it
+        // first shows (each first shows on a music cue).
+        let ready = scene?.modernPictures
+        check("Opening credits: the Modern look's 7 text pictures, horizon and logo are made with the scene, not when first shown",
+              ready?.texts == 7 && ready?.horizon == true && ready?.logo == true,
+              "\(ready?.texts ?? -1) texts, horizon \(ready?.horizon ?? false), logo \(ready?.logo ?? false)")
         var schedule = ""
         for _ in 0..<7000 {
             guard let opening = run.sceneShowing as? OpeningCreditsScene else { break }
