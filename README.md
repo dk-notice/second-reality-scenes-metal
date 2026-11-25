@@ -48,23 +48,23 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 | Scene | Original coder | How the original did it, and how this version does |
 |---|---|---|
+| Ships Fly-by | Psi | [docs/scenes/ships-flyby.md](docs/scenes/ships-flyby.md) |
+| Explosion | Trug, Wildfire | [docs/scenes/explosion.md](docs/scenes/explosion.md) |
+| Title Picture, End Picture | Future Crew | [docs/scenes/title-and-end-pictures.md](docs/scenes/title-and-end-pictures.md) |
+| Glenz Vectors | Psi | [docs/scenes/glenz-vectors.md](docs/scenes/glenz-vectors.md) |
 | Dot Tunnel | Trug | [docs/scenes/dot-tunnel.md](docs/scenes/dot-tunnel.md) |
 | Rings, Interference | Psi | [docs/scenes/rings-and-interference.md](docs/scenes/rings-and-interference.md) |
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Troll, Screen Switches Off | Psi; Wildfire | [docs/scenes/troll-and-switch-off.md](docs/scenes/troll-and-switch-off.md) |
 | Lens | Psi | [docs/scenes/lens.md](docs/scenes/lens.md) |
 | Rotozoomer | Psi | [docs/scenes/rotozoomer.md](docs/scenes/rotozoomer.md) |
-| Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
-| Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
-| 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 | Plasma Cube | Wildfire | [docs/scenes/plasma-cube.md](docs/scenes/plasma-cube.md) |
-| Glenz Vectors | Psi | [docs/scenes/glenz-vectors.md](docs/scenes/glenz-vectors.md) |
-| Ships Fly-by | Psi | [docs/scenes/ships-flyby.md](docs/scenes/ships-flyby.md) |
-| Explosion | Trug, Wildfire | [docs/scenes/explosion.md](docs/scenes/explosion.md) |
-| End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
-| Title Picture, End Picture | Future Crew | [docs/scenes/title-and-end-pictures.md](docs/scenes/title-and-end-pictures.md) |
+| Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
+| 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 | 3D City | Psi | [docs/scenes/city-3d.md](docs/scenes/city-3d.md) |
+| End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
+| Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
 All twelve planned scenes are done: the purely calculated scenes and the 3D scenes. The last two, Ships
 Fly-by and the 3D City, share the original's 3D engine, which was built and checked against the original's
@@ -134,7 +134,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `lens`, `rotozoomer`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `explosion`, `title-picture`, `city-3d`, `end-picture`, `end-scroller`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `sine-landscape`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 

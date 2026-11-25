@@ -97,6 +97,46 @@ struct SceneEntry: Identifiable {
 
 enum SceneCatalog {
     static let all: [SceneEntry] = [
+        // In the order the demo shows them; the hidden starfield (an extra, not in the normal run) last.
+        SceneEntry(
+            id: "ships-flyby",
+            title: "Ships Fly-by",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 70, 130, 200, 290, 330, 345, 350, 400, 480, 560, 591],
+            thumbnailStep: 350,
+            make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "explosion",
+            title: "Explosion",
+            credit: "Trug, Wildfire",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 3, 4, 5, 8, 23, 60, 100, 119, 124, 140, 156, 163, 176, 179],
+            thumbnailStep: 60,
+            make: { device, format in try ExplosionScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "title-picture",
+            title: "Title Picture",
+            credit: "Future Crew",
+            // 320x400, like the original.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 31, 32, 33, 50, 96, 159, 160, 161, 250],
+            thumbnailStep: 200,
+            make: { device, format in
+                try FadingPictureScene(picture: "04-title", timing: FadingPictureScene.titleTiming, device: device, pixelFormat: format)
+            }
+        ),
+        SceneEntry(
+            id: "glenz-vectors",
+            title: "Glenz Vectors",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 1, 100, 330, 420, 800, 960, 1014, 1300, 1700, 2100, 2250, 2340, 2359],
+            thumbnailStep: 1300,
+            make: { device, format in try GlenzScene(device: device, pixelFormat: format) }
+        ),
         SceneEntry(
             id: "dot-tunnel",
             title: "Dot Tunnel",
@@ -152,15 +192,6 @@ enum SceneCatalog {
             make: { device, format in try SwitchOffScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
-            id: "bouncing-dots",
-            title: "Bouncing Dots",
-            credit: "Psi",
-            canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
-            thumbnailStep: 1300,
-            make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
-        ),
-        SceneEntry(
             id: "lens",
             title: "Lens",
             credit: "Psi",
@@ -191,24 +222,6 @@ enum SceneCatalog {
             make: { device, format in try PlasmaScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
-            id: "starfield",
-            title: "Hidden Starfield",
-            credit: "Psi",
-            canvasSize: SIMD2(320, 400),
-            checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
-            thumbnailStep: 1700,
-            make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
-        ),
-        SceneEntry(
-            id: "sine-landscape",
-            title: "3D Sine Landscape",
-            credit: "Psi",
-            canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 31, 100, 200, 700, 1300, 1978, 2047],
-            thumbnailStep: 700,
-            make: { device, format in try SineLandscapeScene(device: device, pixelFormat: format) }
-        ),
-        SceneEntry(
             id: "plasma-cube",
             title: "Plasma Cube",
             credit: "Wildfire",
@@ -219,43 +232,22 @@ enum SceneCatalog {
             make: { device, format in try PlasmaCubeScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
-            id: "glenz-vectors",
-            title: "Glenz Vectors",
+            id: "bouncing-dots",
+            title: "Bouncing Dots",
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 1, 100, 330, 420, 800, 960, 1014, 1300, 1700, 2100, 2250, 2340, 2359],
+            checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
             thumbnailStep: 1300,
-            make: { device, format in try GlenzScene(device: device, pixelFormat: format) }
+            make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
-            id: "ships-flyby",
-            title: "Ships Fly-by",
+            id: "sine-landscape",
+            title: "3D Sine Landscape",
             credit: "Psi",
             canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 70, 130, 200, 290, 330, 345, 350, 400, 480, 560, 591],
-            thumbnailStep: 350,
-            make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
-        ),
-        SceneEntry(
-            id: "explosion",
-            title: "Explosion",
-            credit: "Trug, Wildfire",
-            canvasSize: SIMD2(320, 200),
-            checkpoints: [0, 3, 4, 5, 8, 23, 60, 100, 119, 124, 140, 156, 163, 176, 179],
-            thumbnailStep: 60,
-            make: { device, format in try ExplosionScene(device: device, pixelFormat: format) }
-        ),
-        SceneEntry(
-            id: "title-picture",
-            title: "Title Picture",
-            credit: "Future Crew",
-            // 320x400, like the original.
-            canvasSize: SIMD2(320, 400),
-            checkpoints: [0, 31, 32, 33, 50, 96, 159, 160, 161, 250],
-            thumbnailStep: 200,
-            make: { device, format in
-                try FadingPictureScene(picture: "04-title", timing: FadingPictureScene.titleTiming, device: device, pixelFormat: format)
-            }
+            checkpoints: [0, 31, 100, 200, 700, 1300, 1978, 2047],
+            thumbnailStep: 700,
+            make: { device, format in try SineLandscapeScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
             id: "city-3d",
@@ -286,6 +278,15 @@ enum SceneCatalog {
             checkpoints: [0, 2, 3, 50, 51, 400, 799, 800, 801, 1500, 3000, 6001],
             thumbnailStep: 1300,
             make: { device, format in try EndScrollerScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "starfield",
+            title: "Hidden Starfield",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 20, 300, 900, 1000, 1300, 1700, 1984, 2030, 2047],
+            thumbnailStep: 1700,
+            make: { device, format in try StarfieldScene(device: device, pixelFormat: format) }
         )
     ]
 }

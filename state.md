@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|lens|rotozoomer|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
+  `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|sine-landscape|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
