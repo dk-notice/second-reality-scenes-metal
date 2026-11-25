@@ -274,9 +274,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   4x width, 1.2 tall pixel shape, caps 14 rows on row 14, natural spacing, glides). 16 new self-test
   checks (377). Play Demo shows it from 10:52.4 until stopped. Other text parts' fonts (opening credits,
   credits, mountain, water) are NOT decided yet: compare when reached.
-  ROTOZOOMER DONE (2026-11-24, user: "build it" after the plan): see "Rotozoomer notes".
+  ROTOZOOMER DONE (2026-11-24, user: "build it" after the plan): see "Rotozoomer notes". The user looked
+  at it in the app: "looks fine"; merged into main and pushed the same day.
   NEXT (suggested order): the bigger ones (lens, jelly logo, mountain scroller, credits, opening
-  credits; water last).
+  credits; water last). Suggested and accepted in principle: the LENS next (finishes part 10, same
+  program, picture and LENS.EXP); read LENS/MAIN.C part1/part2, CALC.C, and plan before coding.
 
 ## Rotozoomer notes (2026-11-24)
 - Original: `LENS/MAIN.C` part3 + `LENS/ASM.ASM` `_rotate` (Psi). `Scenes/Rotozoomer/`: `RotozoomerModel`
@@ -301,7 +303,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   generic GPU-vs-processor checks at 20 checkpoints. `--motion-check rotozoomer modern`: no jumps; many
   changed pixels around steps 1850-1870 = the camera's extreme close-up (same in both looks).
 - Seen by Claude: snapshots of both looks (steps 100, 500, 1300, 1862) and Play Demo at step 20500.
-  NOT seen by the user in the running app yet; not compared with the original running.
+  Seen by the user in the running app ("looks fine", 2026-11-24); not compared with the original running.
 - BUILD NOTE (2026-11-24): the first builds in this new worktree failed at `build.sh`'s last step
   (`codesign`: "resource fork, Finder information, or similar detritus not allowed"); the new app folder
   carried `com.apple.FinderInfo` / `com.apple.fileprovider` tags that came straight back after
