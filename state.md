@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (opening credits built, seen by the user and merged: every part is now a scene; the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (every part is a scene; rules tidied; the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -11,60 +11,34 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 `../second-reality-original`.
 
 ## Status (2026-11-25)
-- 25 scenes work in both looks and are in the sidebar in the demo's order: Opening Credits, Ships Fly-by, Explosion, Title
-  Picture, Glenz Vectors, Dot Tunnel, Rings, Interference, Techno Bars, Troll, Screen Switches Off,
-  Mountain Scroller, Lens, Rotozoomer, Plasma, Plasma Cube, Bouncing Dots, Water Scroller, 3D Sine
-  Landscape, Jelly Logo, 3D City, End Picture, Credits, End Scroller, and the Hidden Starfield (last; not in the demo).
+- 25 scenes work in both looks and are in the sidebar in the demo's order: Opening Credits, Ships Fly-by,
+  Explosion, Title Picture, Glenz Vectors, Dot Tunnel, Rings, Interference, Techno Bars, Troll, Screen
+  Switches Off, Mountain Scroller, Lens, Rotozoomer, Plasma, Plasma Cube, Bouncing Dots, Water Scroller,
+  3D Sine Landscape, Jelly Logo, 3D City, End Picture, Credits, End Scroller, and the Hidden Starfield
+  (last; not in the demo). Each scene's page (`docs/scenes/`) says what was built and checked.
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
-  part is a real scene (the opening credits, the last, since 2026-11-25).
-  Since 2026-11-25 every scene follows its original part's own timing inside it (the older scenes: each
-  scene's page, "Inside Play Demo"; the 3D City starts from the jelly logo's last screen via
-  `DemoHandover`). Seen by the user and merged 2026-11-25. Their standalone lengths differ from the
-  original parts on purpose and stay: Glenz 2,360, Plasma 2,323, Plasma Cube 2,048, Sine Landscape
-  2,048, 3D City 3,639, Ships 592.
-- Techno part, seen by the user and merged 2026-11-25: the music frame counter counts MUSIC TICKS (found in the player's library `MAIN/STMIK.300`; 48/52 a
-  second from its "speed adjust"), so inside Play Demo the interference now runs 989 steps (was 669) with
-  full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
-  `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
+  part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
+  scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
+  2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
 - Self-test: 626 checks, all pass. `--demo-timeline`: every part starts on the step the research
-  simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25, with the techno fixes.
-- The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
-  the user in the running app and approved; for older ones see their notes. Nothing has been compared with
-  the original program running.
+  simulation gives. main is pushed to GitHub (private repository).
+- Every scene was seen by the user in the running app. Nothing has been compared with the original
+  program running.
 
 ## Next steps
-1. CREDITS: DONE 2026-11-25, seen by the user and merged (see `docs/scenes/credits.md`):
-   released pictures, texts and font (`Data/Credits/`, `tools/credits_reference.py`); 1993 look with the
-   text's every-other-row and the start-address lag; Modern look in DIN Condensed Bold with pictures
-   captured from the scenes by `build.sh` (`--credits-captures`; moments in `CreditsModel.captures`, chosen
-   with `--credits-match`, ships at 360 by eye, picture 21 recursive, picture 1 Super-xBR until the
-   opening credits exist: then capture it and update `CreditsModel.captures[0]`). Play Demo shows it.
-2. OPENING CREDITS (part 1, `ALKU/MAIN.C` with `TWEAK.ASM`, `ASMYT.ASM`, `COPPER.ASM`), NEXT: research and
-   plan, font decision first. Today: a title card for 73 s. Its timing is in `docs/demo-timeline.md`
-   (texts on sync 1-4, the scroll waits for sync up to 9; the end, "60 refreshes", is an approximation).
-   Lessons from the credits: compare the source with the RELEASED `MAIN/DATA/ALKU.EXE` (unpack with
-   `deark -m pklite`; the credits' pictures and texts differed); check how `tw_putpixel` and the CRTC row
-   width relate (the credits' text showed every other row; ALKU has its own TWEAK.ASM); the horizon and font
-   are exported (`artwork/original/01-opening-*`). When built, capture it for the credits' picture 1
-   (`CreditsModel.captures[0]`, find the step with `--credits-match 1 <scene id>`).
-   DONE 2026-11-25, seen by the user and merged into main (see `docs/scenes/opening-credits.md`): released data (`Data/OpeningCredits/`, `tools/alku_reference.py`; ALKU.EXE
-   is PKLITE over LZEXE), 1993 look, Modern look in Superclarendon stretched to the 1993 line widths (user's
-   choice; the Dolby logo through Super-xBR), Play Demo shows it. The part's real end is 1:20.1 (was
-   approximated 1:12.9); timeline script, Python and `DemoTimelineCommand.expected` changed together, only
-   the ships' start moved. Credits' picture 1 now captured from it (step 3664, the Code page).
-   main's app rebuilt and pushed to GitHub (2026-11-25).
-3. CODE REVIEW AND SIMPLIFY (agreed 2026-11-25, in its own session): review the opening-credits work
+1. CODE REVIEW AND SIMPLIFY (agreed 2026-11-25, in its own session): review the opening-credits work
    (commits f40f208..6988dbf: `Scenes/OpeningCredits/`, `Demo/DemoSequencer.swift`,
    `App/DemoTimelineCommand.swift`, `App/CoreChecks.swift`, `Scenes/Credits/CreditsModel.swift` and
    `CreditsChecks.swift`, `tools/alku_reference.py`, `tools/demo_timeline.py`, `build.sh`); findings first,
-   fixes only after the user's OK. The user chose to leave the open questions below for now.
-4. Then polish, only when the user asks: the open questions below.
+   fixes only after the user's OK.
+2. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
 
 ## Open questions (not to be started unasked)
 - Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
   would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue: the
-  released `PLZPART.EXE` may differ from the source (its pklite unpack came out damaged; not read yet).
+  released `PLZPART.EXE` may differ from the source (its pklite unpack came out damaged; not read yet;
+  it may be packed twice, as ALKU.EXE was: try `deark -m lzexe` on the result).
   See `docs/demo-timeline.md`, "Later found: it counts music ticks".
 - Code review findings left as they are: (3) a resumed part's name is lost if a new part starts on the
   first step; (5) the music-skip check runs only at 44.1 kHz, the player at 48; (6) a failed
@@ -80,8 +54,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app` (first builds libopenmpt, about 15 s the first time; run it once
   before a bare `swift build`). Needs only Apple's Command Line Tools, no Xcode. Shaders compile at start.
+  It also clears Finder tags and retries the signing (the Documents folder is synced and re-tags the app).
 - TWO COPIES TRAP: each worktree builds its own app, and macOS may start another copy with the same
-  identity. After merging into main, rebuild in the main folder. To be sure which copy starts:
+  identity. After every merge into main, rebuild in the main folder. To be sure which copy starts:
   `open -n <full path to the .app> --args ...`.
 - Start-up options after `--args`: `--scene <id>` (ids: `opening-credits ships-flyby explosion title-picture glenz-vectors
   dot-tunnel rings interference techno-bars troll switch-off mountain-scroller lens rotozoomer plasma
@@ -121,26 +96,25 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   `Scenes/<Name>/<Name>Checks.swift`, `Demo/DemoChecks.swift`, `Music/MusicChecks.swift`,
   `Core/PictureChecks.swift` (split 2026-11-25; the self-test prints the same lines as before).
 - `Data/`: original files loaded at run time, each folder with a README (what, why it ships, SHA-256):
-  `Visu/` (3D models, animation), `Music/`, `Credits/`, `EndScroller/`, `Lens/`, `Mountain/`, `Water/`.
+  `Visu/` (3D models, animation), `Music/`, `OpeningCredits/` (horizon, font), `Credits/` (pictures,
+  font), `EndScroller/` (text, font), `Lens/`, `Mountain/`, `Water/`.
 - `artwork/original/`: every picture the demo shows, exported to PNG by `tools/art_export.py` (do not edit
   by hand); `rgb/` copies are what the app loads. Inventory: `artwork/README.md`.
 - `tools/`: development-only Python (standard library only): one `<scene>_reference.py` per replayed
   scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `x86interp.py` (cannot run self-modifying code).
 - `ThirdParty/libopenmpt` (unmodified source, the only dependency), `docs/` (see the end of this file).
 
-## Adding a scene
-1. Research the original and SHOW THE USER A PLAN before code. Check the source release has the RELEASED
-   version (the end scroller's did not): compare with the port's data and, where the built part is in
-   `MAIN/DATA`, unpack it (`deark -m pklite`, installed with Homebrew) and look for the data inside.
-2. Write `tools/<scene>_reference.py`: facts about the data, and a replay printing checksums at chosen steps.
-3. `Sources/SRMetal/Scenes/<Name>/`: model, scene (`DemoScene`: `reset`, `tick`, `draw`,
-   `classicReferenceFrame`, `demoUpdate` for music cues), `<Name>Checks.swift`; one line in `CoreChecks.run`.
-4. One `SceneEntry` in `SceneCatalog.all` (in the demo's order) with `checkpoints` and a `thumbnailStep`.
-5. In `DemoScript.steps`, show the scene; `--demo-timeline` must stay unchanged.
-6. Data that cannot be calculated: `Data/<Name>/` with a README, copied by `build.sh`.
-7. Docs: `docs/scenes/<name>.md` with pictures made by `--snapshot`, README (table, `--scene` list,
-   artwork paragraph), `docs/demo-timeline.md`, and this file.
-8. The user looks at it in the app; then merge into main, rebuild main's app, push when approved.
+## Changing or rebuilding a scene
+All parts are built; this is the checklist when one is redone or a new one is added.
+- Research the original and show the user a plan before code. Compare the source with the RELEASED
+  program in `MAIN/DATA` (several differed): unpack it with `deark -m pklite`, and if the result is still
+  packed, `deark -m lzexe` (ALKU.EXE was packed twice).
+- `tools/<scene>_reference.py`: facts about the data, and a replay printing checksums at chosen steps.
+- `Sources/SRMetal/Scenes/<Name>/`: model, scene (`DemoScene`), `<Name>Checks.swift`, one line in
+  `CoreChecks.run`; a `SceneEntry` in `SceneCatalog.all` (demo order); in Play Demo, `DemoScript.steps`.
+- Data that cannot be calculated: `Data/<Name>/` with a README, copied by `build.sh`.
+- Docs: `docs/scenes/<name>.md` with pictures made by `--snapshot`, README, `docs/demo-timeline.md`, this file.
+- The user looks at it in the app before it is merged.
 
 ## Decisions in force
 - Swift + Metal + SwiftUI, built with Swift Package Manager from the command line; Command-Line-Tools-only
@@ -157,38 +131,36 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - Large binary original data is loaded from `Data/`, not written into Swift source.
 - NO AI-UPSCALED ART (user, 2026-11-24). Modern pictures are the originals through Super-xBR 8x, made at
   run time; re-making pictures from source is welcome where possible.
-- Text and lettering in the Modern look: decided per part with the user from comparison sheets. So far:
-  end scroller in SuperClarendon (a real font fits it); mountain text and water sword through Super-xBR
-  (they are pictures, not fonts). The end scroller uses the RELEASED text and font, from the port's data.
+- Text and lettering in the Modern look: decided per part with the user from comparison sheets: opening
+  credits in Superclarendon stretched to the 1993 line widths (the Dolby logo through Super-xBR); credits
+  in DIN Condensed Bold; end scroller in Superclarendon; mountain text and water sword through Super-xBR
+  (they are pictures, not fonts). Text parts use the RELEASED texts and fonts (the end scroller's from the
+  port's data).
 - Music: the ORIGINAL tracker songs played live with libopenmpt (their pattern data is scrambled;
   unscrambled at load). Song 1 always at tempo 120. Music plays only with Play Demo; sidebar scenes are
   silent and loop; the Music menu has only Mute (the song keeps running underneath). Sound follows the look.
 - Fewer dependencies is better: libopenmpt is the only one (static, built from source by `build.sh`).
 
 ## Working rules learned (each one cost a mistake once)
-- The music frame counter (`dis_getmframe`) counts music ticks, not refreshes: settled from the player's
-  compiled library, not by simulation. When the source cannot answer, look in the compiled files first.
-- STEP PAIRING: what the program set up before its n-th wait for the screen shows on step n - 1. Work it
-  out from each part's own source; do not assume it equals another part's.
+- When the source cannot answer, look in the compiled or released files first (the music counter's
+  meaning was settled from the player's library, not by simulation).
+- STEP PAIRING (which step shows what the program just set up) is worked out from each part's own source
+  and its copper or wait routine; never assume it equals another part's.
 - A scene on its own has no music: NO stand-in pause where the demo waits for a cue, unless the original
-  really shows one (the jelly logo's invented half-second pause was noticed and removed; the water's 7.4 s
-  still picture is real and kept).
-- MEASURE standalone lengths from the script's silent run; do not estimate (two first guesses were wrong).
-  The scene's Play Demo check must use the SCRIPT's numbers, not the model's own constants.
-- Every new check is proven to fail with the detail broken on purpose, then restored. Do that with the
-  filtered self-test (`--selftest <scene id>`, a second or two), not the full one; run the full self-test
-  (and `--demo-timeline`) once before each commit and after each merge (user, 2026-11-25: the full run
-  for every deliberate break cost too much time).
-- A scene shown by Play Demo gets one extra `demoUpdate` with `justShown` (the script tests its first cue
-  on the show step; the lens needed it).
+  really shows one (the jelly logo's invented pause was removed; the water's 7.4 s still picture is real).
+- MEASURE standalone lengths from the script's silent run; do not estimate. A scene's Play Demo check
+  uses the SCRIPT's numbers, not the model's own constants.
+- Every new check is proven to fail with the detail broken on purpose, then restored, using the filtered
+  self-test (`--selftest <scene id>`); run the full self-test and `--demo-timeline` once before each
+  commit and after each merge (user, 2026-11-25).
+- Scratch scripts and their output stay OUT of the repository (the session's scratch folder; comparison
+  sheets for the user go in `build/scaler-compare/`, which git ignores).
+- `docs/images/window.png` is a capture of the app's window only, never the desktop.
+
+## Traps (facts that caused mistakes)
+- The music frame counter (`dis_getmframe`) counts MUSIC TICKS, not refreshes (`MAIN/STMIK.300`).
 - Jump the music by rendering and throwing away (`TrackerSong.skip`), never by libopenmpt's seek-by-seconds
   (it lands on a row start and counts song 1's later sections from the wrong place).
-- Scratch scripts and their output stay OUT of the repository (use the session's scratch folder;
-  comparison sheets for the user go in `build/scaler-compare/`, which git ignores).
-- `docs/images/window.png` is a capture of the app's window only, never the desktop.
-- `build.sh` clears Finder tags and retries the signing (the Documents folder is synced and re-tags the app).
-- Sessions: plan first for anything bigger than a small change; commit after each working change; ask
-  before pushing; rebuild main's app after a merge.
 
 ## Where the detail is
 - `docs/dev-notes.md`: the full notes that used to be here (1,400 lines, frozen): per scene and per
