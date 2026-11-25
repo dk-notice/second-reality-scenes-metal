@@ -47,7 +47,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
-- `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
+- `open build/SRMetal.app` runs it. TWO COPIES TRAP (2026-11-24): each worktree builds its own app, and macOS
+  may start ANOTHER copy with the same identity (an older one quit at once on the new `--from` option). After
+  merging into main, rebuild in the main folder; to be sure which copy starts: `open -n <full path to the .app>`.
+  Main's app was rebuilt after merging Play Demo from Here (2026-11-24, 445 checks pass there). Start-up options go after `--args`: `--look classic|modern`,
   `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|sine-landscape|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
