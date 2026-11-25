@@ -429,7 +429,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Seen by Claude: snapshots of both looks at steps 111 and 165, Play Demo at step 33000. Seen by the user in the
   running app (2026-11-25: "looks right" after the pause was removed); merged into main the same day. Not
   compared with the original running. Open: the white border (overscan) is left out.
-- NEXT (agreed order): mountain scroller, credits, opening credits (font decisions first), water last.
+- Pushed to GitHub with the review fixes (2026-11-25, main = `7f570d3` + this note).
+- NEXT (agreed order, in a NEW session, 2026-11-25): mountain scroller (part 9, `FOREST/READ2.PAS` +
+  `ROUTINES.ASM`, Trug, Turbo Pascal; POS1-3.DAT position tables, made by READMASK/READMSK2?; picture
+  `09-mountain-background`, font `09-mountain-font`): plan first, font decision for the Modern look with
+  the user (compare sheets as for the end scroller). Then credits, opening credits, water last.
+  Still open: review findings 3, 5, 6 (harmless today); skip the black waits when starting "from here"?;
+  the troll flash question; the jelly logo's white border left out.
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,
