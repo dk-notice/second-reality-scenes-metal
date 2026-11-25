@@ -215,7 +215,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   picture-and-fade toolkit; (3) the explosion as a real scene (frames made 8x on the fly, the next one
   prepared ahead, fade laid on after scaling, original 17.5 frames a second; also in the sidebar).
 - STEP 1 DONE: `DemoScene.demoUpdate(_ context: DemoContext)` (default empty; only Play Demo calls it,
-  before each tick): music state, steps since the part started, steps since the scene appeared.
+  before each tick): the music state (steps since the part / scene began were dropped in the /simplify pass).
   Techno Bars sets `TechnoBarsModel.musicRow` from it (nil standalone = the old estimate). 2 self-test
   checks (274): the flash follows the rows given; a silent Play Demo run gives Techno Bars the music's
   row on all 1,260 of its steps (on the step it appears, it has not been told yet: by design, as a
@@ -308,13 +308,21 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Checks weaker than their names (not wrong): the troll check only tests the first flash VALUE, not on
   which refresh it comes; the end scroller "centred" check only tests the ink starts at or after the
   computed start; the switch-off list check did not test timing (now covered by the new check).
-- Tidy-ups for the `/simplify` pass (not done): read `musicState` once per tick in `DemoRunScene` /
-  `DemoSequencer`; drop Play Demo's last picture (its 8x copy, ~65 MB) when a scene shows; scenes are made
-  on the main thread at the part change (Glenz and Ships now upscale in `init`), a possible hitch; three
-  copies of the same picture sampler set-up (`DemoRunScene`, `PictureLayer`, `SwitchOffScene`) and two
-  of the "find a data folder" code (`DemoPictures`, `EndScrollerData`); `DemoRunScene.loadOptions`
-  duplicates `ScenePicture.loadOptions`; `classicReferenceFrame` picture-to-level loops repeated in four
-  scenes; `DemoRunScene.reset()` leaves `shownSince` and the picture cache (harmless).
+- `/SIMPLIFY` PASS DONE (2026-11-24, 5 commits `a4c3bff`..`50bead8`, behaviour unchanged, 378 checks pass,
+  `--demo-timeline` unchanged): unused state removed (`DemoContext` is now only `music`); new shared
+  helpers `vgaFromByte`, `TrackerSong.wholeSong(_:fromOrder:)`, `TrollModel.isCue`, `DataFolder.find`
+  (all four data folders; Artwork and EndScroller gain the current-folder fallback), `Shaders.sampler`;
+  title cards are `ScenePicture`s drawn by `PictureLayer` (DemoRunScene's own pipeline gone; their 1993
+  look now passes through VGA levels like every picture); Play Demo keeps one picture and lets its 8x copy
+  go when anything else shows; `PictureLayer.shared` (shader compiled once), `ScenePicture.shared(named:)`
+  (troll + switch-off share one picture and upscale, held weakly), one command queue in `PictureScaler`;
+  `DemoRunScene.entry` / `DemoRunScene.id` replace the two Play Demo entries and the "play-demo" strings.
+  SKIPPED (left as ideas): read the music once per step; make the next picture / scene ahead in the
+  background (part changes still build scenes on the main thread); reuse the scaler's in-between
+  textures (the explosion allocates ~45 MB of them 17 times a second) or keep upscales in 8-bit;
+  end scroller screen cached between rows; move the scaler comparison code (`PictureScaler.Method`,
+  ~140 lines) into `ScalerCompareCommand`; the switch-off's lead-in skip via `demoUpdate`; the 14,500-step
+  Play Demo self-test run (slowish).
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
