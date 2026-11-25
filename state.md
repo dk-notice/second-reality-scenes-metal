@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (techno part's timing fixed on a branch, waiting for the user's look; the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (techno part's timing fixed, seen by the user and merged; the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -23,13 +23,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   `DemoHandover`). Seen by the user and merged 2026-11-25. Their standalone lengths differ from the
   original parts on purpose and stay: Glenz 2,360, Plasma 2,323, Plasma Cube 2,048, Sine Landscape
   2,048, 3D City 3,639, Ships 592.
-- ON BRANCH `claude/play-demo-timing-issues-df6e91`, waiting for the user to look in the app (not merged):
-  the music frame counter counts MUSIC TICKS (found in the player's library `MAIN/STMIK.300`; 48/52 a
+- Techno part, seen by the user and merged 2026-11-25: the music frame counter counts MUSIC TICKS (found in the player's library `MAIN/STMIK.300`; 48/52 a
   second from its "speed adjust"), so inside Play Demo the interference now runs 989 steps (was 669) with
   full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
   `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
 - Self-test: 577 checks, all pass. `--demo-timeline`: every part starts on the step the research
-  simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25.
+  simulation gives. main was last pushed to GitHub (private repository) at c643694; the techno fixes are not pushed yet.
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
   the original program running.
