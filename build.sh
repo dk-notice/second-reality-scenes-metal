@@ -4,9 +4,11 @@ set -e
 cd "$(dirname "$0")"
 
 APP="build/SRMetal.app"
-# Remove the last build's app BEFORE compiling. If the compile fails, the script stops (set -e)
-# and there is then no app at all, rather than an old one that looks like the result of this build.
+# Remove the last build's app BEFORE compiling, and remove a half-made one if any later step fails
+# (the compile, a copy, the credits' pictures, the signing): the script stops (set -e) and there is
+# then no app at all, rather than an old or unfinished one that looks like the result of this build.
 rm -rf "$APP"
+trap 'if [ $? -ne 0 ]; then rm -rf "$APP"; echo "Build failed: no app was left in build/." >&2; fi' EXIT
 
 # libopenmpt, the tracker-music library (ThirdParty/libopenmpt; see ThirdParty/README.md), built
 # as a STATIC library with every optional format switched off, so it ends up inside the program

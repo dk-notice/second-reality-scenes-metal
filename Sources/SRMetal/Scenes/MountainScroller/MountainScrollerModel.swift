@@ -24,9 +24,12 @@ struct MountainData {
     }
 
     /// nil if a file is missing or is not what the part expects.
-    static func load() -> MountainData? {
+    /// (`bytes` reads a file by name: the data folder's, unless a check hands in damaged ones.)
+    static func load(bytes: (String) -> [UInt8]? = MountainData.bytes) -> MountainData? {
         guard let hills = bytes("HILLBACK.CLX"), hills.count == 778 + 64000,
-              let o2 = bytes("O2.SCI"), o2.count >= 778 + textWidth * rows else { return nil }
+              let o2 = bytes("O2.SCI"), o2.count >= 778 + textWidth * rows,
+              // The text's values are 0...7 (the scene multiplies them by 36 into a byte).
+              o2[778..<(778 + textWidth * rows)].allSatisfy({ $0 < 8 }) else { return nil }
         var tables: [Table] = []
         for n in 1...3 {
             guard let d = bytes("POS\(n).DAT"), let table = ScrollTables.parse(d, columns: columns, rows: rows) else { return nil }

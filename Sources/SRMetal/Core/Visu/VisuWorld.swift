@@ -46,7 +46,9 @@ final class VisuWorld {
         let materials = try load("\(name).00M")
         guard materials.count >= 16 + 768 else { throw VisuError.badFile("\(name).00M", "too short") }
         let m = VisuBytes(bytes: materials)
-        palette = Array(materials[16..<16 + 768])
+        // Colour levels are 0...63; a VGA card ignored a level's top two bits, so a damaged byte cannot
+        // become a level the rest of the app is not ready for.
+        palette = materials[16..<16 + 768].map { $0 & 63 }
         orderingFlag = materials[15]
 
         // The object list: a count (which includes the camera), then one file number per object.

@@ -718,6 +718,15 @@ enum SelfTest {
                 check("VISU loader turns damaged data files away instead of crashing",
                       damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty,
                       damaged.wronglyAccepted.isEmpty ? damaged.summary : "not turned away: \(damaged.wronglyAccepted.joined(separator: ", "))")
+                // A palette byte above 63 (a damaged file): a VGA card used only its low six bits.
+                let loud = try VisuWorld(name: "U2A") { name in
+                    var file = try VisuData.load(name)
+                    if name.hasSuffix(".00M") { for i in 16..<(16 + 768) { file[i] |= 0xC0 } }
+                    return file
+                }
+                let plain = try VisuWorld(name: "U2A")
+                check("VISU loader keeps only the six bits of a palette level a VGA card used",
+                      loud.palette == plain.palette && plain.palette.allSatisfy { $0 < 64 }, "")
                 check("VISU engine stops a scribbled polygon growing past its record while being clipped",
                       damaged.scribblesStopped > 0, "\(damaged.scribblesStopped) corners refused")
             } catch {
