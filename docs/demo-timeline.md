@@ -15,7 +15,7 @@ already has for the part.
 |---|---|---|---|---|---|---|
 | 1 | Opening credits (`ALKU`) | 1 | 0:00.0 | 1:12.9 | 72.9 s | Picture: horizon, font |
 | 2 | Ships fly-by (`U2A`), incl. ~21 s of horizon before the ships | 1 | 1:12.9 | 1:41.2 | 28.3 s | **Scene** |
-| 3 | Explosion (`PAM`), incl. ~2.7 s wait | 1 | 1:41.2 | 1:46.6 | 5.4 s | 40 frames |
+| 3 | Explosion (`PAM`), incl. ~2.7 s wait | 1 | 1:41.2 | 1:46.6 | 5.4 s | **Scene** (2026-11-24) |
 | 4 | Title picture (`BEGLOGO`) | 1 | 1:46.6 | 1:48.9 | 2.3 s | Picture |
 | 5 | Glenz vectors (`GLENZ`) | 2 | 1:48.9 | 2:32.6 | 43.7 s | **Scene** |
 | 6 | Dot tunnel (`TUNNELI`) | 2 | 2:32.6 | 2:47.7 | 15.1 s | **Scene** |
@@ -56,7 +56,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 
   | Part | Shown now |
   |---|---|
-  | Opening credits, explosion, switch-off, rotozoomer, end scroller | A title card naming the part |
+  | Opening credits, switch-off, rotozoomer, end scroller | A title card naming the part |
+  | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
   | Title, mountain, lens, water, jelly logo, end picture | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |

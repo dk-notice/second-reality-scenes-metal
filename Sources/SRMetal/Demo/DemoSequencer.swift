@@ -76,7 +76,9 @@ enum DemoScript {
         s += [.part("Ships fly-by"), .show(.picture("02-ships-horizon")),
               until { $0.order > 10 && $0.row > 46 }, .show(.scene("ships-flyby")),
               until(cap: 521) { $0.order > 11 && $0.row > 54 }]
-        s += [.part("Explosion"), .show(.card("Explosion")), until { $0.sync >= 10 }, .frames(45 * 4)]
+        // While the original waited for its cue, the screen still showed the ships' horizon.
+        s += [.part("Explosion"), .show(.picture("02-ships-horizon")), until { $0.sync >= 10 },
+              .show(.scene("explosion")), .frames(ExplosionModel.length)]
         s += [.part("Title picture"), .show(.picture("04-title")), .frames(161)]
         // ---- Song 2 (MUSIC1) from section 0 ----
         s += [.part("Glenz vectors"), .playSong(.second, order: 0), .show(.scene("glenz-vectors")),

@@ -2,10 +2,12 @@ import Foundation
 import MetalKit
 
 /// A picture from the 1993 demo, ready for both looks: the original pixels (1993 look) and the same made
-/// `PictureScaler.modernScale` times larger by Super-xBR (Modern look, made on first use).
-final class ScenePicture {
+/// `PictureScaler.modernScale` times larger by Super-xBR (Modern look, made on first use, or ahead of
+/// time on a background thread with `prepareUpscaledInBackground`). Safe to use from several threads.
+final class ScenePicture: @unchecked Sendable {
     let original: MTLTexture
     private let device: MTLDevice
+    private let lock = NSLock()
     private var upscaledCopy: MTLTexture?
 
     init(_ original: MTLTexture, device: MTLDevice) {
@@ -32,6 +34,8 @@ final class ScenePicture {
 
     /// The Modern look's version (made now if it is not made yet; a few milliseconds).
     var upscaled: MTLTexture {
+        lock.lock()
+        defer { lock.unlock() }
         if let made = upscaledCopy { return made }
         let made = (try? PictureScaler.upscaled(original, device: device)) ?? original
         upscaledCopy = made
@@ -41,7 +45,23 @@ final class ScenePicture {
     /// Makes the Modern look's version now, so that showing it later costs nothing.
     func prepareUpscaled() { _ = upscaled }
 
-    var isUpscaled: Bool { upscaledCopy != nil }
+    /// Makes the Modern look's version on a background thread (for a picture shown soon).
+    func prepareUpscaledInBackground() {
+        DispatchQueue.global(qos: .userInitiated).async { [self] in prepareUpscaled() }
+    }
+
+    /// Lets go of the Modern look's version (it is made again if needed).
+    func dropUpscaled() {
+        lock.lock()
+        upscaledCopy = nil
+        lock.unlock()
+    }
+
+    var isUpscaled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return upscaledCopy != nil
+    }
 }
 
 enum PictureError: Error, CustomStringConvertible {

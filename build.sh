@@ -66,6 +66,7 @@ cp Data/Music/MUSIC*.S3M "$APP/Contents/Resources/Music/"
 # Pictures for Play Demo: the original pictures at their own size (see artwork/README.md). About 1 MB.
 mkdir -p "$APP/Contents/Resources/Artwork"
 cp artwork/original/rgb/*.png "$APP/Contents/Resources/Artwork/"
+cp -R artwork/original/rgb/explosion "$APP/Contents/Resources/Artwork/"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 codesign --force --sign - "$APP" >/dev/null

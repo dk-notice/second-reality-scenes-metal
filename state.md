@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|city-3d`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|city-3d`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -225,6 +225,15 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   1993 look = the original's whole-number rule, Modern = smooth, laid on after scaling). Play Demo's
   pictures now go through it (only the picture showing is kept). 1 self-test check (275): 1993 fades
   to white and black match the rule on 60 pixels (proven to fail, 46 of 60, with rounding instead).
+- STEP 3 DONE: `Scenes/Explosion/` (sidebar, after Ships Fly-by): `ExplosionModel` (OUTTAA.C's timing
+  and `wfade` table: 45 rounds x 4 steps = 180, then loops) and `ExplosionScene` (frames via
+  `ScenePicture`, 1993 fade exact; Modern: 8x per frame, the next prepared on a background thread,
+  only two kept, smooth fade on top). `build.sh` copies `artwork/original/rgb/explosion` (456 KB).
+  17 new self-test checks (292): all 15 checkpoints match the rule pixel for pixel. Play Demo: the
+  Ships horizon during the wait for sync 10, then the explosion; all part starts unchanged.
+  `docs/scenes/explosion.md` with its two pictures. NOT seen by the user in the app yet.
+  NEXT (suggested): title and end picture fades with the toolkit, then the troll scroll-in, end
+  scroller (fonts decision), rotozoomer.
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.

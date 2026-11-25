@@ -195,6 +195,15 @@ enum SceneCatalog {
             make: { device, format in try ShipsFlybyScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "explosion",
+            title: "Explosion",
+            credit: "Trug, Wildfire",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 3, 4, 5, 8, 23, 60, 100, 119, 124, 140, 156, 163, 176, 179],
+            thumbnailStep: 60,
+            make: { device, format in try ExplosionScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "city-3d",
             title: "3D City",
             credit: "Psi",
