@@ -490,7 +490,12 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   step 16900. Seen by the user in the
   running app (2026-11-25: "looks good"); merged into main and pushed the same day, main's app rebuilt. Not
   compared with the original running.
-- NEXT (agreed order): credits, opening credits (font decisions first), water last. Still open: review
+- NEXT (order CHANGED by the user, 2026-11-25, on Claude's advice): the WATER SCROLLER next, in a NEW session,
+  because it is the same technique (`WATER/DEMO.PAS`, `ROUTINES.ASM` `putrouts1`, Trug; tables `WAT1-4.DAT`,
+  a 158-column window; text picture `MIEKKA.SCI` = `13-water-font`?). To check first: can `DATGEN.PAS` +
+  `MASK.MTV` + `GREEN.CLX` (all in `WATER/`) remake the tables? Reuse the mountain's model, smooth map and
+  checks where they fit. Build on the Super-xBR background; the POV-Ray re-render stays a later idea. Then
+  credits, opening credits (font decisions first). Still open: review
   findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
   logo's white border.
 
