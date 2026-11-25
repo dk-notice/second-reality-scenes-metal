@@ -81,7 +81,9 @@ rests on how VGA cards latch the start address, not on the source alone.
   is most like the released picture (`SRMetal --credits-match`; the ships by eye, since no step of the
   ships scene matches the released picture well). `build.sh` renders them into the app at 1280x960
   (`SRMetal --credits-captures`), so they always match the scenes as built and are not kept in git.
-  Picture 1 (the opening credits, not built yet) is the released picture through Super-xBR. Picture 21
+  Picture 1 is the Opening Credits scene's "Code" page (2026-11-25; until then the released picture
+  through Super-xBR), chosen within that page, since dimmer steps match the picture's darker colours
+  better. Picture 21
   shows the credits screen itself, as the released one does: it is this scene's own Modern screen 21,
   captured with that picture made the plain way.
 - **Text:** DIN Condensed Bold (comes with macOS), white, capitals as tall as the 1993 letters (15 rows)
@@ -90,7 +92,7 @@ rests on how VGA cards latch the start address, not on the source alone.
 
 | Picture | Captured from | Step |
 |---|---|---|
-| 1 | (released picture, Super-xBR) | — |
+| 1 | Opening Credits (its own count, from 70 steps before the first title) | 3664 |
 | 2 | Ships Fly-by | 360 |
 | 3 | Explosion | 124 |
 | 4 | Title Picture | 158 |

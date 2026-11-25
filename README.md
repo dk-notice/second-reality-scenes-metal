@@ -10,10 +10,11 @@ Every scene can be shown two ways, switchable at any time:
 - **1993 look**: the original pixels (320x200 for most scenes) and 70 steps per second, as on a 486 with a
   VGA card.
 
-The 23 scenes, in the demo's order (the hidden starfield, which the demo only showed when asked, comes last):
+The 25 scenes, in the demo's order (the hidden starfield, which the demo only showed when asked, comes last):
 
 | | Modern look | 1993 look |
 |---|---|---|
+| Opening Credits | ![](docs/images/opening-credits-modern.png) | ![](docs/images/opening-credits-classic.png) |
 | Ships Fly-by | ![](docs/images/ships-flyby-modern.png) | ![](docs/images/ships-flyby-classic.png) |
 | Explosion | ![](docs/images/explosion-modern.png) | ![](docs/images/explosion-classic.png) |
 | Title Picture | ![](docs/images/title-picture-modern.png) | ![](docs/images/title-picture-classic.png) |
@@ -57,14 +58,14 @@ the original music (the real tracker songs, played live by libopenmpt, which is 
 Demo from Part** at any of its parts, with the music jumped to that moment, so everything after stays in
 step. The scenes in the sidebar play on their own, silently, and repeat.
 
-Seventeen of the 19 parts are this project's scenes. Two are not built yet and show stand-ins: the opening
-credits (a title card naming the part, for its 73 seconds) and the credits (the 21 original pictures as
-stills). See [docs/demo-timeline.md](docs/demo-timeline.md).
+All 19 parts are this project's scenes (the opening credits, the last, since 2026-11-25). See
+[docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes
 
 | Scene | Original coder | How the original did it, and how this version does |
 |---|---|---|
+| Opening Credits | Wildfire | [docs/scenes/opening-credits.md](docs/scenes/opening-credits.md) |
 | Ships Fly-by | Psi | [docs/scenes/ships-flyby.md](docs/scenes/ships-flyby.md) |
 | Explosion | Trug, Wildfire | [docs/scenes/explosion.md](docs/scenes/explosion.md) |
 | Title Picture, End Picture | Future Crew | [docs/scenes/title-and-end-pictures.md](docs/scenes/title-and-end-pictures.md) |
@@ -92,7 +93,7 @@ The first twelve scenes (2026-11-14) were the purely calculated ones and the 3D 
 [docs/visu-engine.md](docs/visu-engine.md). Picture-based parts, scrollers and stills were out of scope at
 first. Since Play Demo exists (2026-11-24) they have been added one at a time: the Explosion, the title and
 end pictures, the troll and the screen switch-off, the end scroller, the rotozoomer, the lens, the jelly
-logo, the mountain scroller and the water scroller. Still to come: the opening credits and the credits.
+logo, the mountain scroller, the water scroller, the credits and, last, the opening credits.
 Undecided ideas are in [docs/future-ideas.md](docs/future-ideas.md).
 
 ### What is calculated and what is original material
@@ -110,6 +111,8 @@ others need material that cannot be calculated, all of it public domain like the
 | Lens, Rotozoomer | The original picture; the Lens also one table ([Data/Lens/](Data/Lens/README.md)) |
 | Mountain Scroller | Background, text picture and three position tables ([Data/Mountain/](Data/Mountain/README.md)) |
 | Water Scroller | Background, sword picture and three position tables ([Data/Water/](Data/Water/README.md)) |
+| Opening Credits | The released horizon and font ([Data/OpeningCredits/](Data/OpeningCredits/README.md)) |
+| Credits | The released pictures and font ([Data/Credits/](Data/Credits/README.md)) |
 | End Scroller | The released text and font ([Data/EndScroller/](Data/EndScroller/README.md)) |
 | Play Demo | The two songs ([Data/Music/](Data/Music/README.md)) |
 
@@ -168,7 +171,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `credits`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `opening-credits`, `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `credits`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |

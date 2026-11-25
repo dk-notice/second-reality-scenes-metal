@@ -13,8 +13,8 @@ has for the part: a scene of its own, or only the original artwork so far.
 
 | # | Part | Song | Starts | Ends | Length | Have |
 |---|---|---|---|---|---|---|
-| 1 | Opening credits (`ALKU`) | 1 | 0:00.0 | 1:12.9 | 72.9 s | Not built: the horizon picture and font are exported; Play Demo shows a title card |
-| 2 | Ships fly-by (`U2A`), incl. ~21 s of horizon before the ships | 1 | 1:12.9 | 1:41.2 | 28.3 s | **Scene** |
+| 1 | Opening credits (`ALKU`) | 1 | 0:00.0 | 1:20.1 | 80.1 s | **Scene** (2026-11-25) |
+| 2 | Ships fly-by (`U2A`), incl. ~14 s of horizon before the ships | 1 | 1:20.1 | 1:41.2 | 21.2 s | **Scene** |
 | 3 | Explosion (`PAM`), incl. ~2.7 s wait | 1 | 1:41.2 | 1:46.6 | 5.4 s | **Scene** (2026-11-24) |
 | 4 | Title picture (`BEGLOGO`) | 1 | 1:46.6 | 1:48.9 | 2.3 s | **Scene** (2026-11-24) |
 | 5 | Glenz vectors (`GLENZ`) | 2 | 1:48.9 | 2:32.6 | 43.7 s | **Scene** |
@@ -52,11 +52,11 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 - **Checked:** `SRMetal --demo-timeline` (and the self-test) run the same script against the music rendered
   silently, as `tools/music_steps.c` does, and every part starts on exactly the step the Python simulation
   gives; the credits end at step 45,670 (10:52.4).
-- **What each part shows** (`Demo/DemoRunScene.swift`); only the opening credits are still a stand-in:
+- **What each part shows** (`Demo/DemoRunScene.swift`); every part is a scene since 2026-11-25:
 
   | Part | Shown now |
   |---|---|
-  | Opening credits | A title card naming the part |
+  | Opening credits | Its own scene (2026-11-25): the titles and pages on their music cues, the horizon scrolling to the picture the ships start on |
   | Lens, rotozoomer | Their own scenes (2026-11-24): the lens follows both music cues, the rotozoomer turns white on its cue |
   | End scroller | Its own scene (2026-11-24), until the demo is stopped |
   | Troll, screen switch-off | Their own scenes (2026-11-24): the troll scrolls in on its music cue, shakes and flashes; the screen collapses to a line and a dot |
@@ -163,8 +163,10 @@ The music player (STMIK) is not in the source release, so two details had to be 
 
 ## Simplifications, and what is not checked
 
-- **Opening credits' end** is approximate (when the scroll finishes after sync value 9, taken as 60
-  refreshes); it does not change anything after it, because the ships wait for a fixed song position.
+- **Opening credits' end** was approximate until 2026-11-25 (sync value 9 plus 60 refreshes, 1:12.9).
+  Worked out from the released program it is 2,947 refreshes after sync 4 (titles on syncs 1-3, each at
+  least 427 refreshes; the scroll 320 x 9 refreshes; the last fade and the hand-over): 1:20.1. Nothing
+  after it moved, because the ships wait for a fixed song position. See `docs/scenes/opening-credits.md`.
 - **Loading time between parts** (reading each program from disk, a fraction of a second on a 486)
   is not counted.
 - **The switch-off** ends with a `sleep(1)`, counted as 70 refreshes.
