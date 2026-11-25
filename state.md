@@ -90,6 +90,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
     part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
   - `--scaler-compare <picture|file.png> <folder> [x y width] [--methods ...]`: labelled comparison sheets.
+  - `--credits-match <picture 1-21> <scene id> [first last [stride]]`: the steps at which a scene's 1993
+    look is most like a credits picture (to choose the Modern look's capture moments).
   - `--music-info [--write <folder>]`, `--music-render`, `--music-play`: the songs.
   - `--visu-test list|<case>|compare|damaged`: the 3D engine's test cases.
 
