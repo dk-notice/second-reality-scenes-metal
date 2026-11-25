@@ -34,11 +34,22 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   the original program running.
 
 ## Next steps
-1. CREDITS (part 18, `CREDITS/MAIN.C`), next: research and plan first. Today: 21 pictures as
-   stills, 362 steps each. Font decision with the user (compare sheets as before; the credits font has 10
-   shades). Known: the 21 pictures survive only as the artist's files, `pic02` is a "PART PIC MISSING"
-   placeholder (the released demo may differ: check the port's data and the built `CRED.EXE`). The user's
-   later idea: replace the miniature screenshots with ones from this project's own scenes (`--snapshot`).
+1. CREDITS (part 18, `CREDITS/MAIN.C`), IN PROGRESS. Research done 2026-11-25:
+   - The RELEASED `CRED.EXE` (pklite; unpack with deark) differs from the source: 7 of 21 pictures
+     (02 is a real picture, not "PART PIC MISSING"; 16 another city view), all palettes slightly, and 6
+     credit lines (OBJECTS - WILDFIRE, SKETCH - SKAVEN x2, WORLD - TRUG, Skaven on 17 and 18). The font
+     is identical. Pictures sit at 72272 + 16784 k in the unpacked file (16-byte header, 768 palette, 160x100).
+   - Timing: 1 + 102 in + 200 hold + 59 out = 362 steps a screen, 7,602 in all (the script's number).
+   - The text shows EVERY OTHER FONT ROW: written with 320-wide rows into a 640-wide screen (TWEAK.ASM
+     sets CRTC offset 80, byte mode). The C++ port draws all rows (tall letters, lines 3-4 cut off).
+   DECIDED (user, 2026-11-25): 1993 look = the released pictures and the original font (every other
+   row). Modern look = DIN Condensed Bold (macOS system font) and pictures captured from this project's
+   scenes in their Modern look, at the step whose 1993 look matches each released picture (show the user
+   all 21 pairs before they go in), rendered by `build.sh` with `--snapshot` into the app (not in git).
+   Picture 1 (opening credits, not built yet): the released picture through Super-xBR until then.
+   Plan: (1) art_export.py takes the pictures from CRED.EXE; (2) the scene, 1993 look, with a
+   `tools/credits_reference.py` replay (work out which register changes show on which step first);
+   (3) Modern look; (4) Play Demo shows the scene for 7,602 steps.
 2. OPENING CREDITS (part 1, `ALKU`): research and plan, font decision first. Today: a title card for 73 s.
 3. Then polish, only when the user asks: the open questions below.
 
