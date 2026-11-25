@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|rotozoomer|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -274,8 +274,39 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   4x width, 1.2 tall pixel shape, caps 14 rows on row 14, natural spacing, glides). 16 new self-test
   checks (377). Play Demo shows it from 10:52.4 until stopped. Other text parts' fonts (opening credits,
   credits, mountain, water) are NOT decided yet: compare when reached.
-  NEXT (suggested order): the rotozoomer; then the bigger ones (lens, jelly logo, mountain scroller,
-  credits, opening credits; water last).
+  ROTOZOOMER DONE (2026-11-24, user: "build it" after the plan): see "Rotozoomer notes".
+  NEXT (suggested order): the bigger ones (lens, jelly logo, mountain scroller, credits, opening
+  credits; water last).
+
+## Rotozoomer notes (2026-11-24)
+- Original: `LENS/MAIN.C` part3 + `LENS/ASM.ASM` `_rotate` (Psi). `Scenes/Rotozoomer/`: `RotozoomerModel`
+  (path, timing, fades, the exact whole-number `rotate`, tile and turned tile) and `RotozoomerScene`
+  (1993: IndexedCanvas 160x100, colour numbers rebuilt from the exported picture's 64 colours; Modern:
+  own shader, unrounded camera blended between steps, lens picture 8x by Super-xBR via
+  `ScenePicture.shared`, explicit gradients so the tile wrap does not upset the smoothing). Sidebar:
+  before Plasma. Docs: `docs/scenes/rotozoomer.md`, pictures at step 500.
+- DECIDED from the source: the camera path is CALCULATED from MAIN.C's SAVEPATH formulas (C truncation
+  rules); it equals all 2000 steps of `LENS.EXP` (checked by `tools/rotozoom_reference.py` and a
+  self-test checksum of the file's 16,000 path bytes), so no data file ships.
+- Step pairing chosen: step s shows path[s] with the palette set right after it (frame s + 1): flash
+  `(15 - f)*5` for f < 16, fade `(f - 1872)/2` of 63 to white, white after 2000. Standalone: 35 white
+  steps, then again. Play Demo: `demoUpdate` gives music plus; > -4 -> white (script unchanged apart
+  from the card -> scene; `--demo-timeline` unchanged).
+- Strayed from the original (Modern only): no one-row shift at the tile's left/right edge (the 16-bit
+  carry). The 1993 look keeps it.
+- `tools/rotozoom_reference.py`: a register-level transliteration of `_rotate` (NOT run by
+  `x86interp.py`, which cannot run self-modifying code) plus the path check; prints CRCs at 19 steps.
+  Self-test: 5 new checks (405 in all, all pass): path checksum, 920 turned-tile steps, timing, music
+  cue, 1993 pictures = the tool's at 19 steps (proven to fail on 14 of 19 without the carry), plus the
+  generic GPU-vs-processor checks at 20 checkpoints. `--motion-check rotozoomer modern`: no jumps; many
+  changed pixels around steps 1850-1870 = the camera's extreme close-up (same in both looks).
+- Seen by Claude: snapshots of both looks (steps 100, 500, 1300, 1862) and Play Demo at step 20500.
+  NOT seen by the user in the running app yet; not compared with the original running.
+- BUILD NOTE (2026-11-24): in this worktree `build.sh`'s last step (`codesign`) fails with "resource
+  fork, Finder information, or similar detritus not allowed": the app folder gets a
+  `com.apple.FinderInfo` / `com.apple.fileprovider` tag straight back after `xattr -cr` (the Documents
+  folder looks synced by a file provider, e.g. iCloud). Everything before it is done and the program
+  runs (the linker already signs the program itself). Not fixed; the user to decide.
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,

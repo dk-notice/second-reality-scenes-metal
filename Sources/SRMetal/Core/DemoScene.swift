@@ -158,6 +158,16 @@ enum SceneCatalog {
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "rotozoomer",
+            title: "Rotozoomer",
+            credit: "Psi",
+            // 160x100 big pixels: the original's 320x400 mode with each pixel 2 wide and 4 tall.
+            canvasSize: SIMD2(160, 100),
+            checkpoints: [0, 1, 7, 14, 15, 16, 100, 270, 500, 777, 1000, 1300, 1600, 1871, 1872, 1873, 1900, 1990, 1999, 2000],
+            thumbnailStep: 500,
+            make: { device, format in try RotozoomerScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "plasma",
             title: "Plasma",
             credit: "Wildfire",
