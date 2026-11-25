@@ -18,7 +18,10 @@ import Metal
 /// MIT licence, copyright 2011-2022 Hyllian; see ThirdParty/xBR-LICENSE.txt), with the settings of their default presets.
 final class PictureScaler {
     enum Method: String, CaseIterable {
-        case smooth, sharp, xbrLv2 = "xbr-lv2", superXBR = "super-xbr"
+        case smooth, sharp, xbrLv2 = "xbr-lv2", superXBR = "super-xbr", superXBR8 = "super-xbr-8"
+
+        /// The four compared first (2026-11-24); 8x was compared with 4x afterwards.
+        static let firstComparison: [Method] = [.smooth, .sharp, .xbrLv2, .superXBR]
 
         var title: String {
             switch self {
@@ -26,6 +29,7 @@ final class PictureScaler {
             case .sharp: return "Sharp pixels"
             case .xbrLv2: return "xBR level 2"
             case .superXBR: return "Super-xBR (4x, then smooth)"
+            case .superXBR8: return "Super-xBR (8x, then smooth)"
             }
         }
     }
@@ -107,9 +111,9 @@ final class PictureScaler {
         case .smooth: name = "scale_smooth"
         case .sharp: name = "scale_sharp"
         case .xbrLv2: name = "scale_xbr_lv2"
-        case .superXBR:
-            // Two rounds of the three passes: 2x, then 4x.
-            for _ in 0..<2 { input = superXBRRound(input, commands: commands) }
+        case .superXBR, .superXBR8:
+            // Rounds of the three passes, each doubling: 4x is two rounds, 8x three.
+            for _ in 0..<(method == .superXBR ? 2 : 3) { input = superXBRRound(input, commands: commands) }
             name = "scale_smooth"
         }
         var uniforms = Uniforms(region: region, sourceSize: SIMD2(Float(input.width), Float(input.height)),

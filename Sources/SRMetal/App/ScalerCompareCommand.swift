@@ -8,10 +8,22 @@ import MetalKit
 /// (one part of it, `width` source pixels wide starting at x, y, also at 960x720: what that part looks
 /// like on a big screen). Without x y width the zoom shows the middle third.
 enum ScalerCompareCommand {
-    static let usage = "usage: SRMetal --scaler-compare <picture, e.g. 07-troll> <output folder> [x y width]"
+    static let usage = "usage: SRMetal --scaler-compare <picture, e.g. 07-troll> <output folder> [x y width] [--methods a,b,...]"
     static let cell = (width: 960, height: 720)
 
     static func run(arguments: [String]) -> Bool {
+        var arguments = arguments
+        // Which ways to compare (default: the first four); names as in `PictureScaler.Method`.
+        var methods = PictureScaler.Method.firstComparison
+        if let at = arguments.firstIndex(of: "--methods"), at + 1 < arguments.count {
+            let chosen = arguments[at + 1].split(separator: ",").compactMap { PictureScaler.Method(rawValue: String($0)) }
+            guard !chosen.isEmpty else {
+                print("--methods: use some of " + PictureScaler.Method.allCases.map(\.rawValue).joined(separator: ","))
+                return false
+            }
+            methods = chosen
+            arguments.removeSubrange(at...(at + 1))
+        }
         guard let flag = arguments.firstIndex(of: "--scaler-compare"), arguments.count >= flag + 3 else {
             print(usage)
             return false
@@ -39,13 +51,13 @@ enum ScalerCompareCommand {
             }
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             for (suffix, region) in [("full", SIMD4<Float>(0, 0, 1, 1)), ("zoom", zoom)] {
-                let pictures = try PictureScaler.Method.allCases.map { method -> CGImage in
+                let pictures = try methods.map { method -> CGImage in
                     try draw(source, method: method, region: region, scaler: scaler, device: device, queue: queue)
                 }
                 let title = suffix == "full" ? "\(name), whole picture"
                     : String(format: "%@, part from (%.0f, %.0f), %.0f source pixels wide", name,
                              region.x * w, region.y * h, region.z * w)
-                guard let sheet = sheet(pictures, labels: PictureScaler.Method.allCases.map(\.title), title: title),
+                guard let sheet = sheet(pictures, labels: methods.map(\.title), title: title),
                       Snapshot.writePNG(sheet, to: folder.appendingPathComponent("\(name)-\(suffix).png")) else { return false }
             }
             return true
@@ -73,11 +85,12 @@ enum ScalerCompareCommand {
         return image
     }
 
-    /// Four pictures in a 2x2 grid, each with its label, and a title along the top.
+    /// The pictures two to a row, each with its label, and a title along the top.
     private static func sheet(_ pictures: [CGImage], labels: [String], title: String) -> CGImage? {
         let gap = 8, band = 36, top = 44
         let width = 2 * cell.width + 3 * gap
-        let height = top + 2 * (cell.height + band) + gap
+        let rows = (pictures.count + 1) / 2
+        let height = top + rows * (cell.height + band) + gap
         guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                                       space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                       bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
