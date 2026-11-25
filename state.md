@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (code review finished and pushed; next: go through everything left with the user)
+Last updated: 2026-11-25 (everything left gone through with the user; most of it dropped for good)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -29,10 +29,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   program running.
 
 ## Next steps
-0. NEXT SESSION (agreed 2026-11-25): go through EVERYTHING left with the user, before any code: every
-   item under "Open questions", the signed release (item 2), and `docs/future-ideas.md`. For each: what
-   it is in plain words, what it would cost, a recommendation (do, leave for good, or needs a decision),
-   and what the user must decide. Then the user picks; each chosen piece of work gets its own plan.
+0. DONE 2026-11-25: everything left was gone through with the user. Dropped items are listed under
+   "Decisions in force"; what is still open is under "Open questions". The signed release (item 2)
+   waits until the user comes back to it.
 1. CODE REVIEW AND SIMPLIFY: DONE, merged and pushed (2026-11-25; merges 355d716 and a67eade; the user
    saw and tried the results in the app). The whole project was reviewed by six read-only agents;
    nothing was found wrong with the 1993 look or the timing. Fixed: the end scroller's stray "%" and
@@ -49,7 +48,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      between the laptop's speakers and AirPods very quick.
    - Real-sound tests: `--demo-live 8 30 pause 3 4` and `--demo-live 8 30 rebuild 3` (each fails with
      its fix taken out). The self-test never uses the sound output.
-   What the review left is under "Open questions".
+   What the review left was dropped on 2026-11-25 (see "Decisions in force").
 2. SIGNED RELEASE, later, when the user asks (decided 2026-11-25): the app is to be shared outside the
    App Store without a warning on other Macs, so it will be signed with a Developer ID certificate and
    notarised. The user has signed up for an Apple Developer account. Still to do then: the user creates
@@ -58,38 +57,32 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
-3. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
+3. Nothing else is planned. The open questions below start only when the user asks.
 
 ## Open questions (not to be started unasked)
+Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
 - Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
-  would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue: the
-  released `PLZPART.EXE` may differ from the source (its pklite unpack came out damaged; not read yet;
-  it may be packed twice, as ALKU.EXE was: try `deark -m lzexe` on the result).
-  See `docs/demo-timeline.md`, "Later found: it counts music ticks".
-- Code review findings left as they are: (3) a resumed part's name is lost if a new part starts on the
-  first step; (5) the music-skip check runs only at 44.1 kHz, the player at 48; (6) a failed
-  `SilentMusic.play` keeps the old song's details. All harmless today.
-- Left from the whole-project review (2026-11-25), none visible today: work repeated on every drawn frame
-  instead of once per step (the credits' 1993 text, a plasma buffer, Plasma Cube, Lens, Bouncing Dots,
-  Switch Off); the 3D City's Modern fades possibly a frame or two early (one shared palette buffer);
-  two low-memory crash paths (`VisuModernRenderer.makeTargets`, `PictureScaler`); duplicated code
-  (the three text scenes' shaders and loaders, palette conversions, the tools' PNG writers and four
-  ways of finding the original source: several tools need `SR_ORIGINAL` set when run from a worktree);
-  `tools/x86interp.py` treats any `imul` as the one-operand form (no source uses another today);
-  the reference tools do not check the hash of the EXE they unpack.
-- Left from /simplify (2026-11-25): the Lens, Mountain and Water loaders return nil for a damaged file, so
-  it is reported as "missing" (make them throw, as Credits and Visu do); the water's sword values have no
-  load check like the mountain text's; the end scroller still makes each line's picture on the frame the
-  line enters; the opening credits hold about 50 MB of Modern pictures even in the 1993 look (made with
-  the scene so none is late on its cue); `--demo-timeline` could print the same "Part starts (steps)"
-  line as the Python tool, to compare by eye.
-- Skip the black waits when Play Demo starts "from here"?
-- Troll flash possibly one refresh late (rests on how VGA latches, not on the source alone).
-- The jelly logo's white border (overscan) is left out.
-- The water background could be re-rendered from the POV-Ray files in `WATER/` instead of scaled up.
-- The repository's history holds ~168 MB of deleted AI pictures; shrinking it means rewriting history.
-- Waiting on the user by eye: the 3D City's fades and evened-out camera roll; Ships Fly-by's pause.
-- Undecided ideas in `docs/future-ideas.md` (a third "Reimagined" look).
+  would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue, so
+  the released `PLZPART.EXE` may differ from the source. It CAN now be read: it was packed twice, and
+  `deark -m pklite` then `deark -m lzexe` gives a clean 224,608-byte program (2026-11-25; only unpacked,
+  not read). Research first, no code; if the original really paused longer, the user decides whether the
+  timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
+  Recommended; the user has not yet said to start.
+- The water background could be re-rendered from the POV-Ray files in `WATER/` instead of scaled up
+  (Modern look only). Unknown size: a one-hour trial would show whether today's POV-Ray renders the 1993
+  files and whether the result lines up with the original. Undecided.
+- Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
+  two songs are covered by the same public-domain release as the code (this matters for sharing the app
+  too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
+  old commits. They are NOT in the ordinary history, which is 22 MB.
+- `docs/future-ideas.md` is out of date (its second half calls Play Demo unfinished; its first half is
+  the dropped "Reimagined" look). Tidy it or remove it: recommended, not yet agreed.
+- Waiting on the user by eye (main's `build/SRMetal.app`):
+  - 3D City, Modern look against 1993: do the fades (up from black over the first second, to black over
+    the last 1.5 s) look right and come at the same moment in both looks (the review suspected Modern a
+    frame or two early: one shared palette buffer)? Is the evened-out camera roll an improvement?
+  - Ships Fly-by on its own: is the one-second empty horizon wanted, and the right length
+    (`ShipsFlybyModel.pauseSteps`)?
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app` (first builds libopenmpt, about 15 s the first time; run it once
@@ -184,6 +177,18 @@ All parts are built; this is the checklist when one is redone or a new one is ad
   unscrambled at load). Song 1 always at tempo 120. Music plays only with Play Demo; sidebar scenes are
   silent and loop; the Music menu has only Mute (the song keeps running underneath). Sound follows the look.
 - Fewer dependencies is better: libopenmpt is the only one (static, built from source by `build.sh`).
+- DROPPED FOR GOOD (user, 2026-11-25; do not raise again unless one starts to show in the app). None
+  was visible. Code review findings 3, 5 and 6; work repeated on every drawn frame instead of once per
+  step; the two low-memory crash paths; the duplicated code (text scenes' shaders and loaders, palette
+  conversions, the tools' PNG writers and ways of finding the original source: several tools still need
+  `SR_ORIGINAL` set when run from a worktree); `tools/x86interp.py` treating any `imul` as the
+  one-operand form; the reference tools not checking the EXE's hash; the Lens, Mountain and Water
+  loaders reporting a damaged file as "missing", and no load check on the water's sword values; the end
+  scroller making each line's picture on the frame it enters; the opening credits' 50 MB of Modern
+  pictures held in the 1993 look; `--demo-timeline` printing the Python tool's line; the Troll flash
+  possibly one refresh late; rewriting history to shrink the repository (not needed: the old pictures
+  are in Git LFS; `git lfs prune` would free 168 MB on this Mac, not run); skipping the black waits
+  when Play Demo starts "from here"; the jelly logo's white border; the third "Reimagined" look.
 
 ## Working rules learned (each one cost a mistake once)
 - When the source cannot answer, look in the compiled or released files first (the music counter's
