@@ -122,7 +122,7 @@ enum DemoScript {
         return s
     }()
 
-    /// The pictures the script shows, in order (for loading them ahead of time).
+    /// The pictures the script shows, in order.
     static let pictures: [String] = steps.compactMap { if case .show(.picture(let name)) = $0 { return name } else { return nil } }
 
     static var partCount: Int { steps.filter { if case .part = $0 { return true } else { return false } }.count }

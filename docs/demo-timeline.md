@@ -58,7 +58,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   |---|---|
   | Opening credits, explosion, switch-off, rotozoomer, end scroller | A title card naming the part |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
-  | Title, mountain, lens, water, jelly logo, end picture | The picture: the high-resolution version in the Modern look, the original in the 1993 look |
+  | Title, mountain, lens, water, jelly logo, end picture | The original picture: hard-edged pixels in the 1993 look, smoothly stretched in the Modern look (a pixel-art scaler is planned) |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the troll picture, each at the original's moment |
   | Loader's wait after the switch-off | Black |
@@ -70,7 +70,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
-  its 3D data) can take a moment at the start of a part; pictures are loaded ahead in the background.
+  its 3D data) can take a moment at the start of a part.
 
 ## How the music is used
 

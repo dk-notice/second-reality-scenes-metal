@@ -8,8 +8,8 @@ For each picture it reads the copy that was BUILT INTO the demo (the .OBK/.OBJ/.
 into the part's program, or the file the program loads) and cross-checks it against the
 artist's Deluxe Paint file, so the PNG is what the demo actually showed. Outputs:
 - artwork/original/<name>.png       exact pixels and palette (an indexed PNG)
-- artwork/original/rgb/<name>.png    the same, in full colour (8-bit RGB, marked sRGB), ready
-                                    to open in Photoshop and upscale (explosion frames too)
+- artwork/original/rgb/<name>.png    the same, in full colour (8-bit RGB, marked sRGB), what
+                                    the app shows (explosion frames too)
 - artwork/original/4x3/<name>.png   each pixel repeated so the picture has the shape it
                                     had on a 1993 monitor (no smoothing); pictures only
 - artwork/original/explosion/frame-NN.png   the 40 explosion frames

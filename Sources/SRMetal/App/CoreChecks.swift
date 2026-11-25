@@ -112,8 +112,8 @@ enum CoreChecks {
         }
         let unknown = scenes.filter { !ids.contains($0) }
         check("Play Demo: every scene it shows exists (\(scenes.count) uses)", unknown.isEmpty, unknown.joined(separator: ", "))
-        let missing = DemoScript.pictures.filter { DemoPictures.url($0, look: .modern) == nil || DemoPictures.url($0, look: .classic) == nil }
-        check("Play Demo: every picture it shows is there in both looks (\(DemoScript.pictures.count) pictures)",
+        let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
+        check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))
     }
 

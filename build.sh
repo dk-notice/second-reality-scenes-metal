@@ -63,11 +63,9 @@ EOF
 mkdir -p "$APP/Contents/Resources/Music"
 cp Data/Music/MUSIC*.S3M "$APP/Contents/Resources/Music/"
 
-# Pictures for Play Demo: the user's high-resolution versions (Modern look) and the original
-# pictures at their own size (1993 look). See artwork/README.md. About 160 MB.
-mkdir -p "$APP/Contents/Resources/Artwork/modern" "$APP/Contents/Resources/Artwork/original"
-cp artwork/modern/*.png "$APP/Contents/Resources/Artwork/modern/"
-cp artwork/original/rgb/*.png "$APP/Contents/Resources/Artwork/original/"
+# Pictures for Play Demo: the original pictures at their own size (see artwork/README.md). About 1 MB.
+mkdir -p "$APP/Contents/Resources/Artwork"
+cp artwork/original/rgb/*.png "$APP/Contents/Resources/Artwork/"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 codesign --force --sign - "$APP" >/dev/null

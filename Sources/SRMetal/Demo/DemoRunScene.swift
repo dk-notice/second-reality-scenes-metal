@@ -2,31 +2,27 @@ import AppKit
 import CoreText
 import MetalKit
 
-/// Finds the demo's pictures. `./build.sh` copies `artwork/modern` (the user's high-resolution
-/// versions) into the app as `Resources/Artwork/modern`, and `artwork/original/rgb` (the 1993
-/// pictures at their own size) as `Resources/Artwork/original`. Run some other way, the
-/// `artwork` folder next to or above the program is used.
+/// Finds the demo's pictures: the original pictures at their own size, exported from the 1993 demo
+/// (`artwork/original/rgb`). `./build.sh` copies them into the app as `Resources/Artwork`; run some
+/// other way, the `artwork` folder next to or above the program is used.
 enum DemoPictures {
-    static let folders: (modern: URL, classic: URL)? = {
+    static let folder: URL? = {
         let manager = FileManager.default
-        var candidates: [(URL, URL)] = []
-        if let resources = Bundle.main.resourceURL?.appendingPathComponent("Artwork") {
-            candidates.append((resources.appendingPathComponent("modern"), resources.appendingPathComponent("original")))
-        }
+        var candidates: [URL] = []
+        if let resources = Bundle.main.resourceURL { candidates.append(resources.appendingPathComponent("Artwork")) }
         var up = URL(fileURLWithPath: CommandLine.arguments.first ?? ".").resolvingSymlinksInPath().deletingLastPathComponent()
         for _ in 0..<6 {
-            let art = up.appendingPathComponent("artwork")
-            candidates.append((art.appendingPathComponent("modern"), art.appendingPathComponent("original/rgb")))
+            candidates.append(up.appendingPathComponent("artwork/original/rgb"))
             up = up.deletingLastPathComponent()
         }
-        return candidates.first { manager.fileExists(atPath: $0.1.appendingPathComponent("04-title.png").path) }
+        return candidates.first { manager.fileExists(atPath: $0.appendingPathComponent("04-title.png").path) }
     }()
 
-    /// The picture's file for the look, or nil if it is not there.
-    static func url(_ name: String, look: Look) -> URL? {
-        guard let folders else { return nil }
-        let url = (look == .modern ? folders.modern : folders.classic).appendingPathComponent(name + ".png")
-        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    /// The picture's file, or nil if it is not there.
+    static func url(_ name: String) -> URL? {
+        guard let url = folder?.appendingPathComponent(name + ".png"),
+              FileManager.default.fileExists(atPath: url.path) else { return nil }
+        return url
     }
 }
 
@@ -77,14 +73,9 @@ final class DemoRunScene: DemoScene {
     private let nearest: MTLSamplerState
     private let loader: MTKTextureLoader
 
-    /// High-resolution pictures: only the one showing and the next are kept (each is up to 44 MB).
-    private var modern: [String: MTLTexture] = [:]
-    private var wanted: Set<String> = []
-    /// The 1993 pictures are small: kept once loaded.
-    private var classic: [String: MTLTexture] = [:]
+    /// The original pictures (small: kept once loaded).
+    private var pictures: [String: MTLTexture] = [:]
     private var cards: [String: (modern: MTLTexture, classic: MTLTexture)] = [:]
-    /// Position in `DemoScript.pictures` of the picture last shown.
-    private var pictureCursor = -1
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource) throws {
         self.device = device
@@ -121,7 +112,6 @@ final class DemoRunScene: DemoScene {
 
     private func hookUp() {
         sequencer.onShow = { [weak self] visual in self?.show(visual) }
-        preloadNext()
     }
 
     /// The part playing now.
@@ -133,7 +123,6 @@ final class DemoRunScene: DemoScene {
         sequencer = DemoSequencer(music: music)
         shown = .black
         partsStarted = 0
-        pictureCursor = -1
         hookUp()
     }
 
@@ -155,7 +144,7 @@ final class DemoRunScene: DemoScene {
     var currentCanvasSize: SIMD2<Float>? {
         switch shown {
         case .scene(_, let size): return size
-        case .picture(let name): return classicPicture(name).map { SIMD2(Float($0.width), Float($0.height)) } ?? SIMD2(320, 200)
+        case .picture(let name): return picture(name).map { SIMD2(Float($0.width), Float($0.height)) } ?? SIMD2(320, 200)
         case .card, .black: return SIMD2(320, 200)
         }
     }
@@ -173,7 +162,8 @@ final class DemoRunScene: DemoScene {
         case .black:
             return
         case .picture(let name):
-            texture = frame.look == .modern ? (modernPicture(name) ?? classicPicture(name)) : classicPicture(name)
+            // For now the original picture in both looks: smoothly stretched in the Modern look.
+            texture = picture(name)
         case .card(let title):
             let pair = card(title)
             texture = frame.look == .modern ? pair?.modern : pair?.classic
@@ -201,31 +191,11 @@ final class DemoRunScene: DemoScene {
                 shown = .card(entry.title)
             }
         case .picture(let name):
-            if let at = DemoScript.pictures[(pictureCursor + 1)...].firstIndex(of: name) { pictureCursor = at }
             shown = .picture(name)
-            preloadNext()
         case .card(let title):
             shown = .card(title)
         case .black:
             shown = .black
-        }
-    }
-
-    /// Keeps the picture showing (if any) and the next one; starts loading the next in the background.
-    private func preloadNext() {
-        var keep: Set<String> = []
-        if pictureCursor >= 0, pictureCursor < DemoScript.pictures.count { keep.insert(DemoScript.pictures[pictureCursor]) }
-        let next = pictureCursor + 1 < DemoScript.pictures.count ? DemoScript.pictures[pictureCursor + 1] : nil
-        if let next { keep.insert(next) }
-        wanted = keep
-        modern = modern.filter { keep.contains($0.key) }
-        guard let next, modern[next] == nil, let url = DemoPictures.url(next, look: .modern) else { return }
-        loader.newTexture(URL: url, options: Self.loadOptions) { [weak self] texture, error in
-            DispatchQueue.main.async {
-                guard let self, let texture, self.wanted.contains(next) else { return }
-                self.modern[next] = texture
-            }
-            if let error { NSLog("SR Metal: could not load \(next): \(error)") }
         }
     }
 
@@ -236,20 +206,11 @@ final class DemoRunScene: DemoScene {
         .generateMipmaps: false
     ]
 
-    private func modernPicture(_ name: String) -> MTLTexture? {
-        if let texture = modern[name] { return texture }
-        // Not loaded in time (or the demo jumped here): load it now, which may stall a moment.
-        guard let url = DemoPictures.url(name, look: .modern),
+    private func picture(_ name: String) -> MTLTexture? {
+        if let texture = pictures[name] { return texture }
+        guard let url = DemoPictures.url(name),
               let texture = try? loader.newTexture(URL: url, options: Self.loadOptions) else { return nil }
-        if wanted.contains(name) { modern[name] = texture }
-        return texture
-    }
-
-    private func classicPicture(_ name: String) -> MTLTexture? {
-        if let texture = classic[name] { return texture }
-        guard let url = DemoPictures.url(name, look: .classic),
-              let texture = try? loader.newTexture(URL: url, options: Self.loadOptions) else { return nil }
-        classic[name] = texture
+        pictures[name] = texture
         return texture
     }
 

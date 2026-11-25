@@ -74,13 +74,14 @@ scope beyond "purely calculated and 3D scenes" to the picture-based scenes too.
    To confirm before the repository is made public: that the songs are covered by the same public-domain
    release as the code.
 2. **Picture-based scenes**, with the 1993 look using the original pictures and the modern look using
-   artwork upscaled by the user. About eleven: opening credits, explosion, title picture, the picture with
+   the original pictures through a pixel-art scaler, or re-made from source where possible (the user
+   decided against AI-upscaled artwork, 2026-11-24). About eleven: opening credits, explosion, title picture, the picture with
    the TV switch-off, mountain scroller, lens, rotozoomer, water scroller, jelly logo, end picture, credits,
    end scroller. Most are small; the lens and rotozoomer have the most substance.
 3. **A "play the demo" mode**: every scene in order, timed to the music, with the original lead-ins and
    transitions (which the standalone scenes deliberately leave out) restored as an option.
 
-### Notes on upscaling the artwork
+### Notes on scaling up the artwork
 
 - The originals are in old formats (LBM, and the demo's own); they can be converted to PNG with correct
   colours for the user to work from.

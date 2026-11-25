@@ -41,7 +41,7 @@ libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdPar
 **Play Demo** (in the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
 the original music, changing parts on the same music cues the 1993 demo waited for. It is a skeleton for now:
 the parts this project has built appear as its scenes, cut where the original part ended; picture parts show
-the high-resolution pictures (or, in the 1993 look, the original ones); every other part shows a title card
+the original pictures (for now smoothly stretched in the Modern look); every other part shows a title card
 naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes
@@ -191,8 +191,8 @@ does the same.
 - [docs/scenes/](docs/scenes/): one page per scene, original versus new.
 - [docs/visu-engine.md](docs/visu-engine.md): the original's 3D engine (used by Ships Fly-by and the 3D
   City): how it worked, its data formats, this project's version of it, and what was checked.
-- [artwork/](artwork/README.md): every picture the original demo shows, exported to PNG, as the
-  starting point for high-resolution versions.
+- [artwork/](artwork/README.md): every picture the original demo shows, exported to PNG (the app shows
+  these).
 - [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
   out from its source and simulated against the real music, and how Play Demo follows it.
 - [state.md](state.md): working notes: current status, decisions, and what is next.

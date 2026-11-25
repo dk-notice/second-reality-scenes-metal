@@ -34,11 +34,15 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   (Command-.); the sound follows the look (1993 = no interpolation). See "MUSIC" under Decisions.
 - PLAY DEMO SKELETON (2026-11-24): Scene menu "Play Demo" (P; Escape stops) runs all 19 parts in the
   original order with the original music, changing parts on the original's music cues. Stand-ins: the
-  11 built scenes (cut at the part's end), artwork pictures (high-resolution in Modern, originals in
-  1993), title cards for the rest. See "PLAY DEMO notes" below and `docs/demo-timeline.md`.
-- ARTWORK (2026-11-24, current work): every picture the released demo shows is exported to PNG in
-  `artwork/original/` (see "Artwork notes"). The user is making high-resolution versions of each, to go
-  in `artwork/modern/`. No scene uses them yet.
+  11 built scenes (cut at the part's end), the original artwork pictures (smoothly stretched in
+  Modern, hard-edged in 1993), title cards for the rest. See "PLAY DEMO notes" below and `docs/demo-timeline.md`.
+- ARTWORK: every picture the released demo shows is exported to PNG in `artwork/original/` (see
+  "Artwork notes"). DECIDED (user, 2026-11-24): NO AI-UPSCALED ART. The Modern look will scale the
+  original pictures with a pixel-art scaler shader (xBR / ScaleFX family, written from the published
+  algorithm) and re-make pictures from source where possible (water re-render from its POV-Ray files,
+  credits pictures from finished scenes). The 30 AI pictures (`artwork/modern/`), the Photoshop
+  workflow (`artwork/to-upscale/`, git-ignored copies) and `tools/art_check.py` were deleted the same
+  day, at the user's request. They remain in git history and in GitHub's LFS storage (~168 MB).
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
@@ -191,8 +195,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - `Demo/DemoRunScene.swift`: Play Demo is one `DemoScene` to the window. New protocol member
   `currentCanvasSize` (default nil) lets it change canvas as parts change; Renderer and Snapshot use it.
   High-resolution pictures: only current + next kept, next loaded in the background (MTKTextureLoader).
-  Title cards drawn with Core Text. `build.sh` copies `artwork/modern` and `artwork/original/rgb` into
-  the app (`Resources/Artwork/`); the app grew to 165 MB.
+  Title cards drawn with Core Text. `build.sh` copies `artwork/original/rgb` into the app
+  (`Resources/Artwork/`; app 5 MB). (At first it also carried the AI pictures, 165 MB, removed.)
 - AppModel: `playingDemo`; the demo's SceneEntry is not in `SceneCatalog.all` (not in the sidebar, not
   in the per-scene self-tests). Choosing a scene, Escape or Stop Demo ends it and stops the music; the
   Music menu replaces the demo's song and leaves the demo. Window title shows the part. Each part
@@ -231,6 +235,10 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   shader recompiling; give `SceneEntry` a loop length so `--motion-check` need not guess where a loop ends.
 
 ## Artwork notes
+- SUPERSEDED (2026-11-24): everything below about high-resolution versions, Photoshop, Git LFS and
+  `art_check.py` is history: the user decided against AI-upscaled art (see Status, ARTWORK). Git LFS
+  is still installed (`git lfs install` set the global git config) but the repository no longer uses it
+  (`.gitattributes` removed). The exports in `artwork/original/` are unaffected and are what the app shows.
 - Started 2026-11-24 at the user's request, instead of a new scene for now. A ranked list of possible
   new scenes was made the same day (best first: Rotozoomer, Lens, Jelly Logo; the unused Twister; the
   two scrollers; the explosion). The user has not picked one yet; every remaining part of the demo
@@ -294,8 +302,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   have an alpha channel with the top and bottom rows at 254 (invisible); `art_check.py` now treats
   250-254 as harmless and flags only real see-through pixels. A "Flatten Image" step before saving
   would avoid the channel.
-- When the first high-resolution pictures exist: point the Ships Fly-by's replacement background at
-  `artwork/modern/02-ships-horizon.png` (it now looks for `Data/Visu/U2ABG-modern.png`).
+- Ships Fly-by still looks for an optional replacement background `Data/Visu/U2ABG-modern.png` (none
+  exists); the pixel-art scaler will replace its smooth stretch instead.
 - A stray git worktree some session had made inside `../secondreality` (`.claude/worktrees/`, branch
   `claude/project-continuation-5bf400`, no changes or commits of its own) was removed at the user's
   request on 2026-11-24, with `git worktree remove` and `git branch -d`.
@@ -874,11 +882,11 @@ All planned scenes are done.
 Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one engine.
 
 ## Next steps
-- FUTURE (user, 2026-11-24): replace the 21 upscaled credits pictures (`artwork/modern/18-credits-pic*`)
+- FUTURE (user, 2026-11-24): replace the 21 credits pictures (`artwork/original/18-credits-pic*`)
   with screenshots taken from this project's own finished scenes, framed like the originals (compare
   with `artwork/original/4x3/`). Most credits pictures are miniature screenshots of the demo's parts,
   so this needs those parts built as scenes first. `pic02` is a placeholder ("PART PIC MISSING") and
-  `pic06` (Interference) upscaled badly; both are first in line. `--snapshot` can make the pictures.
+  `pic06` (Interference) was first in line. `--snapshot` can make the pictures.
 - DEMO TIMELINE RESEARCH DONE (2026-11-24): `docs/demo-timeline.md` has every part's start and end
   (from the original source, simulated against the real music with `tools/music_steps.c` +
   `tools/demo_timeline.py`): 19 parts, credits end at 10:52, then the end scroller until a key. Key facts:
@@ -891,23 +899,12 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   DONE (2026-11-24): the Play Demo skeleton built on it (see "PLAY DEMO notes"). NEXT: replace stand-ins
   part by part with real parts (the user chooses which), and make the built scenes follow the original
   part's timing inside the demo instead of looping.
-- WHERE WE LEFT OFF (end of 2026-11-24). The user is making high-resolution versions of the artwork;
-  picking the next scene is on hold until they say. 30 of 39 pictures are done in `artwork/modern/`
-  (all one-screen pictures and the credits pictures), all committed and pushed (Git LFS, ~168 MB of
-  10 GB). Left, in suggested order:
-  1. `01-opening-horizon` (640x200 -> 7680x2880): ready; the Photoshop Action's Image Size step must be
-     7680x2880.
-  2. The 40 explosion frames (-> 1920x1440): try 3-4 neighbouring frames first and flip between them,
-     since generative detail may differ frame to frame (flicker); 80 upscales of credits.
-  3. Optional: `00-start-setup-screen` (only if a "play the demo" mode shows it), `starfield-text-panels`
-     (better retyped than upscaled).
-  4. Wait: the 5 fonts (on-screen pixel shape not yet checked; maybe redraw or use a modern font).
-  Skip: `10-lens-shape` (never shown).
-  Workflow: open `artwork/original/rgb/<name>.png` (or copies in the git-ignored `artwork/to-upscale/`),
-  Photoshop Action "Upscale 320x200" (Generative Upscale 4x twice, Image Size, Save a Copy PNG) run by
-  Batch into `artwork/to-upscale/done/`; Claude strips the " Topaz Gigapixel 4x scale" name parts, moves
-  the files to `artwork/modern/`, runs `python3 tools/art_check.py`, updates `artwork/modern/README.md`,
-  commits, and pushes on the user's yes.
+- WHERE WE LEFT OFF (end of 2026-11-24). Play Demo skeleton done and pushed. The user dropped the AI
+  artwork (deleted). NEXT, when the user OKs it: (1) build the pixel-art scaler shader; try it first on
+  the troll, title, Glenz plate and Ships horizon and show before/after pictures (risk: the pictures'
+  dithering); (2) if approved, use it for every picture (Play Demo, Ships background, Glenz plate);
+  (3) later, one at a time: re-made pictures (water via POV-Ray, credits from scenes). The user wants
+  to talk more before starting.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,
