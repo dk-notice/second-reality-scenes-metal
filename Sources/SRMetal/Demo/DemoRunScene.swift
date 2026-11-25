@@ -141,6 +141,8 @@ final class DemoRunScene: DemoScene {
     var sceneShowing: DemoScene? { if case .scene(let scene, _) = shown { return scene } else { return nil } }
     /// The music's row as the parts see it now (for checks).
     var musicRow: Int { sequencer.musicState.row }
+    /// The music as the parts see it now (for checks).
+    var musicState: DemoMusicState { sequencer.musicState }
     /// The music's "music plus" as the parts see it now (for checks).
     var musicPlus: Int { sequencer.musicState.plus }
 

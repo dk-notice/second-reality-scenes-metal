@@ -251,6 +251,16 @@ enum SceneCatalog {
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "water-scroller",
+            title: "Water Scroller",
+            credit: "Trug",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 1, 2, 3, 4, 5, 60, 61, 126, 127, 128, 300, 646, 647, 648, 649, 650, 655, 656, 700, 800, 1000, 1100,
+                          1300, 1500, 1700, 1900, 1978, 1979, 1980, 1981, 2000, 2010, 2042, 2043],
+            thumbnailStep: 1500,
+            make: { device, format in try WaterScrollerScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "sine-landscape",
             title: "3D Sine Landscape",
             credit: "Psi",

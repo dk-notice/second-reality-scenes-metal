@@ -27,7 +27,7 @@ already has for the part.
 | 11 | Plasma (`PLZPART`, first half) | 2 | 5:05.6 | 5:39.9 | 34.3 s | **Scene** |
 | 11 | Plasma cube (`PLZPART`, second half) | 2 | 5:39.9 | 6:12.9 | 33.0 s | **Scene** |
 | 12 | Bouncing dots (`MINVBALL`) | 2 | 6:12.9 | 6:49.8 | 36.9 s | **Scene** |
-| 13 | Water scroller (`RAYSCRL`) | 2 | 6:49.8 | 7:19.2 | 29.5 s | Picture, font |
+| 13 | Water scroller (`RAYSCRL`) | 2 | 6:49.8 | 7:19.2 | 29.5 s | **Scene** (2026-11-25) |
 | 14 | 3D sine landscape (`3DSINFLD`) | 2 | 7:19.2 | 7:48.3 | 29.1 s | **Scene** |
 | 15 | Jelly logo (`JPLOGO`) | 2 | 7:48.3 | 7:59.6 | 11.3 s | **Scene** (2026-11-25) |
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
@@ -65,7 +65,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Title picture, end picture | Their own scenes (2026-11-24): out of white, as the original; the end picture waits for its music cue and fades to black |
   | Jelly logo | Its own scene (2026-11-25): slides in, waits for its music cue, then 700 steps of jelly |
   | Mountain scroller | Its own scene (2026-11-25): the leaves fade in, the scroll starts and the fade-out begins on the music cues |
-  | Water | The original picture: hard-edged pixels in the 1993 look; in the Modern look made 8x larger by Super-xBR, then smoothly scaled |
+  | Water scroller | Its own scene (2026-11-25): black until its first music cue, the fade-in, the still picture until the music's next section, the sword until the fade-out cue |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
@@ -171,7 +171,7 @@ The music player (STMIK) is not in the source release, so two details had to be 
 | PLZ | music plus ≥ 0 (`PLZPART/PLZ.C` 68) | music frame > 2259, then ~64 refreshes (79-91) |
 | VECT | music plus ≥ 13 (`PLZPART/VECT.C` 116) | -4 ≤ music plus < 0 (119-120) |
 | DOTS | 130-refresh fade (`DOTS/MAIN.C` 171-180) | 2,450 refreshes or -3 ≤ music plus ≤ -1 (185-194) |
-| WATER | music plus ≥ 0, then a new section at row ≥ 16 (`WATER/DEMO.PAS` 97-145) | music plus = -11, then 65 refreshes (159-189) |
+| WATER | music plus ≥ 0 (20 refreshes of black), a 127-refresh fade-in, then a new section at row ≥ 16 (519 refreshes of the still picture; `WATER/DEMO.PAS` 97-145) | music plus = -11, then 65 refreshes (159-189) |
 | COMAN | music plus ≥ 0 (`COMAN/MAIN.C` 56) | 4,444 refreshes or -7 ≤ music plus ≤ -1 (57-60) |
 | JPLOGO | 86-refresh drop-in, music plus ≥ 4 (`JPLOGO/JP.C` 71) | 700 refreshes (72) |
 | U2E | 100 refreshes of fades, section > 18 (`VISU/C/U2E.C` 285-366) | the animation's 1,801 frames × 2 refreshes, then a 16-refresh fade |

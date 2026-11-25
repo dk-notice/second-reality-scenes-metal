@@ -63,6 +63,7 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
 | Plasma Cube | Wildfire | [docs/scenes/plasma-cube.md](docs/scenes/plasma-cube.md) |
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
+| Water Scroller | Trug | [docs/scenes/water-scroller.md](docs/scenes/water-scroller.md) |
 | 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 | Jelly Logo | Psi | [docs/scenes/jelly-logo.md](docs/scenes/jelly-logo.md) |
 | 3D City | Psi | [docs/scenes/city-3d.md](docs/scenes/city-3d.md) |
@@ -74,7 +75,7 @@ Fly-by and the 3D City, share the original's 3D engine, which was built and chec
 code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
 out of scope at first. Since Play Demo exists (2026-11-24) the remaining parts are being added one at a
 time, starting with the Explosion (the original's hand-drawn animation), the title and end pictures, the troll and the screen
-switch-off, the end scroller, the lens, the rotozoomer, the jelly logo and the mountain scroller. The ideas are in
+switch-off, the end scroller, the lens, the rotozoomer, the jelly logo, the mountain scroller and the water scroller. The ideas are in
 [docs/future-ideas.md](docs/future-ideas.md).
 
 Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
@@ -86,7 +87,8 @@ is likewise the original's models and recorded flight, with no picture. The Expl
 hand-drawn animation frames, the Title and End Pictures are the original pictures, and the Lens and the
 Rotozoomer use the original lens picture (the Lens also one original table, see
 [Data/Lens/](Data/Lens/README.md)), and the Jelly Logo the original painting. The Mountain Scroller uses the original background, its
-text picture and three position tables that cannot be calculated ([Data/Mountain/](Data/Mountain/README.md)).
+text picture and three position tables that cannot be calculated ([Data/Mountain/](Data/Mountain/README.md)); the Water
+Scroller likewise its background, its sword picture and three such tables ([Data/Water/](Data/Water/README.md)).
 
 ## Build and run
 
@@ -140,7 +142,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |
@@ -281,8 +283,8 @@ anniversary. Everything here was worked out from that release:
 
 No code from the original or from those ports is included here. The scenes were re-implemented from the
 original's logic, and tables the original shipped as data files are calculated instead (two exceptions: the
-lens's table 4 and the mountain scroller's three position tables, which cannot be, see
-[Data/Lens/](Data/Lens/README.md) and [Data/Mountain/](Data/Mountain/README.md)).
+lens's table 4 and the mountain and water scrollers' position tables, which cannot be, see
+[Data/Lens/](Data/Lens/README.md), [Data/Mountain/](Data/Mountain/README.md) and [Data/Water/](Data/Water/README.md)).
 
 The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see

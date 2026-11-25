@@ -81,6 +81,11 @@ cp Data/Lens/LENS.EX4 "$APP/Contents/Resources/Lens/"
 mkdir -p "$APP/Contents/Resources/Mountain"
 cp Data/Mountain/HILLBACK.CLX Data/Mountain/O2.SCI Data/Mountain/POS?.DAT "$APP/Contents/Resources/Mountain/"
 
+# The water scroller's background (with its colour numbers), sword picture and the three position
+# tables that cannot be calculated (see Data/Water/README.md).
+mkdir -p "$APP/Contents/Resources/Water"
+cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT "$APP/Contents/Resources/Water/"
+
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 # codesign refuses a folder carrying Finder information. When the project sits in a synced folder
 # (Documents with iCloud, say), the sync can tag the app folder, sometimes again right after the tags

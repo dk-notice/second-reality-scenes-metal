@@ -51,7 +51,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   may start ANOTHER copy with the same identity (an older one quit at once on the new `--from` option). After
   merging into main, rebuild in the main folder; to be sure which copy starts: `open -n <full path to the .app>`.
   Main's app was rebuilt after merging Play Demo from Here (2026-11-24, 445 checks pass there). Start-up options go after `--args`: `--look classic|modern`,
-  `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|mountain-scroller|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|sine-landscape|jelly-logo|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
+  `--scene ships-flyby|explosion|title-picture|glenz-vectors|dot-tunnel|rings|interference|techno-bars|troll|switch-off|mountain-scroller|lens|rotozoomer|plasma|plasma-cube|bouncing-dots|water-scroller|sine-landscape|jelly-logo|city-3d|end-picture|end-scroller|starfield`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -499,7 +499,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
   logo's white border.
 
-## Water scroller notes (2026-11-25; research done and plan shown, NO code yet, waiting for the user's OK)
+## Water scroller notes (2026-11-25; plan approved by the user ("Yes, build it"), BUILT on branch `claude/water-scroller-plan-79ae73`, NOT yet seen by the user, NOT merged)
 - Original: `WATER/DEMO.PAS` + `ROUTINES.ASM` (`putrouts1`), Trug. It scrolls NO TEXT: `MIEKKA.SCI` ("miekka" =
   sword; = our `13-water-font`, 400 x 34 used, its header's 250 rows is wrong) is a PICTURE OF A SWORD with a
   flame in front and sparks behind, sliding over the water and mirrored in the chrome balls.
@@ -530,12 +530,49 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Measured from the script's silent run (scratch copy of `tools/demo_timeline.py`): part starts at step
   28,683; "plus >= 0" after 20 steps (black); after the 127, the section cue comes 519 steps later (7.4 s: the
   ORIGINAL REALLY SHOWS THE STILL PICTURE that long); fade cue 1,333 draws after that; end at 2,064.
-  On its own (proposed): 128 + 519 hold + 1,333 + 65 = 2,045 steps; the hold's length is the user's call.
+  (The plan's first count, 1,333 draws and 2,045 steps, was one too many: see the timeline below.)
 - Modern prototype (throwaway, in the session's scratch folder): the mountain's `smoothMap` works unchanged
   on the sea and the lower ball; the small reflections (regions under 1,000 pixels, cells smaller than a
   pixel) need one cell per pixel instead of a plane. Near the camera one sword pixel covers ~25 screen pixels,
   so Super-xBR looks soft there (16x instead of 8x changes nothing). Sword drawn as colour-on-black plus a
   mask, both 8x, laid over the background.
+- DECIDED (user, 2026-11-25, by approving the plan's recommendations): the sword through Super-xBR (soft
+  near the camera accepted); the 519-step still picture kept on its own (the original really shows it);
+  the red-first fades in the Modern look too.
+- BUILT: `Data/Water/` (WAT1-3.DAT, BKG.CLX, MIEKKA.SCI unchanged, 154 KB, README with SHA-256; build.sh
+  copies it). SHARED with the mountain: `Core/ScrollTables.swift` (table reader `parse`, `smoothMap`,
+  moved out of the mountain's file unchanged; new option `smallRegion` for the water). `Scenes/WaterScroller/`:
+  `WaterData`, `WaterScrollerModel` (kept screen, window, the two palettes `working`/`shown` stepped as
+  DEMO.PAS does, cues), `WaterScrollerScene` (1993: IndexedCanvas; Modern: own shader). Sidebar: before the
+  3D Sine Landscape. Play Demo: `.show(.scene("water-scroller"))`; `--demo-timeline` unchanged.
+  `DemoRunScene.musicState` added for checks.
+- Timeline on its own (CORRECTED from the plan's 1,333 / 2,045): step 0 black; fade pass y on step y + 1
+  (1-127); still 128-646; scroll draw k on step 647 + k; fade-out from draw 1,332 (step 1979), 65 steps;
+  loop (2,044). In the demo, loop step i of a run started at the scene: fade-in begins at scene step
+  (script's cue index) + 2, scroll likewise + 2, fade-out + 1, next part 65 later (as the mountain's).
+  The scene also reads the cue on its `justShown` call (the script tests it on the show step).
+- Modern: sword as colour-on-black + outline mask, 400x40 (3 empty rows above and below), each 8x; an
+  area mask (table pixels, plus grown-on map pixels beyond the window's edge) 8x for smooth edges against
+  the balls; map pixels of small regions are marked 2 and carry their footprint (cells per pixel) in the
+  slope slots, sampled with that footprint. STRAYED (Modern only): green/blue reach full colour; small
+  reflections stay per-pixel; near the camera the sword is soft.
+- `tools/water_reference.py`: structure facts, GREEN/MASK comparison, table order, regions, palette facts,
+  replay; CRCs at 35 steps + 3 palette CRCs. Self-test: 8 new checks + 37 generic ones (558 in all, all
+  pass): file CRCs, tables disjoint/20,858, smooth map (95% in their third, 99.9% in their row, 437 small
+  pixels exact), 1993 pictures = tool, palette = tool at 61/127/1990, loop, Play Demo sync against the
+  script's own numbers (literals in the check, not the model's constants), standalone lengths = the
+  demo's. The old "picture part (water)" check now uses the credits. Proven to fail: red not doubled,
+  scroll a step early, tables in the other order, section cue a row early, fade cue a row early, new column
+  straight into the last cell. `--motion-check water-scroller modern`: only the fade-out's onset is marked
+  (steps 1979-1980: red drops two levels a step).
+- Docs: `docs/scenes/water-scroller.md` with 3 pictures (steps 1500 both looks, 1100 Modern);
+  `Data/Water/README.md`; README, demo-timeline, artwork/README (the "font" is a sword) updated.
+- Seen by Claude: snapshots of both looks at step 1500 (they agree), Modern at 60 (pink highlights). NOT
+  seen: the running app, motion by eye, Play Demo with sound. Not compared with the original running.
+- AFTER THE USER'S OK: merge into main, rebuild main's app, push (main was one commit ahead of GitHub).
+  Then: credits, then opening credits (font decisions first). Still open: review findings 3, 5, 6; skip
+  the black waits when starting "from here"?; the troll flash question; the jelly logo's white border.
+  `deark` (Homebrew) was installed for the PKLITE check; not needed by the build.
 - Sheet for the user: `build/scaler-compare/water/water-sword-compare.png` in the worktree
   `water-scroller-plan-79ae73` (original pixels / Super-xBR, flat and in place at two moments).
 

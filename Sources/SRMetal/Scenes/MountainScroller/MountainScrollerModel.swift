@@ -8,11 +8,7 @@ struct MountainData {
     static let columns = 237, rows = 31, textWidth = 640
     static let fileNames = ["POS1.DAT", "POS2.DAT", "POS3.DAT", "HILLBACK.CLX", "O2.SCI"]
 
-    /// One position table: cell i (row x 237 + column) owns `addresses[starts[i]..<starts[i + 1]]`.
-    struct Table {
-        var starts: [Int]
-        var addresses: [UInt16]
-    }
+    typealias Table = ScrollTables.Table
 
     /// The 256 colours, VGA levels 0...63.
     let palette: [SIMD3<Int>]
@@ -33,23 +29,7 @@ struct MountainData {
               let o2 = bytes("O2.SCI"), o2.count >= 778 + textWidth * rows else { return nil }
         var tables: [Table] = []
         for n in 1...3 {
-            guard let d = bytes("POS\(n).DAT") else { return nil }
-            var table = Table(starts: [0], addresses: [])
-            var p = 0
-            for _ in 0..<(columns * rows) {
-                guard p + 2 <= d.count else { return nil }
-                let count = Int(d[p]) | Int(d[p + 1]) << 8
-                p += 2
-                guard p + 2 * count <= d.count else { return nil }
-                for k in 0..<count {
-                    let address = UInt16(d[p + 2 * k]) | UInt16(d[p + 2 * k + 1]) << 8
-                    guard address < 64000 else { return nil }
-                    table.addresses.append(address)
-                }
-                p += 2 * count
-                table.starts.append(table.addresses.count)
-            }
-            guard p == d.count else { return nil }
+            guard let d = bytes("POS\(n).DAT"), let table = ScrollTables.parse(d, columns: columns, rows: rows) else { return nil }
             tables.append(table)
         }
         var palette: [SIMD3<Int>] = []
@@ -61,140 +41,10 @@ struct MountainData {
         return MountainData(palette: palette, background: Array(hills[778...]), text: Array(o2[778..<textEnd]), tables: tables)
     }
 
-    /// The Modern look's map: for every screen pixel a plane through the text coordinates around it,
-    /// `u = a + b·dx + c·dy` and the same for v (dx, dy from the pixel's centre, in pixels). u is the
-    /// window column (0...237), v the text row (0...31).
-    ///
-    /// Where the coordinates come from: a pixel that table k (0...2) lists at window column c covers the
-    /// third of a column from u = c + (2 − k)/3 (the tables are the hills ray-traced three times with the
-    /// text moved a third of a column; `tools/mountain_reference.py` shows the order), and its cell's row
-    /// is v. Both are known only in steps (thirds of a column, whole rows), but where two neighbouring
-    /// pixels are one step apart, the line between them is where the coordinate crosses that step: an
-    /// exact value at a known place. Each pixel gets the weighted best-fit plane through such crossings
-    /// around it on the same stretch of hill (and, weakly, through the pixels' own middles). The map is
-    /// then grown three pixels outwards, so the text's edges are cut by the plane (a straight edge), not
-    /// by the pixel grid.
-    struct SmoothMap {
-        /// Per pixel: a, b, c, and 1 if the pixel has a plane (else 0).
-        var u: [Float]
-        /// Per pixel: a, b, c, 0.
-        var v: [Float]
-    }
-
-    func smoothMap() -> SmoothMap {
-        let w = 320, h = 200, none = -1
-        // Per pixel: its third of a column (3c + 2 − k) and its row.
-        var third = [Int](repeating: none, count: w * h), row = third
-        for (k, table) in tables.enumerated() {
-            for cell in 0..<(Self.columns * Self.rows) {
-                for i in table.starts[cell]..<table.starts[cell + 1] {
-                    let a = Int(table.addresses[i])
-                    third[a] = 3 * (cell % Self.columns) + 2 - k
-                    row[a] = cell / Self.columns
-                }
-            }
-        }
-        // Crossings between a pixel and its right (0) and lower (1) neighbour: the coordinate's value on
-        // the line between them, or nil.
-        var crossU = [Float?](repeating: nil, count: w * h * 2), crossV = crossU
-        for y in 0..<h {
-            for x in 0..<w {
-                let a = y * w + x
-                for (side, b) in [(0, x + 1 < w ? a + 1 : -1), (1, y + 1 < h ? a + w : -1)] where b >= 0 {
-                    let here = third[a] != none, there = third[b] != none
-                    if here && there {
-                        let dt = abs(third[a] - third[b]), dr = abs(row[a] - row[b])
-                        guard dt <= 3, dr <= 1 else { continue }     // further apart: another fold of the hills
-                        if dt >= 1 { crossU[2 * a + side] = Float(third[a] + third[b] + 1) / 6 }
-                        if dr == 1 { crossV[2 * a + side] = Float(max(row[a], row[b])) }
-                    } else if here != there {
-                        // The edge of the text's band: its first row starts and its last row ends here
-                        // (unless this is the band's left or right end instead).
-                        let inside = here ? a : b
-                        guard third[inside] > 6, third[inside] < 3 * Self.columns - 7 else { continue }
-                        if row[inside] == 0 { crossV[2 * a + side] = 0 }
-                        if row[inside] == Self.rows - 1 { crossV[2 * a + side] = Float(Self.rows) }
-                    }
-                }
-            }
-        }
-        // Least squares for value = a + b·dx + c·dy.
-        typealias Sample = (dx: Float, dy: Float, value: Float, weight: Float)
-        func fit(_ points: [Sample]) -> SIMD3<Float>? {
-            var m = simd_double3x3(0), r = SIMD3<Double>(0, 0, 0)
-            for p in points {
-                let b = SIMD3<Double>(1, Double(p.dx), Double(p.dy)), wt = Double(p.weight)
-                m += simd_double3x3(columns: (b * b.x * wt, b * b.y * wt, b * b.z * wt))
-                r += b * Double(p.value) * wt
-            }
-            guard abs(m.determinant) > 1e-2 else { return nil }
-            return SIMD3<Float>(m.inverse * r)
-        }
-        var map = SmoothMap(u: [Float](repeating: 0, count: w * h * 4), v: [Float](repeating: 0, count: w * h * 4))
-        let radius = 5
-        for y in 0..<h {
-            for x in 0..<w where third[y * w + x] != none {
-                let t0 = third[y * w + x], r0 = row[y * w + x]
-                let u0 = (Float(t0) + 0.5) / 3, v0 = Float(r0) + 0.5
-                var pu: [Sample] = [], pv: [Sample] = []
-                for dy in -radius...radius {
-                    for dx in -radius...radius {
-                        let xx = x + dx, yy = y + dy
-                        guard xx >= 0, yy >= 0, xx < w, yy < h else { continue }
-                        let b = yy * w + xx
-                        guard third[b] != none else { continue }
-                        // The same stretch of hill: the coordinates may not jump on the way there.
-                        let reach = abs(dx) + abs(dy)
-                        guard abs(third[b] - t0) <= 4 * reach + 3, abs(row[b] - r0) <= reach + 1 else { continue }
-                        let fx = Float(dx), fy = Float(dy)
-                        let weight = exp(-(fx * fx + fy * fy) / 10)
-                        pu.append((fx, fy, (Float(third[b]) + 0.5) / 3, weight * 0.05))
-                        pv.append((fx, fy, Float(row[b]) + 0.5, weight * 0.05))
-                        for side in 0...1 {
-                            let mx = fx + (side == 0 ? 0.5 : 0), my = fy + (side == 1 ? 0.5 : 0)
-                            let mw = exp(-(mx * mx + my * my) / 10)
-                            if let value = crossU[2 * b + side] { pu.append((mx, my, value, mw)) }
-                            if let value = crossV[2 * b + side] { pv.append((mx, my, value, mw)) }
-                        }
-                    }
-                }
-                // The crossings to this pixel's left and above belong to those neighbours even when they
-                // are outside the band.
-                for (b, side, mx, my) in [(y * w + x - 1, 0, Float(-0.5), Float(0)), (y * w + x - w, 1, Float(0), Float(-0.5))]
-                where b >= 0 && third[b] == none {
-                    if let value = crossV[2 * b + side] { pv.append((mx, my, value, 1)) }
-                }
-                var planeU = SIMD3<Float>(u0, 0, 0), planeV = SIMD3<Float>(v0, 0, 0)
-                if pu.count >= 8, let a = fit(pu) { planeU = a }
-                if pv.count >= 8, let b = fit(pv) { planeV = b }
-                // A fit may not carry the pixel out of its own step by much.
-                planeU.x = min(max(planeU.x, Float(t0) / 3 - 0.2), Float(t0 + 1) / 3 + 0.2)
-                planeV.x = min(max(planeV.x, Float(r0) - 0.3), Float(r0 + 1) + 0.3)
-                let i = 4 * (y * w + x)
-                map.u[i] = planeU.x; map.u[i + 1] = planeU.y; map.u[i + 2] = planeU.z; map.u[i + 3] = 1
-                map.v[i] = planeV.x; map.v[i + 1] = planeV.y; map.v[i + 2] = planeV.z
-            }
-        }
-        for _ in 0..<3 {
-            var next = map
-            for y in 0..<h {
-                for x in 0..<w where map.u[4 * (y * w + x) + 3] == 0 {
-                    for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                        let xx = x + dx, yy = y + dy
-                        guard xx >= 0, yy >= 0, xx < w, yy < h, map.u[4 * (yy * w + xx) + 3] == 1 else { continue }
-                        let from = 4 * (yy * w + xx), to = 4 * (y * w + x)
-                        // The neighbour's plane, re-centred on this pixel.
-                        next.u[to] = map.u[from] - map.u[from + 1] * Float(dx) - map.u[from + 2] * Float(dy)
-                        next.u[to + 1] = map.u[from + 1]; next.u[to + 2] = map.u[from + 2]; next.u[to + 3] = 1
-                        next.v[to] = map.v[from] - map.v[from + 1] * Float(dx) - map.v[from + 2] * Float(dy)
-                        next.v[to + 1] = map.v[from + 1]; next.v[to + 2] = map.v[from + 2]
-                        break
-                    }
-                }
-            }
-            map = next
-        }
-        return map
+    /// The Modern look's map (see `ScrollTables.smoothMap`): u is the window column (0...237), v the text
+    /// row (0...31).
+    func smoothMap() -> ScrollTables.SmoothMap {
+        ScrollTables(columns: Self.columns, rows: Self.rows, tables: tables).smoothMap()
     }
 }
 

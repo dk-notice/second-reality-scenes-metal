@@ -110,7 +110,7 @@ enum DemoScript {
               until { -4 <= $0.plus && $0.plus < 0 }]
         s += [.part("Bouncing dots"), .show(.scene("bouncing-dots")), .frames(130),
               until(cap: 2450) { -3 <= $0.plus && $0.plus <= -1 }]
-        s += [.part("Water scroller"), .show(.picture("13-water-background")), until { $0.plus >= 0 },
+        s += [.part("Water scroller"), .show(.scene("water-scroller")), until { $0.plus >= 0 },
               .noteSection, .frames(127), until { $0.order != $0.noted && $0.row >= 16 },
               until { $0.plus == -11 }, .frames(65)]
         s += [.part("3D sine landscape"), .show(.scene("sine-landscape")), until { $0.plus >= 0 },
