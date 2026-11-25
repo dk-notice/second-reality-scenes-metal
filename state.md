@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (every part is a scene; rules tidied; the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (whole-project code review: fixes on the review branch, waiting for /simplify and the user's look)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,18 +21,28 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 626 checks, all pass. `--demo-timeline`: every part starts on the step the research
-  simulation gives. main is pushed to GitHub (private repository).
+- Self-test: 634 checks, all pass (branch `claude/opening-credits-review-88459f`; main has 626 until it
+  is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
+  2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
+  9 cues equal the Swift's). main is pushed to GitHub (private repository).
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
 
 ## Next steps
-1. CODE REVIEW AND SIMPLIFY, UNDER WAY on branch `claude/opening-credits-review-88459f` (started
-   2026-11-25). Widened by the user from the opening-credits work to the WHOLE PROJECT, done by six
-   read-only review agents, one per chunk (Core; App + Demo + Music; scenes in three groups; tools and
-   build.sh), with the opening-credits work (commits f40f208..6988dbf) given the most care. Starting
-   point: 626 checks pass, every part on time. Findings first, fixes only after the user's OK; then
-   the user runs /simplify; the user sees the result in the app before the merge.
+1. CODE REVIEW AND SIMPLIFY, on branch `claude/opening-credits-review-88459f` (2026-11-25): the WHOLE
+   PROJECT was reviewed by six read-only agents; nothing was found wrong with the 1993 look or the
+   timing. FIXED on the branch (7 commits, 6bdf66e..b67aed7): the end scroller's stray "%" and the
+   Troll's jump before restarting (both Modern look); damaged data files turned away at load;
+   build.sh leaves no half-made app; the timeline tool prints steps; the opening credits', credits'
+   and a dozen other checks made to check what they say; the opening credits' Modern pictures made
+   with the scene; unused code and stale comments; README checksums.
+   LEFT TO DO, in this order: (a) the user runs /simplify on the branch; (b) the user looks at the
+   result in the app (end scroller's last lines in the Modern look, about 5.5 minutes in; Troll on its
+   own in the Modern look; the opening credits); (c) merge, then `./build.sh` and the full self-test in
+   the main folder; ask before pushing.
+   NOT DONE, each needs a plan shown to the user first: Play Demo falling behind the music when the
+   window stops drawing (the step clock drops pauses over 0.25 s; `Renderer.longestCatchUp`), and the
+   sound stopping for good when the output device changes (nothing restarts `AVAudioEngine`).
 2. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
 
 ## Open questions (not to be started unasked)
@@ -44,6 +54,14 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - Code review findings left as they are: (3) a resumed part's name is lost if a new part starts on the
   first step; (5) the music-skip check runs only at 44.1 kHz, the player at 48; (6) a failed
   `SilentMusic.play` keeps the old song's details. All harmless today.
+- Left from the whole-project review (2026-11-25), none visible today: work repeated on every drawn frame
+  instead of once per step (the credits' 1993 text, a plasma buffer, Plasma Cube, Lens, Bouncing Dots,
+  Switch Off); the 3D City's Modern fades possibly a frame or two early (one shared palette buffer);
+  two low-memory crash paths (`VisuModernRenderer.makeTargets`, `PictureScaler`); duplicated code
+  (the three text scenes' shaders and loaders, palette conversions, the tools' PNG writers and four
+  ways of finding the original source: several tools need `SR_ORIGINAL` set when run from a worktree);
+  `tools/x86interp.py` treats any `imul` as the one-operand form (no source uses another today);
+  the reference tools do not check the hash of the EXE they unpack.
 - Skip the black waits when Play Demo starts "from here"?
 - Troll flash possibly one refresh late (rests on how VGA latches, not on the source alone).
 - The jelly logo's white border (overscan) is left out.
@@ -151,6 +169,10 @@ All parts are built; this is the checklist when one is redone or a new one is ad
   really shows one (the jelly logo's invented pause was removed; the water's 7.4 s still picture is real).
 - MEASURE standalone lengths from the script's silent run; do not estimate. A scene's Play Demo check
   uses the SCRIPT's numbers, not the model's own constants.
+- Break and restore a detail with exact edits, never `git checkout` on the file (it would also throw away
+  the uncommitted fix being proven). Use the optimised build for the filtered self-test (`swift build -c
+  release`, then `.build/release/SRMetal --selftest <word>`): the debug build takes minutes; its one
+  expected failure is the credits' captured pictures, which only the app bundle has.
 - Every new check is proven to fail with the detail broken on purpose, then restored, using the filtered
   self-test (`--selftest <scene id>`); run the full self-test and `--demo-timeline` once before each
   commit and after each merge (user, 2026-11-25).
