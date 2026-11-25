@@ -152,6 +152,9 @@ The window has a list of scenes down the left (the sidebar) and a toolbar along 
 | Mute or unmute the music | **Music** menu, "Mute Music", or press M (the demo keeps its timing) |
 | Stop the demo | Escape, **Scene** menu "Stop Demo", or choose any scene |
 
+While the window cannot be seen (minimised, fully covered, on another desktop) the picture and the music
+pause together and carry on from the same place when it shows again.
+
 In fullscreen the sidebar and toolbar get out of the way so that only the scene shows; the keys above still
 work, and moving the pointer to the top of the screen brings the toolbar back. Leaving fullscreen puts the
 sidebar back as it was.
@@ -241,7 +244,10 @@ build/SRMetal.app/Contents/MacOS/SRMetal --demo-live troll 30
 
 starts Play Demo's running order at a scene (or a part number) with the real music player, muted (add
 `sound` to hear it), for 30 seconds, drawing nothing, and prints when each later part starts compared
-with a full run: a check that the music, started part-way, keeps the demo on time.
+with a full run: a check that the music, started part-way, keeps the demo on time. Add `pause 3 4` to
+pause the music and the steps together after 3 seconds for 4 (as the app does while its window cannot be
+seen), or `rebuild 3` to make the sound output again after 3 seconds (as when the output device changes):
+the later parts must still be on time.
 
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --scaler-compare 07-troll out-folder 120 15 80

@@ -129,6 +129,17 @@ enum CoreChecks {
               afterPause.steps == 17 && afterPause.alpha >= 0 && afterPause.alpha < 1
                   && negative.steps == 0 && negative.alpha == 0 && backwards.owed == 0,
               "\(afterPause.steps) steps after an hour's pause")
+        // Play Demo's music does not stall with the picture: a stall is made up in full, to 5 seconds.
+        var demo = StepClock(), demoLong = StepClock()
+        let stall = demo.advance(by: 1, longest: DemoRunScene.longestCatchUp)
+        let longStall = demoLong.advance(by: 3600, longest: DemoRunScene.longestCatchUp)
+        let runScene = MTLCreateSystemDefaultDevice().flatMap {
+            try? DemoRunScene(device: $0, pixelFormat: Renderer.pixelFormat, music: SilentMusic())
+        }
+        check("Core clock: inside Play Demo a 1-second stall is made up in full (70 steps; 350 at most), a scene on its own keeps the quarter second",
+              stall.steps == 70 && longStall.steps == 350 && runScene?.longestCatchUp == 5
+                && SceneCatalog.all.first.flatMap { e in MTLCreateSystemDefaultDevice().flatMap { try? e.make($0, Renderer.pixelFormat) } }?.longestCatchUp == 0.25,
+              "\(stall.steps) steps after 1 s, \(longStall.steps) after an hour")
     }
 
     // MARK: - The 4:3 picture area

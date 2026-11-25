@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (whole-project code review merged into main and pushed)
+Last updated: 2026-11-25 (Play Demo pause and sound-output fixes on a branch, waiting for the user's try in the app)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 634 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 634 checks, all pass (635 on the branch below). `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the code review's merge
   included (2026-11-25).
@@ -37,10 +37,20 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    checks made to check what they say; the self-test's total pinned; the opening credits' Modern
    pictures made with the scene; unused code, stale comments, README checksums. What was left is under
    "Open questions".
-   STILL OPEN from the review, each needs a plan shown to the user first: Play Demo falling behind the
-   music when the window stops drawing (the step clock drops pauses over 0.25 s;
-   `Renderer.longestCatchUp`), and the sound stopping for good when the output device changes (nothing
-   restarts `AVAudioEngine`; only the user can test it, with real headphones).
+   The review's two last findings are FIXED ON BRANCH `claude/play-demo-pause-and-sound` (2026-11-25,
+   plans approved by the user; 635 checks pass, timeline unchanged), NOT MERGED: the user tries them
+   in the app first.
+   - Play Demo falling behind its music: the clock makes up stalls of up to 5 s inside Play Demo
+     (`DemoScene.longestCatchUp`), and the picture and music PAUSE TOGETHER while the window cannot be
+     seen or the Mac sleeps (the user chose pausing over playing on; `SceneView`, `AppModel.hidden`,
+     `MusicPlayer.paused`).
+   - The sound stopping when the output device changes: `MusicPlayer.rebuildOutput` on macOS's notice;
+     a failure shows as NO SOUND in the window title (`MusicPlayer.problem`).
+   - Proven with real sound by `--demo-live 8 30 pause 3 4` and `--demo-live 8 30 rebuild 3` (each fails
+     with its fix taken out). NOT verified, only the user can: in the app's window, minimise or cover it
+     for 10 s during Play Demo (music stops, both carry on together); connect or disconnect headphones
+     during Play Demo (the music carries on, the parts keep changing).
+   THEN: merge, `./build.sh` and the full self-test in the main folder; ask before pushing.
 2. SIGNED RELEASE, later, when the user asks (decided 2026-11-25): the app is to be shared outside the
    App Store without a warning on other Macs, so it will be signed with a Developer ID certificate and
    notarised. The user has signed up for an Apple Developer account. Still to do then: the user creates
@@ -101,7 +111,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
   - `--demo-timeline`: runs Play Demo's script against silently rendered music (0.2 s) and compares every
-    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound]`: the same with the
+    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [pause <at> <for>] [rebuild <at>]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
   - `--scaler-compare <picture|file.png> <folder> [x y width] [--methods ...]`: labelled comparison sheets.
   - `--credits-match <picture 1-21> <scene id> [first last [stride]]`: the steps at which a scene's 1993
@@ -185,7 +195,7 @@ All parts are built; this is the checklist when one is redone or a new one is ad
   the uncommitted fix being proven). Use the optimised build for the filtered self-test (`swift build -c
   release`, then `.build/release/SRMetal --selftest <word>`): the debug build takes minutes; its one
   expected failure is the credits' captured pictures, which only the app bundle has.
-- The full self-test fails if its total is not `SelfTest.expectedChecks` (634): change that number with
+- The full self-test fails if its total is not `SelfTest.expectedChecks`: change that number with
   every check added or removed. It is how a check that silently stops running gets noticed.
 - Every new check is proven to fail with the detail broken on purpose, then restored, using the filtered
   self-test (`--selftest <scene id>`); run the full self-test and `--demo-timeline` once before each

@@ -68,8 +68,24 @@ calls for, then draws. It also works out how far it is towards the next step, a 
 
 The sums are kept in a small piece of their own, `StepClock`, apart from the real time source. That lets
 the self-test feed it made-up times: ten seconds of a 60 Hz display, of a 120 Hz one, an hour's pause.
-After a pause (window hidden, Mac asleep) the clock catches up on a quarter of a second at most, so a
-scene never races through minutes of steps.
+After a stall the clock catches up on a quarter of a second at most, so a scene never races through
+minutes of steps.
+
+Play Demo is different, because its music plays on a clock of its own and does not stall with the picture.
+Two rules keep them together (added 2026-11-25):
+
+- **A short stall is made up in full**, up to 5 seconds (a scene being made at a part change, a hitch):
+  the missed steps are run at once. Dropped, every later step would lag the music by that much.
+- **While nobody can see the picture, everything pauses**: when the window is minimised, fully covered or
+  on another desktop, or the Mac goes to sleep, the picture stops and the music with it, and both carry on
+  from the same place. (Catching up afterwards would not do: some parts wait for one exact row of the
+  music, a tenth of a second long, and would miss it.) The scene's view reports whether its window can be
+  seen; this holds for scenes on their own too, which simply stand still.
+
+The sound output itself can stop: macOS stops it when the output device changes (headphones connected,
+another device chosen). The player then makes its output again at the new device's rate and carries on
+with the song from its place. If there is no sound output at all, Play Demo would wait for music that
+never comes, so the window's title says "NO SOUND" and why.
 
 ## The two looks
 
