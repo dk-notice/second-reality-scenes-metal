@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (whole-project code review: fixes on the review branch, waiting for /simplify and the user's look)
+Last updated: 2026-11-25 (whole-project code review merged into main; not pushed yet)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,32 +21,26 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 634 checks, all pass (branch `claude/opening-credits-review-88459f`; main has 626 until it
-  is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 634 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
-  9 cues equal the Swift's). main is pushed to GitHub (private repository).
+  9 cues equal the Swift's). GitHub (private repository) has main up to 00faa8a; the code review's merge
+  (355d716) and what follows are NOT pushed yet: ask the user first.
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
 
 ## Next steps
-1. CODE REVIEW AND SIMPLIFY, on branch `claude/opening-credits-review-88459f` (2026-11-25): the WHOLE
-   PROJECT was reviewed by six read-only agents; nothing was found wrong with the 1993 look or the
-   timing. FIXED on the branch (7 commits, 6bdf66e..b67aed7): the end scroller's stray "%" and the
-   Troll's jump before restarting (both Modern look); damaged data files turned away at load;
-   build.sh leaves no half-made app; the timeline tool prints steps; the opening credits', credits'
-   and a dozen other checks made to check what they say; the opening credits' Modern pictures made
-   with the scene; unused code and stale comments; README checksums.
-   /simplify was run on the branch's changes (2026-11-25) and its cleanups applied: one rule for palette
-   bytes read from a file (`vgaLevels`, used by every loader), one set of options for text pictures
-   (`ScenePicture.textLoadOptions`), one "is this the loop line" rule for the end scroller, check names
-   written once, and the self-test's total pinned (`SelfTest.expectedChecks`).
-   LEFT TO DO, in this order: (b) the user looks at the
-   result in the app (end scroller's last lines in the Modern look, about 5.5 minutes in; Troll on its
-   own in the Modern look; the opening credits); (c) merge, then `./build.sh` and the full self-test in
-   the main folder; ask before pushing.
-   NOT DONE, each needs a plan shown to the user first: Play Demo falling behind the music when the
-   window stops drawing (the step clock drops pauses over 0.25 s; `Renderer.longestCatchUp`), and the
-   sound stopping for good when the output device changes (nothing restarts `AVAudioEngine`).
+1. CODE REVIEW AND SIMPLIFY: DONE and merged into main (2026-11-25, merge 355d716; main's app rebuilt,
+   634 checks pass, every part on time; the user saw the result in the app). The whole project was
+   reviewed by six read-only agents; nothing was found wrong with the 1993 look or the timing. Fixed:
+   the end scroller's stray "%" and the Troll's jump before restarting (both Modern look); damaged data
+   files turned away at load; build.sh leaves no half-made app; the timeline tool prints steps; a dozen
+   checks made to check what they say; the self-test's total pinned; the opening credits' Modern
+   pictures made with the scene; unused code, stale comments, README checksums. What was left is under
+   "Open questions".
+   STILL OPEN from the review, each needs a plan shown to the user first: Play Demo falling behind the
+   music when the window stops drawing (the step clock drops pauses over 0.25 s;
+   `Renderer.longestCatchUp`), and the sound stopping for good when the output device changes (nothing
+   restarts `AVAudioEngine`; only the user can test it, with real headphones).
 2. SIGNED RELEASE, later, when the user asks (decided 2026-11-25): the app is to be shared outside the
    App Store without a warning on other Macs, so it will be signed with a Developer ID certificate and
    notarised. The user has signed up for an Apple Developer account. Still to do then: the user creates
