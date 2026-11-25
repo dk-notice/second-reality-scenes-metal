@@ -7,7 +7,7 @@ import Foundation
 ///   white column at its right edge (JP.C's `row[y][184] = 65`; colour 65 is white in its palette).
 /// - Slide-in (86 refreshes, as the original's 86 waits): the picture is drawn once, full width (184),
 ///   and the screen's start row moves from 400 (nothing) to 0, `y -= a; a += 6` in 1/64 rows.
-/// - Wait: in the demo, until "music plus" ≥ 4 (on its own: 35 steps).
+/// - Wait: in the demo, until "music plus" ≥ 4 (about 3 steps; on its own: none).
 /// - Jelly (700 refreshes): the top and bottom edges follow a small bounce worked out in JP.C (200
 ///   frames in 1/16 pixels, spread over 800 refreshes so that each value shows twice; still from refresh
 ///   379). Rows between the edges show source row b = (y − y1)·400 / (y2 − y1) at width
@@ -21,10 +21,11 @@ import Foundation
 ///
 /// Step pairing (as the switch-off): what the program set up before its n-th wait shows on step n − 1;
 /// jelly step j shows the rows drawn after `doit`'s j-th wait (j = 0: the slide-in's picture).
-/// On its own: slide-in, 35 steps, jelly, 35 steps holding the last picture, then again (856 steps).
+/// On its own: slide-in, jelly, 35 steps holding the last picture, then again (821 steps).
 struct JellyLogoModel {
     static let slideSteps = 86
-    static let standaloneWait = 35
+    /// On its own there is no music to wait for: the jelly starts as the picture lands.
+    static let standaloneWait = 0
     static let jellySteps = 700
     static let holdSteps = 35
     static let musicCue = 4

@@ -255,8 +255,8 @@ enum SceneCatalog {
             credit: "Psi",
             // 320x400, like the original.
             canvasSize: SIMD2(320, 400),
-            checkpoints: [0, 1, 2, 3, 40, 84, 85, 86, 121, 122, 125, 130, 140, 146, 200, 300, 500, 506, 820, 855],
-            thumbnailStep: 146,
+            checkpoints: [0, 1, 2, 3, 40, 84, 85, 86, 87, 90, 95, 105, 111, 165, 265, 465, 471, 785, 820],
+            thumbnailStep: 111,
             make: { device, format in try JellyLogoScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(

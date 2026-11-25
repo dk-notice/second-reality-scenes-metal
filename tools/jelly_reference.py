@@ -18,8 +18,8 @@ What it does:
      cache leaves black.
 
 The standalone scene's timeline (the app's `JellyLogoModel`): 86 steps of slide-in (as the original's
-86 waits), 35 steps waiting (in the demo: until "music plus" >= 4), 700 steps of jelly, 35 steps
-holding the last picture, then it starts again (856 steps). Step pairing: what the program set up
+86 waits), no wait (in the demo: until "music plus" >= 4, about 3 steps), 700 steps of jelly, 35 steps
+holding the last picture, then it starts again (821 steps). Step pairing: what the program set up
 before its n-th wait for the screen is what shows on step n - 1 (counting from 0); so jelly step j
 shows the rows drawn after the j-th wait of `doit` (j = 0: the slide-in's picture).
 
@@ -36,9 +36,8 @@ import artformats  # noqa: E402
 SRC = os.path.join(HERE, '..', '..', 'secondreality')
 if not os.path.isdir(SRC):
     SRC = os.path.join(HERE, '..', '..', '..', '..', '..', 'secondreality')   # from inside a worktree
-SLIDE, WAIT, JELLY, HOLD = 86, 35, 700, 35
-STEPS = [0, 1, 2, 3, 10, 40, 80, 84, 85, 86, 120, 121, 122, 125, 130, 140, 146, 150, 200, 260, 300, 400,
-         500, 505, 506, 600, 700, 820, 855]
+SLIDE, WAIT, JELLY, HOLD = 86, 0, 700, 35
+STEPS = [0, 1, 2, 3, 10, 40, 80, 84, 85, 86, 87, 90, 95, 105, 111, 115, 165, 225, 265, 365, 465, 470, 471, 565, 665, 785, 820]
 BEG, END = 140, 244          # DOL.C: the narrowest and widest routines
 BAND = ((160 - END // 2 - 1) & ~7, (160 + END // 2 + 8) & ~7)   # columns every routine writes: 32...287
 BLACK, EMPTY = -1, -2

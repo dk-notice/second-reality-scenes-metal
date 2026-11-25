@@ -14,8 +14,8 @@ bouncing a few times before it settles. Part 15 of the demo, just before the 3D 
   (53 line-stretching routines, 16,800 lines), by Psi. `ZOOM.INC` was written beforehand by a small
   program, `JPLOGO/DOL.C`. Built into `JPLOGO.EXE`.
 - **This version:** `Sources/SRMetal/Scenes/JellyLogo/` (added 2026-11-25).
-- **Length:** on its own 856 steps (about 12.2 seconds): 86 of slide-in, 35 waiting, 700 of jelly, 35
-  holding the last picture, then it starts again. In Play Demo it waits for the music as the original did
+- **Length:** on its own 821 steps (about 11.7 seconds): 86 of slide-in, 700 of jelly, 35 holding the
+  last picture, then it starts again (no wait between landing and jelly: there is no music to wait for). In Play Demo it waits for the music as the original did
   ("music plus" ≥ 4) between the slide-in and the jelly, and the 3D city follows the 700 steps.
 
 **This scene uses original artwork:** the picture (`artwork/original/rgb/15-jelly-logo.png`; it is signed
@@ -83,14 +83,14 @@ steps; no rows stay black.
 ## Checks
 
 - `tools/jelly_reference.py` runs `ZOOM.INC` against `DOL.C`'s formula, checks the sine table, works out
-  the bounce, and replays the part from the ORIGINAL picture file (`_PIC.OBK`), printing checksums at 29
+  the bounce, and replays the part from the ORIGINAL picture file (`_PIC.OBK`), printing checksums at 27
   steps and the 134 rows the cache leaves black.
-- The self-test compares the app's 1993 pictures with that tool at those 29 steps (all identical), checks
+- The self-test compares the app's 1993 pictures with that tool at those 27 steps (all identical), checks
   the sine table, the bounce and the column tables against the tool's checksums, the 134 black rows, the
-  loop after 856 steps, and, in a silent Play Demo run, that the jelly starts on the very step the demo
+  loop after 821 steps, and, in a silent Play Demo run, that the jelly starts on the very step the demo
   script gets past its music cue and the city follows 700 steps later. Each of those checks was seen to
   fail with the detail broken on purpose (no clamp, the cache cleared, the cue off by one).
-- `--motion-check jelly-logo modern`: two jumps, the loop back to black and the landing (step 121 to 122:
+- `--motion-check jelly-logo modern`: two jumps, the loop back to black and the landing (step 86 to 87:
   the bounce's first value already has the top 31 rows down, in 1993 too).
 
 ## Differences and limits

@@ -415,17 +415,18 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   identical to `SinTable`). Nothing shipped: ZOOM.INC = DOL.C's formula for all 160 widths (the tool runs
   ZOOM.INC instruction by instruction on four planes).
 - Step pairing: state set before wait n shows on step n - 1 (as the switch-off); jelly step j shows the rows
-  drawn after doit's j-th wait. Standalone: 86 slide-in, 35 wait, 700 jelly, 35 hold, loop (856).
+  drawn after doit's j-th wait. Standalone: 86 slide-in, NO wait, 700 jelly, 35 hold, loop (821). (First built with a 35-step wait;
+  the user saw the half-second pause after landing and it was removed, 2026-11-25. In the demo the wait is ~3 steps.)
 - `tools/jelly_reference.py`: ZOOM.INC vs DOL.C, sine table, bounce, replay from the ORIGINAL `_PIC.OBK`;
-  CRCs at 29 steps; 134 black row-refreshes. Self-test: 7 new checks + 22 generic GPU-vs-processor ones
-  (476 in all, all pass): sine, bounce, columns CRCs, 1993 pictures = tool at 29 steps, 134 black rows,
+  CRCs at 27 steps; 134 black row-refreshes. Self-test: 7 new checks + 21 generic GPU-vs-processor ones
+  (475 in all, all pass): sine, bounce, columns CRCs, 1993 pictures = tool at 27 steps, 134 black rows,
   loop, Play Demo sync (jelly on the script's cue step, city 700 later). Proven to fail with no clamp,
   the cache cleared, the cue off by one. `--demo-timeline` unchanged.
-- `--motion-check jelly-logo modern`: jumps only at the loop and at the landing (121->122: the bounce's
+- `--motion-check jelly-logo modern`: jumps only at the loop and at the landing (86->87: the bounce's
   first value already has the top 31 rows down, in 1993 too).
 - Docs: `docs/scenes/jelly-logo.md` with 3 pictures; README, demo-timeline, original-demo (ZOOM.INC was
   written beforehand, not at run time) updated.
-- Seen by Claude: snapshots of both looks at steps 146 and 200, Play Demo at step 33000. NOT seen by the
+- Seen by Claude: snapshots of both looks at steps 111 and 165, Play Demo at step 33000. NOT seen by the
   user in the app yet; not compared with the original running. Open: the white border (overscan) is left out.
 - NEXT (agreed order): mountain scroller, credits, opening credits (font decisions first), water last.
 
