@@ -41,20 +41,7 @@ enum Song: String, CaseIterable {
 /// `./build.sh` copies `Data/Music` into the app as `SRMetal.app/Contents/Resources/Music`; when the
 /// program is run some other way, a `Data/Music` folder next to or above it is used instead.
 enum MusicData {
-    static let folder: URL? = {
-        let manager = FileManager.default
-        var candidates: [URL] = []
-        if let resources = Bundle.main.resourceURL {
-            candidates.append(resources.appendingPathComponent("Music"))
-        }
-        var up = URL(fileURLWithPath: CommandLine.arguments.first ?? ".").resolvingSymlinksInPath().deletingLastPathComponent()
-        for _ in 0..<6 {
-            candidates.append(up.appendingPathComponent("Data/Music"))
-            up = up.deletingLastPathComponent()
-        }
-        candidates.append(URL(fileURLWithPath: manager.currentDirectoryPath).appendingPathComponent("Data/Music"))
-        return candidates.first { manager.fileExists(atPath: $0.appendingPathComponent(Song.first.rawValue).path) }
-    }()
+    static let folder = DataFolder.find(resource: "Music", devPath: "Data/Music", marker: Song.first.rawValue)
 
     /// The song file exactly as shipped (patterns still scrambled).
     static func original(_ song: Song) throws -> [UInt8] {

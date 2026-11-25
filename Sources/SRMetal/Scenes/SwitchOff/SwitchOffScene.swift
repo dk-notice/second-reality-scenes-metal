@@ -137,20 +137,9 @@ final class SwitchOffScene: DemoScene {
         descriptor.fragmentFunction = try Shaders.function("switch_off_fragment", in: library)
         descriptor.colorAttachments[0].pixelFormat = pixelFormat
         pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-        func sampler(_ filter: MTLSamplerMinMagFilter) throws -> MTLSamplerState {
-            let d = MTLSamplerDescriptor()
-            d.minFilter = filter
-            d.magFilter = filter
-            d.mipFilter = filter == .linear ? .linear : .notMipmapped
-            // Squashed up and down only: smooth vertically without blurring sideways.
-            if filter == .linear { d.maxAnisotropy = 16 }
-            d.sAddressMode = .clampToEdge
-            d.tAddressMode = .clampToEdge
-            guard let state = device.makeSamplerState(descriptor: d) else { throw RendererError.noSampler }
-            return state
-        }
-        smooth = try sampler(.linear)
-        nearest = try sampler(.nearest)
+        // Squashed up and down only: smooth vertically without blurring sideways.
+        smooth = try Shaders.sampler(device: device, smooth: true, anisotropy: 16)
+        nearest = try Shaders.sampler(device: device, smooth: false)
     }
 
     func reset() { model.reset() }

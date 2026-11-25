@@ -20,6 +20,20 @@ enum Shaders {
         return try device.makeLibrary(source: source, options: options)
     }
 
+    /// A sampler for pictures, edges clamped: `smooth` = linear with mipmaps (Modern look), otherwise
+    /// nearest pixel (1993 look). `anisotropy` above 1 lets a picture squashed one way stay sharp the other.
+    static func sampler(device: MTLDevice, smooth: Bool, anisotropy: Int = 1) throws -> MTLSamplerState {
+        let d = MTLSamplerDescriptor()
+        d.minFilter = smooth ? .linear : .nearest
+        d.magFilter = smooth ? .linear : .nearest
+        d.mipFilter = smooth ? .linear : .notMipmapped
+        d.maxAnisotropy = anisotropy
+        d.sAddressMode = .clampToEdge
+        d.tAddressMode = .clampToEdge
+        guard let state = device.makeSamplerState(descriptor: d) else { throw RendererError.noSampler }
+        return state
+    }
+
     static func function(_ name: String, in library: MTLLibrary) throws -> MTLFunction {
         guard let function = library.makeFunction(name: name) else {
             throw ShaderError.missingFunction(name)

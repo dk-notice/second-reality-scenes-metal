@@ -2,17 +2,7 @@ import Foundation
 
 /// Finds the end scroller's data (`Data/EndScroller`, copied into the app as `Resources/EndScroller`).
 enum EndScrollerData {
-    static let folder: URL? = {
-        let manager = FileManager.default
-        var candidates: [URL] = []
-        if let resources = Bundle.main.resourceURL { candidates.append(resources.appendingPathComponent("EndScroller")) }
-        var up = URL(fileURLWithPath: CommandLine.arguments.first ?? ".").resolvingSymlinksInPath().deletingLastPathComponent()
-        for _ in 0..<6 {
-            candidates.append(up.appendingPathComponent("Data/EndScroller"))
-            up = up.deletingLastPathComponent()
-        }
-        return candidates.first { manager.fileExists(atPath: $0.appendingPathComponent("ENDSCROL.TXT").path) }
-    }()
+    static let folder = DataFolder.find(resource: "EndScroller", devPath: "Data/EndScroller", marker: "ENDSCROL.TXT")
 
     static func load(_ name: String) throws -> [UInt8] {
         guard let folder, let data = try? Data(contentsOf: folder.appendingPathComponent(name)) else {

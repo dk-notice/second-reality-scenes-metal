@@ -6,17 +6,7 @@ import MetalKit
 /// (`artwork/original/rgb`). `./build.sh` copies them into the app as `Resources/Artwork`; run some
 /// other way, the `artwork` folder next to or above the program is used.
 enum DemoPictures {
-    static let folder: URL? = {
-        let manager = FileManager.default
-        var candidates: [URL] = []
-        if let resources = Bundle.main.resourceURL { candidates.append(resources.appendingPathComponent("Artwork")) }
-        var up = URL(fileURLWithPath: CommandLine.arguments.first ?? ".").resolvingSymlinksInPath().deletingLastPathComponent()
-        for _ in 0..<6 {
-            candidates.append(up.appendingPathComponent("artwork/original/rgb"))
-            up = up.deletingLastPathComponent()
-        }
-        return candidates.first { manager.fileExists(atPath: $0.appendingPathComponent("04-title.png").path) }
-    }()
+    static let folder = DataFolder.find(resource: "Artwork", devPath: "artwork/original/rgb", marker: "04-title.png")
 
     /// The picture's file, or nil if it is not there.
     static func url(_ name: String) -> URL? {

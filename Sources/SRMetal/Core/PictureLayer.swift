@@ -142,18 +142,8 @@ final class PictureLayer {
         descriptor.fragmentFunction = try Shaders.function("picture_layer_fragment", in: library)
         descriptor.colorAttachments[0].pixelFormat = pixelFormat
         pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-        func sampler(_ filter: MTLSamplerMinMagFilter) throws -> MTLSamplerState {
-            let d = MTLSamplerDescriptor()
-            d.minFilter = filter
-            d.magFilter = filter
-            d.mipFilter = filter == .linear ? .linear : .notMipmapped
-            d.sAddressMode = .clampToEdge
-            d.tAddressMode = .clampToEdge
-            guard let state = device.makeSamplerState(descriptor: d) else { throw RendererError.noSampler }
-            return state
-        }
-        smooth = try sampler(.linear)
-        nearest = try sampler(.nearest)
+        smooth = try Shaders.sampler(device: device, smooth: true)
+        nearest = try Shaders.sampler(device: device, smooth: false)
     }
 
     /// `offsetX`: how far the picture is moved left, in canvas pixels (the troll scrolling in); what

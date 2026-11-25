@@ -20,20 +20,7 @@ enum VisuError: Error, CustomStringConvertible {
 /// program is run some other way (straight from `.build/`, say), the files are looked for in a
 /// `Data/Visu` folder next to or above the program, so development runs work too.
 enum VisuData {
-    static let folder: URL? = {
-        let manager = FileManager.default
-        var candidates: [URL] = []
-        if let resources = Bundle.main.resourceURL {
-            candidates.append(resources.appendingPathComponent("Visu"))
-        }
-        var up = URL(fileURLWithPath: CommandLine.arguments.first ?? ".").resolvingSymlinksInPath().deletingLastPathComponent()
-        for _ in 0..<6 {
-            candidates.append(up.appendingPathComponent("Data/Visu"))
-            up = up.deletingLastPathComponent()
-        }
-        candidates.append(URL(fileURLWithPath: manager.currentDirectoryPath).appendingPathComponent("Data/Visu"))
-        return candidates.first { manager.fileExists(atPath: $0.appendingPathComponent("U2A.00M").path) }
-    }()
+    static let folder = DataFolder.find(resource: "Visu", devPath: "Data/Visu", marker: "U2A.00M")
 
     static func load(_ name: String) throws -> [UInt8] {
         guard let folder, let data = try? Data(contentsOf: folder.appendingPathComponent(name)) else {

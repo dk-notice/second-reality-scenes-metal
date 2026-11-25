@@ -49,14 +49,7 @@ final class EndScrollerScene: DemoScene {
         descriptor.colorAttachments[0].sourceRGBBlendFactor = .one
         descriptor.colorAttachments[0].destinationRGBBlendFactor = .one
         linePipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-        let s = MTLSamplerDescriptor()
-        s.minFilter = .linear
-        s.magFilter = .linear
-        s.mipFilter = .linear
-        s.sAddressMode = .clampToEdge
-        s.tAddressMode = .clampToEdge
-        guard let state = device.makeSamplerState(descriptor: s) else { throw RendererError.noSampler }
-        sampler = state
+        sampler = try Shaders.sampler(device: device, smooth: true)
     }
 
     func reset() {
