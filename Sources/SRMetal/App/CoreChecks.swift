@@ -18,40 +18,40 @@ enum CoreChecks {
     static func run(_ report: (String, Bool, String) -> Void) {
         func check(_ name: String, _ passed: Bool, _ detail: String = "") { report(name, passed, detail) }
 
-        catalogue(check)
-        clock(check)
-        letterbox(check)
-        commandLine(check)
-        math3D(check)
-        smoothTriangleGeometry(check)
-        music(check)
-        demoTimeline(check)
-        demoFromHere(check)
-        rotozoomerTiming(check)
+        if SelfTest.wants("core catalogue scene list") { catalogue(check) }
+        if SelfTest.wants("core clock") { clock(check) }
+        if SelfTest.wants("core letterbox") { letterbox(check) }
+        if SelfTest.wants("core app command line") { commandLine(check) }
+        if SelfTest.wants("core math3d") { math3D(check) }
+        if SelfTest.wants("core smooth triangles") { smoothTriangleGeometry(check) }
+        if SelfTest.wants("music") { music(check) }
+        if SelfTest.wants("demo play-demo timeline techno-bars interference troll switch-off end-picture title-picture end-scroller") { demoTimeline(check) }
+        if SelfTest.wants("demo play-demo from here") { demoFromHere(check) }
+        if SelfTest.wants("rotozoomer") { rotozoomerTiming(check) }
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             check("Core: Metal device available", false)
             return
         }
         do {
-            try indexedCanvas(check, device: device, queue: queue)
-            try smoothTrianglesDrawn(check, device: device, queue: queue)
-            try snapshots(check)
-            try pictureScaler(check, device: device, queue: queue)
-            try pictureFades(check, device: device, queue: queue)
-            try rotozoomerPictures(check, device: device)
-            try lens(check, device: device)
-            try jellyLogo(check, device: device)
-            try mountain(check, device: device)
-            try water(check, device: device)
-            try shipsInDemo(check, device: device)
-            try landscapeInDemo(check, device: device)
-            try plasmaCubeInDemo(check, device: device)
-            try plasmaInDemo(check, device: device)
-            try interferenceInDemo(check, device: device)
-            try cityInDemo(check, device: device)
-            try glenzInDemo(check, device: device)
-            try demoFromHereShown(check, device: device)
+            if SelfTest.wants("core indexed canvas") { try indexedCanvas(check, device: device, queue: queue) }
+            if SelfTest.wants("core smooth triangles") { try smoothTrianglesDrawn(check, device: device, queue: queue) }
+            if SelfTest.wants("core app snapshot") { try snapshots(check) }
+            if SelfTest.wants("core picture scaler") { try pictureScaler(check, device: device, queue: queue) }
+            if SelfTest.wants("core picture fades title-picture end-picture") { try pictureFades(check, device: device, queue: queue) }
+            if SelfTest.wants("rotozoomer") { try rotozoomerPictures(check, device: device) }
+            if SelfTest.wants("lens demo") { try lens(check, device: device) }
+            if SelfTest.wants("jelly-logo jelly logo demo") { try jellyLogo(check, device: device) }
+            if SelfTest.wants("mountain-scroller mountain demo") { try mountain(check, device: device) }
+            if SelfTest.wants("water-scroller water demo") { try water(check, device: device) }
+            if SelfTest.wants("ships-flyby ships demo") { try shipsInDemo(check, device: device) }
+            if SelfTest.wants("sine-landscape landscape demo") { try landscapeInDemo(check, device: device) }
+            if SelfTest.wants("plasma-cube plasma cube demo") { try plasmaCubeInDemo(check, device: device) }
+            if SelfTest.wants("plasma demo") { try plasmaInDemo(check, device: device) }
+            if SelfTest.wants("interference techno lead-in demo") { try interferenceInDemo(check, device: device) }
+            if SelfTest.wants("city-3d city jelly-logo demo") { try cityInDemo(check, device: device) }
+            if SelfTest.wants("glenz-vectors glenz title-picture demo") { try glenzInDemo(check, device: device) }
+            if SelfTest.wants("demo play-demo from here troll lens credits") { try demoFromHereShown(check, device: device) }
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")
         }

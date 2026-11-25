@@ -169,7 +169,13 @@ the project builds with Apple's small Command Line Tools alone.
 build/SRMetal.app/Contents/MacOS/SRMetal --selftest
 ```
 
-The test opens no window. It checks these kinds of thing.
+The test opens no window and takes about 40 seconds. A word after it runs only the groups of checks
+whose label contains that word, in a second or two: a scene id (`--selftest interference`), or a topic
+such as `demo` (every Play Demo check), `music` or `core`. The last line then says it was not the full
+self-test, and a word that matches nothing is a failure. That is for working on one area; the full
+self-test is run before every commit.
+
+It checks these kinds of thing.
 
 **The shared code and the command line.** These run first and live in `App/CoreChecks.swift` (its `run`
 also calls the checks kept next to what they check: `Scenes/<Name>/<Name>Checks.swift`, `Demo/DemoChecks.swift`,

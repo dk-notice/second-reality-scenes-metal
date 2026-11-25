@@ -9,7 +9,10 @@ import SwiftUI
 @main
 enum Main {
     static func main() {
-        if CommandLine.arguments.contains("--selftest") {
+        if let flag = CommandLine.arguments.firstIndex(of: "--selftest") {
+            // An optional word after it runs only the matching groups of checks (see `SelfTest.only`).
+            let next = CommandLine.arguments.dropFirst(flag + 1).first
+            if let next, !next.hasPrefix("-") { SelfTest.only = next }
             exit(SelfTest.run() ? 0 : 1)
         }
         if CommandLine.arguments.contains("--snapshot") {

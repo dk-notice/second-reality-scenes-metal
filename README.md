@@ -181,7 +181,8 @@ Two more are run directly on the program inside the app, and open no window:
 build/SRMetal.app/Contents/MacOS/SRMetal --selftest
 ```
 
-runs the checks (see [docs/how-it-works.md](docs/how-it-works.md#the-self-test)), and
+runs the checks (see [docs/how-it-works.md](docs/how-it-works.md#the-self-test); `--selftest <word>` runs
+only the groups matching a scene id or topic, such as `--selftest demo`), and
 
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --snapshot dot-tunnel modern 500 picture.png

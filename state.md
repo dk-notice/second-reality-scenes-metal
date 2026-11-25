@@ -70,7 +70,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
   (with `play-demo`), `--music on|off`.
 - Commands (run `build/SRMetal.app/Contents/MacOS/SRMetal` directly; none opens a window):
-  - `--selftest`: all checks.
+  - `--selftest`: all checks (~40 s). `--selftest <word>`: only the groups whose label contains the word
+    (a scene id, or `demo`, `music`, `core`), in a second or two.
   - `--snapshot <scene-id|play-demo> <modern|classic> <step> <file.png> [blend]`: a 960x720 picture.
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
@@ -152,7 +153,10 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   still picture is real and kept).
 - MEASURE standalone lengths from the script's silent run; do not estimate (two first guesses were wrong).
   The scene's Play Demo check must use the SCRIPT's numbers, not the model's own constants.
-- Every new check is proven to fail with the detail broken on purpose, then restored.
+- Every new check is proven to fail with the detail broken on purpose, then restored. Do that with the
+  filtered self-test (`--selftest <scene id>`, a second or two), not the full one; run the full self-test
+  (and `--demo-timeline`) once before each commit and after each merge (user, 2026-11-25: the full run
+  for every deliberate break cost too much time).
 - A scene shown by Play Demo gets one extra `demoUpdate` with `justShown` (the script tests its first cue
   on the show step; the lens needed it).
 - Jump the music by rendering and throwing away (`TrackerSong.skip`), never by libopenmpt's seek-by-seconds
