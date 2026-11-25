@@ -277,6 +277,45 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   NEXT (suggested order): the rotozoomer; then the bigger ones (lens, jelly logo, mountain scroller,
   credits, opening credits; water last).
 
+## Code review of the Play Demo work (2026-11-24)
+- Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,
+  `PictureLayer`, `demoUpdate` / `currentCanvasSize`, the explosion, title/end picture, troll, switch-off and
+  end scroller scenes, Techno Bars' music row, the new checks in `CoreChecks.swift`. Compared against
+  `../secondreality` (OUTTAA.C, BEG.C, END.C, KOE.C, SHUTDOWN.C, ENDSCRL/MAIN.C, DISINT.ASM, COPPER.ASM) and
+  the port's released end scroller.
+- Matches the original (checked): "music plus" (DISINT.ASM `muscode_6`, incl. row 32 between two
+  separators), the sync table and its lookup, the script against `tools/demo_timeline.py` step for step,
+  the explosion's rounds and `wfade`, the fade formulas, the title/end picture waits and the 5000 cap, the
+  troll's scroll/shake arithmetic, the switch-off wipes and dot, the end scroller's ring, centring, `[nn`
+  and `%`. Thread safety: the two locks are always taken in the same order, the audio thread only tries;
+  `ScenePicture` holds its lock while upscaling (at worst the screen waits a few ms, no race).
+- FIXED (1, commit `4044ab2`): PROVEN switch-off off-by-one. SHUTDOWN.C waits a third time before its band
+  loop, so the quarter squash shows at refreshes 2 AND 3 and band 32 first at 4 (it was at 3); band 3 is
+  made after refresh 14's wait and cut to the line at once, so it never shows. New check (fails without
+  the fix). 378 checks pass; `--demo-timeline` unchanged.
+- SUSPECTED, not fixed:
+  - Troll flash one refresh late. `waitb` returns just after vertical retrace starts (COPPER.ASM
+    `copper_end`), so the palette set after pass k's wait shows with pass k's position; the model pairs
+    flash 45 with the shake's SECOND refresh. The switch-off model already assumes the first rule (its
+    refresh 1), so the two scenes disagree; settling it rests on how VGA latches the start address, not on
+    the source alone. Fix if wanted: flash = 45 - 3k on shake refreshes 0...15.
+  - End picture: the scene checks "music plus" with the music one step older than the original's
+    "wait, then check" would; the scene may lag the script's fade-out by one step (the last, black step
+    of the fade then falls on the credits' first step).
+  - Live music only: one Play Demo step reads the music position several times (scene, then each
+    condition); the audio thread can move it in between, so a scene and the script can see a cue one step
+    apart. Harmless where checked (troll); reading it once per step would remove it.
+- Checks weaker than their names (not wrong): the troll check only tests the first flash VALUE, not on
+  which refresh it comes; the end scroller "centred" check only tests the ink starts at or after the
+  computed start; the switch-off list check did not test timing (now covered by the new check).
+- Tidy-ups for the `/simplify` pass (not done): read `musicState` once per tick in `DemoRunScene` /
+  `DemoSequencer`; drop Play Demo's last picture (its 8x copy, ~65 MB) when a scene shows; scenes are made
+  on the main thread at the part change (Glenz and Ships now upscale in `init`), a possible hitch; three
+  copies of the same picture sampler set-up (`DemoRunScene`, `PictureLayer`, `SwitchOffScene`) and two
+  of the "find a data folder" code (`DemoPictures`, `EndScrollerData`); `DemoRunScene.loadOptions`
+  duplicates `ScenePicture.loadOptions`; `classicReferenceFrame` picture-to-level loops repeated in four
+  scenes; `DemoRunScene.reset()` leaves `shownSince` and the picture cache (harmless).
+
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
   Full account, with how each finding was proven: `docs/how-it-works.md`, "Code review of the core and the app".
