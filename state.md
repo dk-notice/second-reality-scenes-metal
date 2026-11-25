@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (code review finished: every finding marked for fixing is merged and pushed)
+Last updated: 2026-11-25 (code review finished and pushed; next: go through everything left with the user)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -29,25 +29,27 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   program running.
 
 ## Next steps
-1. CODE REVIEW AND SIMPLIFY: DONE and merged into main (2026-11-25, merge 355d716; main's app rebuilt,
-   634 checks pass, every part on time; the user saw the result in the app). The whole project was
-   reviewed by six read-only agents; nothing was found wrong with the 1993 look or the timing. Fixed:
-   the end scroller's stray "%" and the Troll's jump before restarting (both Modern look); damaged data
-   files turned away at load; build.sh leaves no half-made app; the timeline tool prints steps; a dozen
-   checks made to check what they say; the self-test's total pinned; the opening credits' Modern
-   pictures made with the scene; unused code, stale comments, README checksums. What was left is under
-   "Open questions".
-   The review's two last findings are also DONE and merged (2026-11-25, merge a67eade; plans approved
-   and the result tried in the app by the user: both work, and switching between the laptop's speakers
-   and AirPods is very quick):
+0. NEXT SESSION (agreed 2026-11-25): go through EVERYTHING left with the user, before any code: every
+   item under "Open questions", the signed release (item 2), and `docs/future-ideas.md`. For each: what
+   it is in plain words, what it would cost, a recommendation (do, leave for good, or needs a decision),
+   and what the user must decide. Then the user picks; each chosen piece of work gets its own plan.
+1. CODE REVIEW AND SIMPLIFY: DONE, merged and pushed (2026-11-25; merges 355d716 and a67eade; the user
+   saw and tried the results in the app). The whole project was reviewed by six read-only agents;
+   nothing was found wrong with the 1993 look or the timing. Fixed: the end scroller's stray "%" and
+   the Troll's jump before restarting (both Modern look); damaged data files turned away at load;
+   build.sh leaves no half-made app; the timeline tool prints steps; a dozen checks made to check what
+   they say; the self-test's total pinned; the opening credits' Modern pictures made with the scene;
+   unused code, stale comments, README checksums. And the two bigger findings:
    - Play Demo falling behind its music: the clock makes up stalls of up to 5 s inside Play Demo
      (`DemoScene.longestCatchUp`), and the picture and music PAUSE TOGETHER while the window cannot be
      seen or the Mac sleeps (the user chose pausing over playing on; `SceneView`, `AppModel.hidden`,
      `MusicPlayer.paused`).
    - The sound stopping when the output device changes: `MusicPlayer.rebuildOutput` on macOS's notice;
-     a failure shows as NO SOUND in the window title (`MusicPlayer.problem`).
+     a failure shows as NO SOUND in the window title (`MusicPlayer.problem`). The user found switching
+     between the laptop's speakers and AirPods very quick.
    - Real-sound tests: `--demo-live 8 30 pause 3 4` and `--demo-live 8 30 rebuild 3` (each fails with
      its fix taken out). The self-test never uses the sound output.
+   What the review left is under "Open questions".
 2. SIGNED RELEASE, later, when the user asks (decided 2026-11-25): the app is to be shared outside the
    App Store without a warning on other Macs, so it will be signed with a Developer ID certificate and
    notarised. The user has signed up for an Apple Developer account. Still to do then: the user creates
@@ -116,6 +118,10 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   - `--credits-captures <folder>`: renders the credits' Modern pictures (build.sh does this into the app).
   - `--music-info [--write <folder>]`, `--music-render`, `--music-play`: the songs.
   - `--visu-test list|<case>|compare|damaged`: the 3D engine's test cases.
+
+## Housekeeping (2026-11-25)
+- All finished branches were deleted (each fully merged) and the three older sessions' worktrees removed.
+  Only `main` remains, plus the branch and worktree of whichever session is open.
 
 ## Layout
 - `Sources/SRMetal/Core/`: shared by all scenes. `DemoScene.swift` (the scene contract and `SceneCatalog`),
