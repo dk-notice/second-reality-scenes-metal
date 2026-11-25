@@ -192,6 +192,16 @@ enum SceneCatalog {
             make: { device, format in try SwitchOffScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "mountain-scroller",
+            title: "Mountain Scroller",
+            credit: "Trug",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 1, 2, 33, 64, 65, 66, 67, 68, 70, 100, 150, 191, 192, 193, 400, 665, 1000, 1500, 1582, 1583, 1700, 1900,
+                          1970, 1971, 1972, 1996, 2034, 2035],
+            thumbnailStep: 665,
+            make: { device, format in try MountainScrollerScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "lens",
             title: "Lens",
             credit: "Psi",

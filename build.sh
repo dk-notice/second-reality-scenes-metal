@@ -76,6 +76,11 @@ cp Data/EndScroller/ENDSCROL.TXT Data/EndScroller/ENDFONT.BIN "$APP/Contents/Res
 mkdir -p "$APP/Contents/Resources/Lens"
 cp Data/Lens/LENS.EX4 "$APP/Contents/Resources/Lens/"
 
+# The mountain scroller's background (with its colour numbers), text picture and the three position
+# tables that cannot be calculated (see Data/Mountain/README.md).
+mkdir -p "$APP/Contents/Resources/Mountain"
+cp Data/Mountain/HILLBACK.CLX Data/Mountain/O2.SCI Data/Mountain/POS?.DAT "$APP/Contents/Resources/Mountain/"
+
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 # codesign refuses a folder carrying Finder information. When the project sits in a synced folder
 # (Documents with iCloud, say), the sync can tag the app folder, sometimes again right after the tags

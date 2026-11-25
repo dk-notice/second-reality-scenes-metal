@@ -99,7 +99,7 @@ enum DemoScript {
               .frames(53 + 50), until(cap: 420) { -6 < $0.plus && $0.plus < 16 }]
         s += [.part("Screen switches off"), .show(.scene("switch-off")), .frames(SwitchOffModel.length)]
         s += [.part("Loader waits for the music"), .show(.black), until { $0.plus < 0 }, until { $0.plus > 0 }]
-        s += [.part("Mountain scroller"), .show(.picture("09-mountain-background")), .frames(64),
+        s += [.part("Mountain scroller"), .show(.scene("mountain-scroller")), .frames(64),
               until { $0.plus >= 0 }, .frames(127), until { $0.plus == -11 }, .frames(65)]
         s += [.part("Lens, then rotozoomer"), .show(.scene("lens")), until { $0.plus >= -6 },
               .resetFrameCounter, .frames(300), until { $0.plus >= -20 }, .frames(720),
