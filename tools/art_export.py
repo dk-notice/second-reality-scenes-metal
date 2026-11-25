@@ -128,10 +128,41 @@ PIECES = [
 ]
 CREDITS = ["01", "02", "03", "04", "05", "05B", "06", "07", "08", "09", "10", "10B",
            "11", "12", "13", "14", "14B", "15", "16", "17", "18"]
-for c in CREDITS:
+
+_cred = None
+
+
+def released_credits():
+    """The released credits program, unpacked: MAIN/DATA/CRED.EXE is packed with PKLITE, which
+    `deark -m pklite` undoes (Homebrew: brew install deark). The 21 pictures are linked into it in
+    order, 16,784 bytes apart from 72,272: a 16-byte header ("FCFC", 160, 100), 768 bytes of
+    palette (VGA levels 0...63), 160 x 100 pixels."""
+    global _cred
+    if _cred is None:
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["deark", "-m", "pklite", "-q", "-od", tmp, "-o", "cred",
+                            os.path.join(SOURCE, "MAIN", "DATA", "CRED.EXE")], check=True)
+            name = next(f for f in os.listdir(tmp) if f.lower().endswith(".exe"))
+            with open(os.path.join(tmp, name), "rb") as f:
+                _cred = f.read()
+    return _cred
+
+
+def released_credits_picture(index):
+    data = released_credits()
+    start = 72272 + 16784 * index
+    if data[start:start + 2] != b"\xfc\xfc" or words(data, start + 2, 2) != (160, 100):
+        raise FormatError(f"credits picture {index + 1} is not where it should be in CRED.EXE")
+    return Picture(160, 100, data[start + 784:start + 784 + 16000], vga_palette(data[start + 16:start + 784]))
+
+
+for i, c in enumerate(CREDITS):
     PIECES.append((f"18-credits-pic{c.lower()}", "CREDITS",
-                   (lambda c=c: read_lbm(src(f"CREDITS/PICS/PIC{c}.LBM"))), [], TALL,
-                   "Only the artist's file survives (the built copies are not in the source)."))
+                   (lambda i=i: released_credits_picture(i)), [f"CREDITS/PICS/PIC{c}.LBM"], TALL,
+                   "From the released CRED.EXE. The artist's file in the source differs for 02, 05b, 09, "
+                   "14b, 16, 17, 18 (02 there is a \"PART PIC MISSING\" placeholder)."))
 
 
 def other(path):

@@ -69,7 +69,7 @@ shape: 320x200 and 320x400 pictures become 1600x1200; the two 640-wide pictures 
 | `13-water-font` | 13 | 400x35 | Not a font: a picture of a sword with a flame in front and sparks behind, with its own colours (192...255); the part slides it over the water (see `docs/scenes/water-scroller.md`). (The file's header says 400x250; the data is 400x35.) |
 | `15-jelly-logo` | 15, jelly logo (`JPLOGO`) | 320x400 | The warrior on a horse ("Ice Kingdom"). The program squashes and wobbles it row by row. |
 | `17-end-picture` | 17, end picture (`END`) | 320x400 | The Future Crew ring. |
-| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits. Most are miniature screenshots of the part. **Plan (user, 2026-11-24): replace them with screenshots of this project's finished scenes** (nearly all parts are built now; the credits part itself is not). See the warnings below. |
+| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits, as linked into the released `CRED.EXE`. Most are miniature screenshots of the part. **Plan (user, 2026-11-24): replace them with screenshots of this project's finished scenes** (nearly all parts are built now; the credits part itself is not). See the warnings below. |
 | `18-credits-font` | 18 | 1500x40 | The credits font (shades 0-9, coloured by each credits picture's palette). The program uses the top 32 rows. |
 | `19-endscroller-font` | 19, end scroller (`ENDSCRL`) | 1500x30 | The end scroller's font; shades, coloured by the program. |
 | `starfield-text-panels` | Hidden part (`DDSTARS`) | 320x200 | The two text panels of the hidden starfield part. Left out of this project's Hidden Starfield scene. 16-colour picture using 4. |
@@ -80,10 +80,11 @@ them, which has not been checked.
 
 ## Warnings
 
-- **Credits pictures are the artist's files, not the built copies.** The files the credits program
-  was built from are not in the source release, so these could not be cross-checked.
-  `18-credits-pic02` is a placeholder in the source ("PART PIC MISSING"); the released demo may show
-  something else there. Not checked.
+- **Credits pictures come from the released program** (since 2026-11-25), unpacked from
+  `MAIN/DATA/CRED.EXE` with `deark` (Homebrew), which `tools/art_export.py` needs for them. The
+  artist's files in the source (`CREDITS/PICS/*.LBM`) differ: pictures 02, 05b, 09, 14b, 16, 17 and 18
+  were redrawn or replaced for the release (02 is a "PART PIC MISSING" placeholder there, a real
+  picture in the release), and every palette differs slightly. The export prints the comparison.
 - **The explosion's decoding** was checked by structure only (every frame fills exactly the screen,
   and the frames look right), not against the Autodesk Animator original.
 - **Colours on screen sometimes differed** from these PNGs: parts fade in and out, the lens tints,
