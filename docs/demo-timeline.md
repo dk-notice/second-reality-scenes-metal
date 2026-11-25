@@ -72,7 +72,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | 3D city | Its own scene: the jelly logo's last picture fading to white, the white window, the wait for section 19, the flight, the shifted whitening into the end picture (2026-11-25) |
   | Glenz | Its own scene: the title picture held until its music cue, the wipe to grey behind black bars, the plate, the pause to music frame 333, the glenz, black until the tunnel (2026-11-25) |
   | Tunnel, dots | The project's scene, started at the part's start and cut at its end; they fit exactly |
-  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (all three sections: the third cut by the music, see the scene's page), then the Troll scene, each at the original's moment |
+  | Techno | Black, rings, interference (its flash to white, then the original's lead-in: four columns wiped to black on four beats, shown by the interference scene), techno bars (all three sections: the third cut by the music, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 

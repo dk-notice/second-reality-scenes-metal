@@ -161,19 +161,24 @@ extension CoreChecks {
         // The techno part in a silent run: what shows, from which step, for how long.
         let sequencer = DemoSequencer(music: SilentMusic())
         var shows: [(visual: DemoVisual, step: Int)] = []
+        var cue = -1
         sequencer.onShow = { [unowned sequencer] visual in shows.append((visual, sequencer.time)) }
-        while !sequencer.finished && sequencer.time < 70 * 60 * 15 { sequencer.tick() }
+        while !sequencer.finished && sequencer.time < 70 * 60 * 15 {
+            if cue < 0, shows.last?.visual == .scene("interference"), sequencer.musicState.ticks >= 925 { cue = sequencer.time }
+            sequencer.tick()
+        }
         func length(_ id: String) -> Int {
             guard let i = shows.firstIndex(where: { $0.visual == .scene(id) }), i + 1 < shows.count else { return -1 }
             return shows[i + 1].step - shows[i].step
         }
+        let shownAt = shows.first { $0.visual == .scene("interference") }?.step ?? 0
         // Measured from this silent run (2026-11-25). Counting refreshes gave 669 and 1,260 (section three
         // never seen); with ticks the interference ends on the beat before the lead-in's cue and the bars
         // just before the troll's.
-        let interference = length("interference"), bars = length("techno-bars")
+        let interference = cue - shownAt, bars = length("techno-bars")
         let barsSectionThree = bars - TechnoBarsModel.sectionOneTicks - TechnoBarsModel.sectionTwoTicks
-        check("Play Demo: the interference shows 989 steps to 925 music ticks (and its 5-step flash), the techno bars 1,955 (their third section 695, to 2520 ticks)",
-              interference == 989 + 5 && bars == 1955 && barsSectionThree == 695,
+        check("Play Demo: the interference runs 989 steps to 925 music ticks, the techno bars 1,955 (their third section 695, to 2520 ticks)",
+              interference == 989 && bars == 1955 && barsSectionThree == 695,
               "interference \(interference), bars \(bars)")
     }
 

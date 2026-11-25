@@ -42,7 +42,8 @@ struct InterferenceModel {
     /// the rings, reached this many music ticks (`TECHNO/KOEA.ASM` 900-904)...
     static let demoEndTicks = 925
     /// ...and then the screen went to white over four refreshes, each mixing the last palette this
-    /// much of 256 towards white (`KOE.C` 224-228, `flash`). White then stays until the lead-in.
+    /// much of 256 towards white (`KOE.C` 224-228, `flash`). Then the lead-in to the bars
+    /// (`TechnoLeadIn`).
     static let flashMixes = [32, 64, 192, 256]
 
     static let pictureWidth = 640
@@ -58,9 +59,11 @@ struct InterferenceModel {
     /// Inside Play Demo (set by the scene): the interference runs as the original's did, the wobble
     /// growing to full and staying there, no loop.
     var inDemo = false
-    /// Inside Play Demo, once the music's cue has come: refreshes of the flash to white so far (the
-    /// picture stays at its last step meanwhile). nil before.
-    private(set) var flashSteps: Int?
+    /// Inside Play Demo, from the music's cue: the flash to white (the picture stays at its last step
+    /// meanwhile), then the lead-in to the bars. nil before.
+    private(set) var leadIn: TechnoLeadIn?
+    /// Inside Play Demo: the music as Play Demo gave it for the coming step (the lead-in follows it).
+    var demoMusic: DemoMusicState?
 
     init(part: Part) {
         self.part = part
@@ -70,22 +73,26 @@ struct InterferenceModel {
         part == .rings ? .rings(frame: ticks) : .interference(frame: ticks)
     }
 
-    mutating func reset() { ticks = 0; flashSteps = nil }
+    mutating func reset() { ticks = 0; leadIn = nil }
 
-    /// Play Demo's cue: from the next tick, the flash to white instead of the next step.
-    mutating func startFlash() { if flashSteps == nil { flashSteps = 0 } }
+    /// Play Demo's cue: from the next tick, the flash to white and the lead-in instead of the next step.
+    mutating func startFlash() { if leadIn == nil { leadIn = TechnoLeadIn() } }
 
-    /// How far (of 256) the palette is mixed towards white: 0 before the flash, then 32, 64, 192, 256.
+    /// How far (of 256) the interference's palette is mixed towards white: 0 before the flash, then 32,
+    /// 64, 192, 256.
     var flashMix: Int {
-        guard let flashSteps, flashSteps > 0 else { return 0 }
-        return Self.flashMixes[min(flashSteps, Self.flashMixes.count) - 1]
+        guard let screen = leadIn?.screen, screen.interference, leadIn?.spent ?? 0 > 0 else { return 0 }
+        return screen.mix
     }
 
     /// The same one step earlier (the Modern look glides from it).
     var previousFlashMix: Int {
-        guard let flashSteps, flashSteps > 1 else { return 0 }
-        return Self.flashMixes[min(flashSteps - 1, Self.flashMixes.count) - 1]
+        guard let screen = leadIn?.previous, screen.interference, (leadIn?.spent ?? 0) > 1 else { return 0 }
+        return screen.mix
     }
+
+    /// The lead-in's picture is showing (no longer the interference's).
+    var showsLeadIn: Bool { leadIn.map { !$0.screen.interference } ?? false }
 
     /// A colour mixed `mix` of 256 towards white, as `flash` did: (colour x (256 - mix) + 63 x mix) / 256.
     static func flashed(_ colour: Colour, mix: Int) -> Colour {
@@ -93,7 +100,10 @@ struct InterferenceModel {
     }
 
     mutating func tick() {
-        if let flashSteps { self.flashSteps = flashSteps + 1; return }
+        if leadIn != nil {
+            leadIn?.step(music: demoMusic ?? DemoMusicState(order: 0, row: 0, plus: -32, sync: 0, frame: 0, ticks: 0, noted: 0))
+            return
+        }
         ticks += 1
         switch part {
         case .rings:
@@ -238,6 +248,7 @@ struct InterferenceModel {
     /// The classic-look picture worked out on the processor by the 1993 rules: red, green, blue
     /// (0...63 each) for every pixel of the 320x200 screen.
     func classicReferenceFrame() -> [UInt8] {
+        if showsLeadIn, let leadIn { return leadIn.classicFrame() }
         let palette = classicPalette()
         let layout = classicLayout()
         let width = Self.pictureWidth
@@ -296,7 +307,7 @@ struct InterferenceModel {
 
         case .interference(let whole):
             // During Play Demo's flash the picture holds still and only the palette moves.
-            let frame = Double(whole) + (flashSteps == nil ? alpha : 0)
+            let frame = Double(whole) + (leadIn == nil ? alpha : 0)
             let ringTurn = 5 * frame
             let stripeTurn = 211 + 7 * frame
             let growing = (frame - Double(Self.wobbleStartTick)) / Double(Self.wobbleGrowTicks)

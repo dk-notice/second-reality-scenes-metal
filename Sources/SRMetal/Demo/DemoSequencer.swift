@@ -92,11 +92,12 @@ enum DemoScript {
               .frames(47), until { $0.plus >= -19 }, .resetFrameCounter, .frames(177),
               until { $0.frame >= 333 }, until(cap: 7000) { -16 < $0.plus && $0.plus < 0 }]
         s += [.part("Dot tunnel"), .show(.scene("dot-tunnel")), .frames(1060)]
-        // TECHNO: rings, interference, the lead-in to the bars on four beats, the bars, the troll.
+        // TECHNO: rings, interference, the lead-in to the bars on four beats, the bars, the troll. The
+        // interference scene shows the lead-in itself (`TechnoLeadIn`, which follows these same waits).
         s += [.part("Rings, interference, techno bars, troll"), .show(.black), until { $0.plus >= -4 },
               .show(.scene("rings")), .resetFrameCounter, .frames(256),
               .show(.scene("interference")), until { $0.ticks >= InterferenceModel.demoEndTicks },
-              .frames(5), .show(.black), until { $0.plus >= -3 }, until { $0.row & 7 == 7 }]
+              .frames(5), until { $0.plus >= -3 }, until { $0.row & 7 == 7 }]
         for _ in 0..<4 { s += [.frames(21), until { $0.row & 7 == 7 }, .frames(4)] }
         s += [.show(.scene("techno-bars")), .frames(420), .frames(840), until(cap: 700) { $0.ticks > 2520 },
               .show(.scene("troll")), until { $0.order > 35 || ($0.order == 35 && $0.row > 48) },

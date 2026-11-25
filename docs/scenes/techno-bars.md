@@ -160,8 +160,10 @@ still not counted.
   (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything. **Inside Play Demo** (2026-11-24) the flash
   follows the real music instead: the scene is given the music's row each step and flashes on rows 7,
   15, 23 ... as the original did.
-- **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats);
-  Play Demo holds black for those four beats. The picture that scrolls in afterwards is now a scene of
+- **The original's lead-in** (a white flash, then four columns dropping to black on four beats) is not
+  part of this scene: inside Play Demo the interference scene shows it (2026-11-25; see
+  [Rings and Interference](rings-and-interference.md), "Inside Play Demo"), so the bars start out of its
+  last white as in 1993. On its own this scene starts straight away. The picture that scrolls in afterwards is now a scene of
   its own, the [Troll](troll-and-switch-off.md) (2026-11-24).
 - **Inside Play Demo it is cut by the music**, as the original was. Sections 1 and 2 always run their
   full 420 and 840 refreshes (`doit1`, `doit2` only count refreshes). Only section 3 looks at the music's

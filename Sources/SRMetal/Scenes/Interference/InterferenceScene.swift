@@ -28,6 +28,9 @@ final class InterferenceScene: DemoScene {
         var classic: UInt32
         var stripesOn: UInt32
         var padding: UInt32 = 0
+        /// Play Demo's lead-in to the bars: x 1 when it shows, y the columns wiped, z the rows wiped of the
+        /// next column. Colours 0 and 15 of `palette` are its two colours.
+        var leadIn = SIMD4<Float>(0, 0, 0, 0)
     }
 
     init(part: InterferenceModel.Part, device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
@@ -67,6 +70,7 @@ final class InterferenceScene: DemoScene {
     func demoUpdate(_ context: DemoContext) {
         guard model.part == .interference else { return }
         model.inDemo = true
+        model.demoMusic = context.music
         if context.music.ticks >= InterferenceModel.demoEndTicks { model.startFlash() }
     }
 
@@ -79,7 +83,29 @@ final class InterferenceScene: DemoScene {
         var palette: [SIMD4<Float>]
         var wobble: [Int32]
 
-        if frame.look == .classic {
+        if model.showsLeadIn, let leadIn = model.leadIn {
+            // Play Demo's lead-in: two colours and the wipe. The Modern look glides the wipe and the
+            // palette between steps (not across a new column, which starts again from the top).
+            let now = leadIn.screen
+            var rows = Float(now.rows), mix = Float(now.mix)
+            if frame.look == .modern, let before = leadIn.previous, !before.interference {
+                let alpha = Float(frame.alpha)
+                if before.columns == now.columns && before.rows <= now.rows { rows = Float(before.rows) + (rows - Float(before.rows)) * alpha }
+                mix = Float(before.mix) + (mix - Float(before.mix)) * alpha
+            }
+            func colour(_ c: SIMD3<Int>) -> SIMD4<Float> {
+                frame.look == .classic
+                    ? SIMD4<Float>(SIMD3<Float>(InterferenceModel.flashed(c, mix: now.mix)) / 63, 1)
+                    : SIMD4<Float>((SIMD3<Float>(c) * (256 - mix) + 63 * mix) / 256 / 63, 1)
+            }
+            palette = [SIMD4<Float>](repeating: colour(TechnoLeadIn.light), count: 16)
+            palette[0] = colour(TechnoLeadIn.dark)
+            wobble = [Int32](repeating: 0, count: 200)
+            uniforms = Uniforms(canvasSize: frame.canvasSize, ringScroll: .zero, stripeScroll: .zero,
+                                wobbleAmplitude: 0, wobblePhase: 0, cycle: 0,
+                                classic: frame.look == .classic ? 1 : 0, stripesOn: 0,
+                                leadIn: SIMD4(1, Float(now.columns), rows, 0))
+        } else if frame.look == .classic {
             let layout = model.classicLayout()
             palette = model.classicPalette().map { SIMD4<Float>(SIMD3<Float>($0) / 63, 1) }
             wobble = layout.wobble.map { Int32($0) }
@@ -125,6 +151,7 @@ final class InterferenceScene: DemoScene {
         uint classic;
         uint stripesOn;
         uint padding;
+        float4 leadIn;          // Play Demo's lead-in: x on, y columns wiped, z rows wiped of the next
     };
 
     // Colour of ring-position `t` on an 8-colour ramp, with the edge between two rings softened
@@ -145,6 +172,26 @@ final class InterferenceScene: DemoScene {
                                           texture2d<uint> ringPicture [[texture(0)]],
                                           texture2d<uint> stripePicture [[texture(1)]]) {
         float2 pos = in.uv * u.canvasSize;   // canvas position; whole pixels are centred on .5
+
+        if (u.leadIn.x != 0) {
+            // Colour 0 where the wipe has passed (whole columns of 80, then the top rows of the next),
+            // colour 15 elsewhere.
+            float columns = u.leadIn.y, rows = u.leadIn.z;
+            if (u.classic != 0) {
+                int2 pixel = int2(floor(pos));
+                int column = pixel.x / 80;
+                bool dark = column < int(columns) || (column == int(columns) && pixel.y < int(rows));
+                return float4(palette[dark ? 0 : 15].rgb, 1.0);
+            }
+            // Modern: the same edges, softened over one screen pixel.
+            float2 w = max(fwidth(pos), float2(1e-5));
+            float left = 80.0 * columns;
+            float done = saturate((left - pos.x) / w.x + 0.5);
+            float inColumn = saturate((pos.x - left) / w.x + 0.5) * saturate((left + 80.0 - pos.x) / w.x + 0.5);
+            float above = saturate((rows - pos.y) / w.y + 0.5);
+            float dark = max(done, inColumn * above);
+            return float4(mix(palette[15].rgb, palette[0].rgb, dark), 1.0);
+        }
 
         if (u.classic != 0) {
             // 1993: look both pictures up, then let the 16-colour table decide.

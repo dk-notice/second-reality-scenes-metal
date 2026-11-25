@@ -195,8 +195,23 @@ Inside Play Demo the interference then follows the original (2026-11-25):
   colour x (256 - mix) / 256 + 63 x mix / 256). The fifth step is white too: the script waits five steps
   there. The Modern look glides between the four mixes.
 
-Rings is unchanged there (still no white-out) and neither scene waits for the music; the checks are
-"Play Demo: the interference runs to the script's 925 music ticks..." (`InterferenceChecks.swift`).
+- **The lead-in to the techno bars** (`KOE.C` 230-316, `TechnoLeadIn.swift`). The interference scene
+  stays on screen and shows it, following the same waits as the script:
+  - white until "music plus" reaches -3 and the music is on a row ending in 7 (a beat);
+  - then, four times: one quarter of the screen (80 pixels, left to right) is wiped to black from the
+    top, 1, 2, 3 ... more rows each step, over 21 steps. Meanwhile the palette fades from white over 9
+    steps: the screen to a blue-grey (45, 52, 60) and the wiped part to black. Then it waits for the next
+    beat and flashes back to white over 4 steps (32, 64, 192, 256);
+  - the techno bars start on the step after the fourth flash, out of white.
+
+  The original changed screen mode under the white (it cleared the screen to colour 15, all white then);
+  the wipe is the only drawing. The Modern look softens the edges over one screen pixel and glides the
+  wipe and the fades between steps.
+
+Rings is unchanged there (still no white-out). On their own (the sidebar) neither scene has the flash or
+the lead-in. The checks are the "Play Demo: the interference runs to the script's 925 music ticks...",
+"... the techno lead-in on the script's waits ...", "... blue-grey (45, 52, 60) ..." and "the graphics
+chip draws the techno lead-in ..." lines (`InterferenceChecks.swift`).
 
 One thing that is not a difference: the circles are round in pixels, and the canvas is shown at 4:3 as on a
 VGA monitor, so they appear as slightly tall ovals. They did in 1993 too.
