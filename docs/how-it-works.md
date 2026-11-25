@@ -158,7 +158,9 @@ build/SRMetal.app/Contents/MacOS/SRMetal --selftest
 
 The test opens no window. It checks these kinds of thing.
 
-**The shared code and the command line.** These run first and live in `App/CoreChecks.swift`: the scene
+**The shared code and the command line.** These run first and live in `App/CoreChecks.swift` (its `run`
+also calls the checks kept next to what they check: `Scenes/<Name>/<Name>Checks.swift`, `Demo/DemoChecks.swift`,
+`Music/MusicChecks.swift`, `Core/PictureChecks.swift`): the scene
 list, the clock, the 4:3 picture area, the start-up options and the `--snapshot` and `--motion-check`
 command lines, the 3D helpers, smooth triangles, the palette picture, and the sidebar pictures drawn on
 two threads at once. They were added by the code review described at the end of this page.
