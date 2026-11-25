@@ -176,6 +176,25 @@ The camera glides between steps.
 - The modern look was checked by eye only. It is a smooth re-drawing of the same landscape, not a
   pixel-exact one.
 
+## Inside Play Demo
+
+Since 2026-11-25 the scene follows the music there, as the part did (`COMAN/MAIN.C` 56-62):
+
+- **Black until "music plus" reaches 0** (24 steps in the demo: the part had set its mode, cleared the
+  screen and was waiting). The main loop starts on that step; its first picture shows two steps later
+  (this version's two refreshes a picture), and the land has risen 160 steps after the cue.
+- **The sinking starts on the music.** The part reads "music plus" once at the top of each pass; while it
+  is between -29 and -1 the land sinks a line a refresh. In the demo that begins 1,833 steps after the
+  cue and lasts 178 steps, so the land is out of sight (160 lines) for the last 18 before the cut. That
+  agrees with the recording, where it sinks nearly out of sight.
+- **The cut** is the script's: "music plus" at -7. The scene does not start again.
+
+The self-test runs Play Demo silently from this scene and compares the scene's start, first picture and
+cut with the script's own cues, and the sinking with the source's -30; both checks were proven to fail
+with the cues moved by one.
+
+On its own the scene is unchanged (2,048 steps, its own sink time, then it loops).
+
 ## Deliberate differences
 
 - **Speed.** The original's speed depended on the PC. This version draws one picture every 2 steps (35 a
@@ -184,12 +203,12 @@ The camera glides between steps.
   the recording shows exactly 35 pictures a second. One picture per step was tried first and was plainly
   too fast. The number is `ticksPerPicture` in the model. The modern look glides between pictures, so it
   is smooth either way.
-- **The ending.** The original started sinking on a music cue; in the recording the land sinks nearly
+- **The ending**, on its own. The original started sinking on a music cue; in the recording the land sinks nearly
   out of sight before the next part cuts in (the source alone suggested it would be cut off sooner). Here
   it always sinks all the way out of sight (130 steps), then the scene starts again from a black screen. The
   loop point is therefore invisible. The scene's length (2048 steps, 29 seconds) is this version's choice; the
   original's was set by the music and is about 28 seconds in the recording.
-- **The start** does not wait for the music as the original did.
+- **The start**, on its own, does not wait for the music as the original did.
 - **Video pages.** The original showed each picture one frame late (it drew into the hidden page) and
   relied on 18 cleared lines above the picture to wipe the previous one as it moved. This version simply
   shows black above the picture, which gives the same result as long as the picture moves less than 18

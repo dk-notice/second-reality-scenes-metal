@@ -73,6 +73,7 @@ final class SineLandscapeScene: DemoScene {
 
     func reset() { model.reset() }
     func tick() { model.tick() }
+    func demoUpdate(_ context: DemoContext) { model.update(music: context.music, justShown: context.justShown) }
     func classicReferenceFrame() -> [UInt8] { model.classicReferenceFrame() }
 
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {

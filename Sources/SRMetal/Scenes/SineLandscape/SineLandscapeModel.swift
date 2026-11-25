@@ -12,6 +12,12 @@ import simd
 /// The 1993 look replays the original's inner loop on the processor, with the original's 16- and
 /// 32-bit arithmetic, into the same off-screen column buffer, which the original only partly cleared
 /// between frames. The modern look only needs the camera, which `camera(alpha:)` provides.
+///
+/// Inside Play Demo (COMAN/MAIN.C `doit`, lines 56-60) the scene follows the music as the part did:
+/// black until "music plus" >= 0; then the main loop, whose first picture shows `ticksPerPicture` steps
+/// after the step that met the cue; the land sinks a line a refresh on every pass that begins with
+/// "music plus" between -29 and -1 (the part reads it once, at the top of a pass); no second run. The
+/// script cuts the part when "music plus" reaches -7.
 struct SineLandscapeModel {
     static let width = 320
     static let height = 200
@@ -124,6 +130,15 @@ struct SineLandscapeModel {
     // MARK: State
 
     private(set) var ticks = 0
+    /// Inside Play Demo: the music, given before each step. nil on its own.
+    private(set) var music: DemoMusicState?
+    /// Inside Play Demo: whether the start cue has been met (the step counter runs from the step after).
+    private(set) var started = false
+    /// Inside Play Demo: "music plus" as the pass now being drawn read it at its top.
+    private var passPlus = -32
+    static let startCue = 0
+    /// The land sinks while "music plus" is in this range (MAIN.C: `a>-30 && a<0`).
+    static let sinkCue = -29 ... -1
     /// How many lines the picture is pushed down: 160 (out of sight) at the start, 0 when fully risen.
     private(set) var startRise = 160
     private var rot = 0
@@ -151,20 +166,35 @@ struct SineLandscapeModel {
 
     mutating func reset() { self = SineLandscapeModel() }
 
+    /// Play Demo's music, before each step; `justShown` on the step the scene appears.
+    mutating func update(music: DemoMusicState, justShown: Bool) {
+        self.music = music
+        // The script tests the start cue on the very step it shows the scene.
+        if justShown, music.plus >= Self.startCue { started = true }
+    }
+
     /// One 1/70 s step. Every `ticksPerPicture` steps, one frame of the original's main loop is run.
     mutating func tick() {
+        if let music, !started {
+            // The part's first loop: black until "music plus" >= 0.
+            if music.plus >= Self.startCue { started = true }
+            return
+        }
         ticks += 1
-        if ticks >= Self.lengthInTicks {
+        if music == nil, ticks >= Self.lengthInTicks {
             // Everything is out of sight by now, so starting again cannot be seen.
             reset()
             return
         }
+        // A pass begins on the step after the last picture appeared; there it reads the music.
+        if let music, ticks % Self.ticksPerPicture == 1 % Self.ticksPerPicture { passPlus = music.plus }
         guard ticks % Self.ticksPerPicture == 0 else { return }
 
         // The rise and fall kept to real time in the original: one line per screen refresh that had
         // passed, however long the picture took to draw.
+        let sinking = music == nil ? ticks > Self.sinkStart : Self.sinkCue.contains(passPlus)
         for _ in 0..<Self.ticksPerPicture {
-            if ticks > Self.sinkStart {
+            if sinking {
                 if startRise < 160 { startRise += 1 }
             } else if startRise > 0 {
                 startRise -= 1
