@@ -50,6 +50,7 @@ enum CoreChecks {
             if SelfTest.wants("plasma-cube plasma cube demo") { try plasmaCubeInDemo(check, device: device) }
             if SelfTest.wants("plasma demo") { try plasmaInDemo(check, device: device) }
             if SelfTest.wants("interference techno lead-in demo") { try interferenceInDemo(check, device: device) }
+            if SelfTest.wants("credits demo") { try creditsInDemo(check, device: device) }
             if SelfTest.wants("city-3d city jelly-logo demo") { try cityInDemo(check, device: device) }
             if SelfTest.wants("glenz-vectors glenz title-picture demo") { try glenzInDemo(check, device: device) }
             if SelfTest.wants("demo play-demo from here troll lens credits") { try demoFromHereShown(check, device: device) }

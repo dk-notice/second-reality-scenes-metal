@@ -1,4 +1,5 @@
 import AppKit
+import Metal
 import CoreText
 import Foundation
 
@@ -93,5 +94,30 @@ extension CoreChecks {
                     && abs((rows.first ?? 0) - 38) <= 1 && abs((rows.last ?? 0) - 110) <= 1,
                   "inked rows \(rows.first ?? -1)...\(rows.last ?? -1)")
         }
+    }
+}
+
+extension CoreChecks {
+    /// Inside Play Demo the Credits scene shows for the script's 21 x 362 steps from its first screen,
+    /// then the end scroller follows (2026-11-25; before, 21 still pictures).
+    static func creditsInDemo(_ check: (String, Bool, String) -> Void, device: MTLDevice) throws {
+        let part = DemoScript.partNames.firstIndex(of: "Credits") ?? 0
+        let run = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(), from: .part(part))
+        // The script's own number for the part: its `.frames` after showing the scene.
+        var scripted = -1
+        if let at = DemoScript.steps.firstIndex(where: { if case .show(.scene("credits")) = $0 { return true } else { return false } }),
+           case .frames(let n) = DemoScript.steps[at + 1] { scripted = n }
+        var shown = 0, inStep = true, after: DemoScene?
+        // The step the scene first shows is its step 0; each later step, its model has moved on one.
+        if let credits = run.sceneShowing as? CreditsScene { shown = 1; inStep = credits.model.step == 0 }
+        for _ in 0..<8000 {
+            run.tick()
+            guard let credits = run.sceneShowing as? CreditsScene else { after = run.sceneShowing; break }
+            if credits.model.step != shown { inStep = false }
+            shown += 1
+        }
+        check("Play Demo: the credits show as the Credits scene for the script's \(scripted) steps (21 screens of 362) from its first step, then the end scroller",
+              scripted == 7602 && shown == scripted && inStep && after is EndScrollerScene,
+              "shown \(shown) steps, in step \(inStep), then \(String(describing: after.map { type(of: $0) }))")
     }
 }

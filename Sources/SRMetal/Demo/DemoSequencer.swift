@@ -126,8 +126,8 @@ enum DemoScript {
               until { $0.order > 18 }, .frames(1801 * 2 + 16)]
         s += [.part("End picture"), .show(.scene("end-picture")), .frames(163),
               until(cap: 5000) { $0.plus > -16 }, .frames(64)]
-        s += [.part("Credits")]
-        for picture in creditsPictures { s += [.show(.picture(picture)), .frames(362)] }
+        // CREDITS/MAIN.C: 21 screens of 362 refreshes (see CreditsModel), shown by the Credits scene.
+        s += [.part("Credits"), .show(.scene("credits")), .frames(creditsPictures.count * 362)]
         s += [.part("End scroller"), .show(.scene("end-scroller")), .hold]   // until the demo is stopped (a key, in 1993)
         return s
     }()

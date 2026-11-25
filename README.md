@@ -35,6 +35,7 @@ The 23 scenes, in the demo's order (the hidden starfield, which the demo only sh
 | Jelly Logo | ![](docs/images/jelly-logo-modern.png) | ![](docs/images/jelly-logo-classic.png) |
 | 3D City | ![](docs/images/city-3d-modern.png) | ![](docs/images/city-3d-classic.png) |
 | End Picture | ![](docs/images/end-picture-modern.png) | ![](docs/images/end-picture-classic.png) |
+| Credits | ![](docs/images/credits-modern.png) | ![](docs/images/credits-classic.png) |
 | End Scroller | ![](docs/images/end-scroller-modern.png) | ![](docs/images/end-scroller-classic.png) |
 | Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 
@@ -82,6 +83,7 @@ stills). See [docs/demo-timeline.md](docs/demo-timeline.md).
 | 3D Sine Landscape | Psi | [docs/scenes/sine-landscape.md](docs/scenes/sine-landscape.md) |
 | Jelly Logo | Psi | [docs/scenes/jelly-logo.md](docs/scenes/jelly-logo.md) |
 | 3D City | Psi | [docs/scenes/city-3d.md](docs/scenes/city-3d.md) |
+| Credits | Future Crew | [docs/scenes/credits.md](docs/scenes/credits.md) |
 | End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
@@ -166,7 +168,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `credits`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |

@@ -32,7 +32,7 @@ has for the part: a scene of its own, or only the original artwork so far.
 | 15 | Jelly logo (`JPLOGO`) | 2 | 7:48.3 | 7:59.6 | 11.3 s | **Scene** (2026-11-25) |
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
 | 17 | End picture (`ENDLOGO`) | 1 | 8:55.3 | 9:03.8 | 8.6 s | **Scene** (2026-11-24) |
-| 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | Not built: Play Demo shows the 21 pictures as stills |
+| 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | **Scene** (2026-11-25) |
 | 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | until a key | — | **Scene** (2026-11-24; released text and font) |
 
 The hidden starfield (`DDSTARS`) is not in the normal run: the loader plays it only when chosen
@@ -52,7 +52,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 - **Checked:** `SRMetal --demo-timeline` (and the self-test) run the same script against the music rendered
   silently, as `tools/music_steps.c` does, and every part starts on exactly the step the Python simulation
   gives; the credits end at step 45,670 (10:52.4).
-- **What each part shows** (`Demo/DemoRunScene.swift`); only the opening credits and the credits are still stand-ins:
+- **What each part shows** (`Demo/DemoRunScene.swift`); only the opening credits are still a stand-in:
 
   | Part | Shown now |
   |---|---|
@@ -74,7 +74,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Tunnel, dots | The project's scene, started at the part's start and cut at its end; they fit exactly |
   | Techno | Black, rings, interference (its flash to white, then the original's lead-in: four columns wiped to black on four beats, shown by the interference scene), techno bars (all three sections: the third cut by the music, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
-  | Credits | The 21 credits pictures in the original order, 362 steps each |
+  | Credits | Its own scene (2026-11-25): 21 screens of 362 steps, the released pictures and texts |
 
   Every scene built before Play Demo now follows the original part's own steps and music cues there,
   as the newer ones do (2026-11-25; each scene's page has an "Inside Play Demo" section). On its own

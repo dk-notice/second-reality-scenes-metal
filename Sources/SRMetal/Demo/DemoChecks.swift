@@ -254,9 +254,9 @@ extension CoreChecks {
         run.reset()   // a restart starts part-way again, through the same steps as the first start
         check("Play Demo from here: the music starts only once the first scene is built",
               recorder.sceneShownAtPlay == [true], "\(recorder.sceneShownAtPlay)")
-        check("Play Demo from here: starts showing the chosen scene (troll), the lens uncovering at once, and a picture part (credits)",
+        check("Play Demo from here: starts showing the chosen scene (troll), the lens uncovering at once, and a part by number (credits)",
               troll.sceneShowing is TrollScene && troll.currentPart == "Rings, interference, techno bars, troll"
-                && lensPhase == .reveal && credits.currentPart == "Credits" && credits.sceneShowing == nil,
+                && lensPhase == .reveal && credits.currentPart == "Credits" && credits.sceneShowing is CreditsScene,
               "troll: \(troll.currentPart ?? "-"), lens: \(String(describing: lensPhase)), credits: \(credits.currentPart ?? "-")")
     }
 }

@@ -11,13 +11,13 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 `../second-reality-original`.
 
 ## Status (2026-11-25)
-- 23 scenes work in both looks and are in the sidebar in the demo's order: Ships Fly-by, Explosion, Title
+- 24 scenes work in both looks and are in the sidebar in the demo's order: Ships Fly-by, Explosion, Title
   Picture, Glenz Vectors, Dot Tunnel, Rings, Interference, Techno Bars, Troll, Screen Switches Off,
   Mountain Scroller, Lens, Rotozoomer, Plasma, Plasma Cube, Bouncing Dots, Water Scroller, 3D Sine
-  Landscape, Jelly Logo, 3D City, End Picture, End Scroller, and the Hidden Starfield (last; not in the demo).
+  Landscape, Jelly Logo, 3D City, End Picture, Credits, End Scroller, and the Hidden Starfield (last; not in the demo).
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
-  part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
+  part is a real scene EXCEPT the opening credits (a title card).
   Since 2026-11-25 every scene follows its original part's own timing inside it (the older scenes: each
   scene's page, "Inside Play Demo"; the 3D City starts from the jelly logo's last screen via
   `DemoHandover`). Seen by the user and merged 2026-11-25. Their standalone lengths differ from the
@@ -27,29 +27,19 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   second from its "speed adjust"), so inside Play Demo the interference now runs 989 steps (was 669) with
   full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
   `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
-- Self-test: 577 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- Self-test: 600 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25, with the techno fixes.
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
   the original program running.
 
 ## Next steps
-1. CREDITS (part 18, `CREDITS/MAIN.C`), IN PROGRESS. Research done 2026-11-25:
-   - The RELEASED `CRED.EXE` (pklite; unpack with deark) differs from the source: 7 of 21 pictures
-     (02 is a real picture, not "PART PIC MISSING"; 16 another city view), all palettes slightly, and 6
-     credit lines (OBJECTS - WILDFIRE, SKETCH - SKAVEN x2, WORLD - TRUG, Skaven on 17 and 18). The font
-     is identical. Pictures sit at 72272 + 16784 k in the unpacked file (16-byte header, 768 palette, 160x100).
-   - Timing: 1 + 102 in + 200 hold + 59 out = 362 steps a screen, 7,602 in all (the script's number).
-   - The text shows EVERY OTHER FONT ROW: written with 320-wide rows into a 640-wide screen (TWEAK.ASM
-     sets CRTC offset 80, byte mode). The C++ port draws all rows (tall letters, lines 3-4 cut off).
-   DECIDED (user, 2026-11-25): 1993 look = the released pictures and the original font (every other
-   row). Modern look = DIN Condensed Bold (macOS system font) and pictures captured from this project's
-   scenes in their Modern look, at the step whose 1993 look matches each released picture (show the user
-   all 21 pairs before they go in), rendered by `build.sh` with `--snapshot` into the app (not in git).
-   Picture 1 (opening credits, not built yet): the released picture through Super-xBR until then.
-   Plan: (1) art_export.py takes the pictures from CRED.EXE; (2) the scene, 1993 look, with a
-   `tools/credits_reference.py` replay (work out which register changes show on which step first);
-   (3) Modern look; (4) Play Demo shows the scene for 7,602 steps.
+1. CREDITS: BUILT 2026-11-25 on the branch, waiting for the user's look (see `docs/scenes/credits.md`):
+   released pictures, texts and font (`Data/Credits/`, `tools/credits_reference.py`); 1993 look with the
+   text's every-other-row and the start-address lag; Modern look in DIN Condensed Bold with pictures
+   captured from the scenes by `build.sh` (`--credits-captures`; moments in `CreditsModel.captures`, chosen
+   with `--credits-match`, ships at 360 by eye, picture 21 recursive, picture 1 Super-xBR until the
+   opening credits exist: then capture it and update `CreditsModel.captures[0]`). Play Demo shows it.
 2. OPENING CREDITS (part 1, `ALKU`): research and plan, font decision first. Today: a title card for 73 s.
 3. Then polish, only when the user asks: the open questions below.
 
@@ -77,8 +67,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   `open -n <full path to the .app> --args ...`.
 - Start-up options after `--args`: `--scene <id>` (ids: `ships-flyby explosion title-picture glenz-vectors
   dot-tunnel rings interference techno-bars troll switch-off mountain-scroller lens rotozoomer plasma
-  plasma-cube bouncing-dots water-scroller sine-landscape jelly-logo city-3d end-picture end-scroller
-  starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
+  plasma-cube bouncing-dots water-scroller sine-landscape jelly-logo city-3d end-picture credits
+  end-scroller starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
   (with `play-demo`), `--music on|off`.
 - Commands (run `build/SRMetal.app/Contents/MacOS/SRMetal` directly; none opens a window):
   - `--selftest`: all checks (~40 s). `--selftest <word>`: only the groups whose label contains the word
@@ -92,6 +82,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   - `--scaler-compare <picture|file.png> <folder> [x y width] [--methods ...]`: labelled comparison sheets.
   - `--credits-match <picture 1-21> <scene id> [first last [stride]]`: the steps at which a scene's 1993
     look is most like a credits picture (to choose the Modern look's capture moments).
+  - `--credits-captures <folder>`: renders the credits' Modern pictures (build.sh does this into the app).
   - `--music-info [--write <folder>]`, `--music-render`, `--music-play`: the songs.
   - `--visu-test list|<case>|compare|damaged`: the 3D engine's test cases.
 
@@ -112,7 +103,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   `Scenes/<Name>/<Name>Checks.swift`, `Demo/DemoChecks.swift`, `Music/MusicChecks.swift`,
   `Core/PictureChecks.swift` (split 2026-11-25; the self-test prints the same lines as before).
 - `Data/`: original files loaded at run time, each folder with a README (what, why it ships, SHA-256):
-  `Visu/` (3D models, animation), `Music/`, `EndScroller/`, `Lens/`, `Mountain/`, `Water/`.
+  `Visu/` (3D models, animation), `Music/`, `Credits/`, `EndScroller/`, `Lens/`, `Mountain/`, `Water/`.
 - `artwork/original/`: every picture the demo shows, exported to PNG by `tools/art_export.py` (do not edit
   by hand); `rgb/` copies are what the app loads. Inventory: `artwork/README.md`.
 - `tools/`: development-only Python (standard library only): one `<scene>_reference.py` per replayed
