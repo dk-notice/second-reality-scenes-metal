@@ -63,7 +63,7 @@ struct StartupOptions {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
         Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline, --scaler-compare (run one without arguments for its usage)
-        Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or play-demo for the whole demo
+        Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or \(DemoRunScene.id) for the whole demo
         """
     }
 
@@ -91,7 +91,7 @@ struct StartupOptions {
                 if let chosen = Look(rawValue: value) { look = chosen }
                 else { problems.append("Unknown look \"\(value)\" (use modern or classic)") }
             case "--scene":
-                if value == "play-demo" { playDemo = true }
+                if value == DemoRunScene.id { playDemo = true }
                 else if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
                 else { problems.append("Unknown scene \"\(value)\"") }
             default:
@@ -152,16 +152,12 @@ final class AppModel: ObservableObject {
 
     var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
 
-    /// Play Demo, as a scene the window can show. Not in `SceneCatalog.all`: it is not in the sidebar.
-    private lazy var demoEntry = SceneEntry(
-        id: "play-demo", title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
-        checkpoints: [], thumbnailStep: 0,
-        make: { [unowned self] device, format in
-            let scene = try DemoRunScene(device: device, pixelFormat: format,
-                                         music: LiveDemoMusic(player: self.music, look: { [unowned self] in self.look }))
+    /// Play Demo, as a scene the window can show, with the real music.
+    private lazy var demoEntry = DemoRunScene.entry(
+        music: { [unowned self] in LiveDemoMusic(player: self.music, look: { [unowned self] in self.look }) },
+        configure: { [weak self] scene in
             scene.onPart = { [weak self] name in self?.demoPart = name }
             scene.logsParts = true
-            return scene
         })
 
     /// Starts the whole demo from its beginning, with its music.

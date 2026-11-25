@@ -44,10 +44,7 @@ enum DemoTimelineCommand {
     ]
 
     /// Play Demo as a scene with silent music, for `--snapshot play-demo`.
-    static let silentEntry = SceneEntry(
-        id: "play-demo", title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
-        checkpoints: [], thumbnailStep: 0,
-        make: { device, format in try DemoRunScene(device: device, pixelFormat: format, music: SilentMusic()) })
+    static let silentEntry = DemoRunScene.entry(music: { SilentMusic() })
 
     /// Runs the script until it reaches its end (or gives up after 15 minutes of demo time).
     static func simulate() -> (sequencer: DemoSequencer, problem: String?) {

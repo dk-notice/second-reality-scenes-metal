@@ -35,7 +35,7 @@ enum Snapshot {
         guard let request = request(from: arguments) else {
             print("Usage: SRMetal --snapshot <scene-id> <modern|classic> <step> <output.png> [blend 0...1]")
             print("(step: a whole number, 0 or more)")
-            print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", ") + ", play-demo")
+            print("Scenes: " + SceneCatalog.all.map(\.id).joined(separator: ", ") + ", " + DemoRunScene.id)
             return false
         }
         do {
@@ -63,7 +63,7 @@ enum Snapshot {
     static func request(from arguments: [String]) -> Request? {
         guard let flag = arguments.firstIndex(of: "--snapshot"), arguments.count >= flag + 5,
               let entry = SceneCatalog.all.first(where: { $0.id == arguments[flag + 1] })
-                  ?? (arguments[flag + 1] == "play-demo" ? DemoTimelineCommand.silentEntry : nil),
+                  ?? (arguments[flag + 1] == DemoRunScene.id ? DemoTimelineCommand.silentEntry : nil),
               let look = Look(rawValue: arguments[flag + 2]),
               let step = Int(arguments[flag + 3]), step >= 0 else { return nil }
         var blend: Float = 0

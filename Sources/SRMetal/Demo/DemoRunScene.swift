@@ -42,6 +42,22 @@ final class LiveDemoMusic: DemoMusicSource {
 /// Play Demo: the whole demo, part after part, following `DemoScript` with the original music.
 /// To the window it is one more scene; inside, it shows whichever stand-in the script asks for.
 final class DemoRunScene: DemoScene {
+    /// Play Demo's id on the command line (`--scene play-demo`, `--snapshot play-demo ...`).
+    static let id = "play-demo"
+
+    /// Play Demo as a scene the window or a command can show. Not in `SceneCatalog.all`: it is not in
+    /// the sidebar or the per-scene checks. `configure` sets up each new run (the app's hooks).
+    static func entry(music: @escaping () -> DemoMusicSource,
+                      configure: @escaping (DemoRunScene) -> Void = { _ in }) -> SceneEntry {
+        SceneEntry(id: id, title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
+                   checkpoints: [], thumbnailStep: 0,
+                   make: { device, format in
+                       let scene = try DemoRunScene(device: device, pixelFormat: format, music: music())
+                       configure(scene)
+                       return scene
+                   })
+    }
+
     private let device: MTLDevice
     private let pixelFormat: MTLPixelFormat
     private let music: DemoMusicSource
