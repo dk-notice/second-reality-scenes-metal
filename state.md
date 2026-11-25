@@ -499,6 +499,46 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
   logo's white border.
 
+## Water scroller notes (2026-11-25; research done and plan shown, NO code yet, waiting for the user's OK)
+- Original: `WATER/DEMO.PAS` + `ROUTINES.ASM` (`putrouts1`), Trug. It scrolls NO TEXT: `MIEKKA.SCI` ("miekka" =
+  sword; = our `13-water-font`, 400 x 34 used, its header's 250 rows is wrong) is a PICTURE OF A SWORD with a
+  flame in front and sparks behind, sliding over the water and mirrored in the chrome balls.
+- Differences from the mountain: window 158 x 34 (not 237 x 31); tables `WAT1-3.DAT` (`WAT4.DAT` is unused and
+  in another layout); a pixel shows the sword's own colour number where inked, else the background again (NO
+  "+128" colour trick); the palette is MIEKKA.SCI's, not the background's (they differ in 192-255, the sword's
+  colours; BKG.CLX uses only 0-191); window starts EMPTY, sword column `scp` from 0, stops at 390 (blank, so
+  no smear); the new column goes in at index 158 + row x 158 and reaches column 157 one move later; table row
+  0 = GREEN.CLX value 34. ONE fade-in for everything: 127 waits, a level every 2nd; then a wait with no
+  refresh for a new section at row >= 16; fade-out looked for from the first scroll draw.
+- QUIRK (1993 look, exact): both fades loop `pf := 0 to 3`, so each colour's RED moves twice per round: the
+  picture comes in pinkish and goes out bluish. (The mountain's fades do not have this; the C++ port fixed it,
+  and also runs 126 fade waits, not 127: do not copy the port.)
+- FOUND: the tables CANNOT be recalculated. DATGEN.PAS needs four ray-traced masks (`o:k1/k2/k3/k5.mtv`) that
+  are not in the release. `MASK.MTV` is an earlier trial render (its columns differ from the tables' by 17-60,
+  never equal) and even `GREEN.CLX` is not quite the one used (78 of 20,858 addresses disagree with it). The
+  tables must ship (74 KB), with BKG.CLX and MIEKKA.SCI (colour numbers + palette), as for the mountain.
+- FOUND: this IS the released version: `MAIN/DATA/RAYSCRL.EXE` (PKLITE-packed; unpacked with `deark -m
+  pklite`, installed by Homebrew for this) contains WAT1-3.DAT, MIEKKA.SCI and BKG.CLX whole, byte for byte.
+  The port's data equals the same five files. (`MIEK.OBJ` is an older sword; `MIEKKA.OBJ` is the one used.)
+- Structure facts: each table parses to its length; the three share no pixel; 20,858 pixels in 14 regions
+  (sea 17,359; lower ball's reflection 3,062; small reflections 297, 66, 55, ...); table order as the
+  mountain's, u = c + (2 - k)/3 (67% of neighbours in order against 52%; less sharp because far cells are
+  smaller than a pixel).
+- Step pairing (rule: set before wait n shows on step n - 1): step 0 black; fade waits y = 0...126 show on
+  steps 1...127, a new level (y - 1)/2 on odd y (steps 2 and 3 still black, level 62 from step 126; red ahead);
+  scroll draw k on step 128 + hold + k; fade-out setting i (0...64) on the cue's step + i.
+- Measured from the script's silent run (scratch copy of `tools/demo_timeline.py`): part starts at step
+  28,683; "plus >= 0" after 20 steps (black); after the 127, the section cue comes 519 steps later (7.4 s: the
+  ORIGINAL REALLY SHOWS THE STILL PICTURE that long); fade cue 1,333 draws after that; end at 2,064.
+  On its own (proposed): 128 + 519 hold + 1,333 + 65 = 2,045 steps; the hold's length is the user's call.
+- Modern prototype (throwaway, in the session's scratch folder): the mountain's `smoothMap` works unchanged
+  on the sea and the lower ball; the small reflections (regions under 1,000 pixels, cells smaller than a
+  pixel) need one cell per pixel instead of a plane. Near the camera one sword pixel covers ~25 screen pixels,
+  so Super-xBR looks soft there (16x instead of 8x changes nothing). Sword drawn as colour-on-black plus a
+  mask, both 8x, laid over the background.
+- Sheet for the user: `build/scaler-compare/water/water-sword-compare.png` in the worktree
+  `water-scroller-plan-79ae73` (original pixels / Super-xBR, flat and in place at two moments).
+
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,
   `PictureLayer`, `demoUpdate` / `currentCanvasSize`, the explosion, title/end picture, troll, switch-off and
