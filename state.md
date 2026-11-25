@@ -28,7 +28,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
   `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
 - Self-test: 577 checks, all pass. `--demo-timeline`: every part starts on the step the research
-  simulation gives. main was last pushed to GitHub (private repository) at c643694; the techno fixes are not pushed yet.
+  simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25, with the techno fixes.
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
   the original program running.
