@@ -41,13 +41,17 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      - 3D City: 100 steps of lead-in over the jelly logo's last picture (to white in 33, hold 16 + 2 + 16,
        33 to black with the picture window's colours 253/254 kept white), 180 steps of waiting for section
        19, the flight without this version's fades, then a 16-step whitening (+4 levels a step). Needs Play
-       Demo to hand a new scene the previous scene's last 1993 picture. STILL TO READ, and to show the user
-       before building: what `vid_init(11)` leaves on screen during the 180-step wait.
+       Demo to hand a new scene the previous scene's last 1993 picture. READ 2026-11-25: `vid_init(11)`
+       (`VISU/AVIDM1.ASM` `m11_init`) sets no mode and clears nothing, so `fadeset`'s picture stays for the
+       180-step wait: a WHITE band on rows 25-174 (colours 253/254) between black borders; the flight then
+       cuts in on black. Told to the user; waiting for their OK before building.
      - Glenz: the title picture held 457 steps until "music plus" >= -19, then `zoomer2`'s 47-step wipe
        (bars of colour 255 close in from top and bottom, colours 0-127 fade to grey 30), the 177-step plate
        drop, the glenz at music frame 333 (so the original's pause was about 110 steps, NOT 156: the frame
-       counter is reset before the wipe), black for the last 134 steps. STILL TO READ, and to show the user:
-       the wipe's colours in the title picture's palette. The user chose the real wipe.
+       counter is reset before the wipe), black for the last 134 steps. READ 2026-11-25: the title picture uses only
+       colours 0-79, so the WHOLE picture fades to grey (30 of 63) over the wipe's first 32 steps; the bars
+       are BLACK (`BEG.C` sets colour 255 black); they stop at rows 260 and 274 of 400, leaving a grey strip
+       until the screen is cleared on step 47. Told to the user; waiting for their OK before building.
    - Standalone lengths that differ from the original part on purpose and stay: Glenz 2,360 (35-step pause,
      loops), Plasma 2,323 (fades from black), Plasma Cube 2,048 (16-step lead-in), Sine Landscape 2,048 (own
      sink time), 3D City 3,639 (own fades), Ships 592 (70-step pause).
