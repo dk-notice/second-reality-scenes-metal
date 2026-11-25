@@ -18,7 +18,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
-- Self-test: 562 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- Self-test: 564 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository).
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
@@ -31,10 +31,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    check (`Scenes/<Name>/<Name>Checks.swift`) and docs; the user looks at each (`--from <scene>`) before the merge.
    - DONE: Techno Bars (right as it was: the original's section 3 never ran, its frame counter stood at
      2,697 against a limit of 2,520; docs corrected). Ships Fly-by (no pause, frames 0-520). Sine Landscape
-     (black 24 steps until "music plus" >= 0, sinks while a pass reads -29...-1, sunk 18 steps before the cut).
+     (black 24 steps until "music plus" >= 0, sinks while a pass reads -29...-1, sunk 18 steps before the cut). Plasma Cube (empty screen 312 steps until "music plus" >= 13 and on the cue
+     step, then the original's frame n on the n-th step, fresh start without the 16-step lead-in, 1,998 frames).
    - TO DO, in this order, with what was found (steps are from the part's start, measured from the script):
-     - Plasma Cube: black 312 steps until "music plus" >= 13, then the original's frames from 0 (no
-       16-step lead-in) for 1,999 steps; black from frame 1995.
      - Plasma: WHITE 74 steps (the rotozoomer ends by setting all colours white), then the original's first
        fade, 127 steps DOWN from white (`cop_drop` = 128), drops after frames 723/1491/1875/2259; no second run.
      - 3D City: 100 steps of lead-in over the jelly logo's last picture (to white in 33, hold 16 + 2 + 16,

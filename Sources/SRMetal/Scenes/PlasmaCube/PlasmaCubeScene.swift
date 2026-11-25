@@ -59,9 +59,11 @@ final class PlasmaCubeScene: DemoScene {
 
     func reset() { model.reset() }
     func tick() { model.tick() }
+    func demoUpdate(_ context: DemoContext) { model.update(music: context.music, justShown: context.justShown) }
     func classicReferenceFrame() -> [UInt8] { model.classicReferenceFrame() }
 
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
+        if model.waiting { return }   // inside Play Demo, before the music's cue: the cleared screen
         if frame.look == .classic {
             let pictures = model.classicPictures()
             let palette = (0..<256).map { (i: Int) -> SIMD4<Float> in

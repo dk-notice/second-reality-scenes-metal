@@ -283,14 +283,31 @@ independent reading of the two C files that had only ever been ported by reading
   to a whole number, which is very likely but not proven.
 - When the music started and ended the part was not known when this was written. The demo's timeline
   (2026-11-24, [demo-timeline.md](../demo-timeline.md)) has since worked it out from `VECT.C`'s two music
-  cues: the part lasts 2,311 steps, longer than this scene's 2,048. Whether viewers in 1993 saw the cube
-  go fully dark has not been worked out from that. In Play Demo this scene still runs on its own clock:
-  it starts when the part does (not on the cue) and begins again 263 steps before the part ends.
+  cues; see "Inside Play Demo" below. Viewers in 1993 did see the cube go fully dark: the loop ran for
+  1,999 refreshes and the cube is black from frame 1995.
 - Which moment of the refresh the palette and the page flip took effect was not modelled (see below).
 - The modern look's texture (the pattern on the faces) and its edge smoothing were checked by eye only,
   in still pictures. Its geometry, light and motion are now checked by program (see above).
 - That the PC kept up with 70 pictures a second is an assumption; on a slower PC the original showed
   fewer pictures of the same motion.
+
+## Inside Play Demo
+
+Since 2026-11-25 the scene follows the part's two music cues there (`VECT.C` 114-120):
+
+- **An empty screen for 312 steps.** The part cleared the screen (`tw_opengraph`) and waited for "music
+  plus" >= 13, with the plasma's band already fallen away. The step that meets the cue is still empty:
+  the loop first shows its empty page for one refresh and counts it.
+- **Then the original's frames, one a step:** the n-th step after the cue shows frame n, from a fresh
+  start. This version's 16-step lead-in (which starts the cube below the screen, for the loop) is not
+  used, so the cube appears with the tip of a corner already in view, as it did.
+- **It runs until the script's end cue** ("music plus" from -4), 1,999 steps after the first: frames 1 to
+  1,998 show, the last four of them black. No second run.
+
+The self-test runs Play Demo silently from this scene and compares the empty steps, every frame number
+and the cut with the script's own cues; proven to fail with the cue moved by one.
+
+On its own the scene is unchanged (the lead-in, 2,048 steps, then it repeats).
 
 ## Deliberate differences
 

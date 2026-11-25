@@ -18,6 +18,11 @@ import simd
 ///    the whole 64 are dimmed by how squarely the face meets the light.
 ///  - The scene ends by itself: the light swings round behind the cube, which goes black as it
 ///    comes to rest.
+///
+/// Inside Play Demo it follows the part's waits (VECT.C 114-120): the screen is cleared and black until
+/// "music plus" >= 13; the loop then shows its empty first page for one refresh, counts it, and draws,
+/// so the step that meets the cue is still black and the n-th step after it shows the original's frame
+/// n, from a fresh start (no lead-in of this version's). It runs until the script cuts it; no second run.
 struct PlasmaCubeModel {
     // MARK: - Size and length
 
@@ -129,6 +134,12 @@ struct PlasmaCubeModel {
     private(set) var ticks = 0
     /// The original's frame counter: negative during this version's lead-in.
     var frames: Int { ticks - Self.leadIn }
+    /// Inside Play Demo: the music, given before each step. nil on its own.
+    private(set) var music: DemoMusicState?
+    /// Inside Play Demo: whether the start cue has been met, and whether the screen is still empty.
+    private(set) var cued = false
+    private(set) var waiting = false
+    static let startCue = 13
 
     /// Each corner after turning and moving (x, y, z) and where it lands on the 640-wide page.
     private(set) var turned = [SIMD3<Int>](repeating: .zero, count: 8)
@@ -146,13 +157,36 @@ struct PlasmaCubeModel {
     /// frame "as drawn" and the other the same frame as the neighbouring frames were drawn.
     private(set) var cards = [CubeVideoCard(page: 0), CubeVideoCard(page: 3)]
 
-    init() {
-        drawFrame()
+    /// `drawing`: whether the first frame is drawn at once (not inside Play Demo, which starts empty).
+    init(drawing: Bool = true) {
+        if drawing { drawFrame() }
+    }
+
+    /// Play Demo's music, before each step; `justShown` on the step the scene appears.
+    mutating func update(music: DemoMusicState, justShown: Bool) {
+        if justShown {
+            self = PlasmaCubeModel(drawing: false)
+            waiting = true
+            ticks = Self.leadIn      // the original's frame 0
+            // The script tests the cue on the very step it shows the scene.
+            cued = music.plus >= Self.startCue
+        }
+        self.music = music
     }
 
     mutating func reset() { self = PlasmaCubeModel() }
 
     mutating func tick() {
+        if let music {
+            guard cued else {
+                if music.plus >= Self.startCue { cued = true }
+                return
+            }
+            ticks += 1
+            waiting = false
+            drawFrame()
+            return
+        }
         ticks += 1
         if ticks >= Self.lengthInTicks {
             self = PlasmaCubeModel()
@@ -291,6 +325,7 @@ struct PlasmaCubeModel {
     }
 
     func classicReferenceFrame() -> [UInt8] {
+        if waiting { return [UInt8](repeating: 0, count: Self.width * Self.canvasHeight * 3) }
         let pictures = classicPictures()
         var frame = [UInt8](repeating: 0, count: Self.width * Self.canvasHeight * 3)
         for i in 0..<(Self.width * Self.canvasHeight) {
