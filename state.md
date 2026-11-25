@@ -43,7 +43,15 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    NOT DONE, each needs a plan shown to the user first: Play Demo falling behind the music when the
    window stops drawing (the step clock drops pauses over 0.25 s; `Renderer.longestCatchUp`), and the
    sound stopping for good when the output device changes (nothing restarts `AVAudioEngine`).
-2. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
+2. SIGNED RELEASE, later, when the user asks (decided 2026-11-25): the app is to be shared outside the
+   App Store without a warning on other Macs, so it will be signed with a Developer ID certificate and
+   notarised. The user has signed up for an Apple Developer account. Still to do then: the user creates
+   the "Developer ID Application" certificate and an app-specific password (kept in the keychain, never
+   in git); `build.sh` gets an optional release mode (sign with the hardened runtime, zip, `notarytool
+   submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
+   Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
+   the GitHub repository goes public is a separate decision.
+3. Then polish, only when the user asks: the open questions below (the user chose to leave them for now).
 
 ## Open questions (not to be started unasked)
 - Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
