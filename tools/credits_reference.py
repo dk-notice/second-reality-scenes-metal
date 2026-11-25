@@ -187,7 +187,7 @@ def checksum(step):
 
 
 CHECK_STEPS = [0, 1, 2, 10, 50, 102, 103, 200, 302, 303, 304, 330, 361, 362, 362 * 9 + 40, 362 * 9 + 320,
-               362 * 20 + 150, 362 * 21 - 1]
+               362 * 20 + 150, 362 * 21 - 1] + [362 * k + 250 for k in range(PICTURES)]   # every screen, held
 
 if __name__ == "__main__":
     if "--extract" in sys.argv:

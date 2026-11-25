@@ -319,6 +319,16 @@ enum SceneCatalog {
             }
         ),
         SceneEntry(
+            id: "credits",
+            title: "Credits",
+            credit: "Future Crew",
+            // The card's 400 lines: each display row is 2 of them, and the split line counts in them.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 1, 10, 50, 102, 103, 302, 303, 330, 361, 362, 3298, 7390, 7601],
+            thumbnailStep: 250,
+            make: { device, format in try CreditsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
             id: "end-scroller",
             title: "End Scroller",
             credit: "Future Crew",

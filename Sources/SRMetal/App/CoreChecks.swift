@@ -28,6 +28,7 @@ enum CoreChecks {
         if SelfTest.wants("demo play-demo timeline techno-bars interference troll switch-off end-picture title-picture end-scroller") { demoTimeline(check) }
         if SelfTest.wants("demo play-demo from here") { demoFromHere(check) }
         if SelfTest.wants("rotozoomer") { rotozoomerTiming(check) }
+        if SelfTest.wants("credits") { credits(check) }
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             check("Core: Metal device available", false)
