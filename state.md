@@ -437,7 +437,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   Still open: review findings 3, 5, 6 (harmless today); skip the black waits when starting "from here"?;
   the troll flash question; the jelly logo's white border left out.
 
-## Mountain scroller notes (2026-11-25, branch claude/mountain-scroller-plan-caeaad; plan approved by the user and BUILT)
+## Mountain scroller notes (2026-11-25; plan approved by the user, built, merged)
 - Original: `FOREST/READ2.PAS` + `ROUTINES.ASM` (`putrouts`), Trug. There is NO font and no text string: the
   text is ONE PICTURE, `O2.SCI` (640 wide, rows 0-30 used, values 0-7, "ANOTHER WAY TO SCROLL"; = our
   `09-mountain-font`). A 237x31 window of it is laid over the hills through `POS1-3.DAT`: per window cell
@@ -487,7 +487,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   fade cue loosened. `--motion-check mountain-scroller modern`: no jumps.
 - Docs: `docs/scenes/mountain-scroller.md` with 3 pictures; README, demo-timeline updated.
 - Seen by Claude: snapshots of both looks at step 665 (they agree), Modern at 50, 110, 1960, Play Demo at
-  step 16900. NOT seen by the user in the app yet; not merged, not pushed. After merging: rebuild main's app.
+  step 16900. Seen by the user in the
+  running app (2026-11-25: "looks good"); merged into main and pushed the same day, main's app rebuilt. Not
+  compared with the original running.
 - NEXT (agreed order): credits, opening credits (font decisions first), water last. Still open: review
   findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
   logo's white border.
