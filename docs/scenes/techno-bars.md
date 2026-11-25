@@ -10,7 +10,7 @@ that brighten where they overlap. The bars flash on the beat.
 - **Original:** `TECHNO/KOE.C` (`doit1`, `doit2`, `doit3`) in C, with the drawing in `TECHNO/KOEA.ASM` and
   `TECHNO/POLYCLIP.ASM`, by Psi.
 - **This version:** `Sources/SRMetal/Scenes/TechnoBars/`
-- **Length:** about 28 seconds in three sections, then it loops. (Play Demo cuts it earlier: see
+- **Length:** about 28 seconds in three sections, then it loops. (Play Demo, as the demo, shows only sections 1 and 2: see
   "Differences from the original".)
 
 | Section | Length | What happens |
@@ -163,10 +163,14 @@ still not counted.
 - **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats);
   Play Demo holds black for those four beats. The picture that scrolls in afterwards is now a scene of
   its own, the [Troll](troll-and-switch-off.md) (2026-11-24).
-- **Inside Play Demo it is cut by the music**, as the original was: when the music's frame counter passes
-  2520, the troll takes over. The bars start no earlier than frame 1030, so at most 1,491 of the scene's
-  2,000 steps show: section 3 gets about 3 seconds, and the slide-off (which on its own starts at step
-  1908) is never reached there.
+- **Inside Play Demo it is cut by the music**, as the original was, and section 3 is not seen at all
+  (measured 2026-11-25 from the script's silent run; an earlier estimate here said "about 3 seconds").
+  Sections 1 and 2 always run their full 420 and 840 refreshes (`doit1`, `doit2` only count refreshes).
+  Only section 3 looks at the music's frame counter (`KOE.C` 495-500: past 2520 it sets its slide to
+  zero, and on the next pass it stops). That counter was started with the rings, and the bars begin at
+  1,437 on it, so it already stands at 2,697 when section 3 begins: the original drew one pass of it at
+  most and went on to the troll. Play Demo shows the scene for exactly those 1,260 steps, so the circling
+  and the slide-off (on its own from step 1908) are seen only when the scene runs on its own.
 - **It loops.** After sliding off, the scene starts again from section 1.
 
 ### Quirks that were kept

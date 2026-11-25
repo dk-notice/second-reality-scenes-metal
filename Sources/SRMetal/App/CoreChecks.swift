@@ -44,6 +44,7 @@ enum CoreChecks {
             try jellyLogo(check, device: device)
             try mountain(check, device: device)
             try water(check, device: device)
+            try shipsInDemo(check, device: device)
             try demoFromHereShown(check, device: device)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")

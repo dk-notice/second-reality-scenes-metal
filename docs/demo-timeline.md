@@ -61,13 +61,13 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | End scroller | Its own scene (2026-11-24), until the demo is stopped |
   | Troll, screen switch-off | Their own scenes (2026-11-24): the troll scrolls in on its music cue, shakes and flashes; the screen collapses to a line and a dot |
   | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
-  | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene |
+  | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene: the whole flight, a frame a step, with no pause (2026-11-25) |
   | Title picture, end picture | Their own scenes (2026-11-24): out of white, as the original; the end picture waits for its music cue and fades to black |
   | Jelly logo | Its own scene (2026-11-25): slides in, waits for its music cue, then 700 steps of jelly |
   | Mountain scroller | Its own scene (2026-11-25): the leaves fade in, the scroll starts and the fade-out begins on the music cues |
   | Water scroller | Its own scene (2026-11-25): black until its first music cue, the fade-in, the still picture until the music's next section, the sword until the fade-out cue |
   | Glenz, tunnel, plasma, plasma cube, dots, landscape, city | The project's scene, started at the part's start and cut at its end |
-  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars, then the Troll scene, each at the original's moment |
+  | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (sections 1 and 2: the original's third section never got to run, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 
@@ -79,10 +79,10 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   What that means for the older scenes today (part length against the scene's own length, in steps):
   Glenz 3,057 against 2,360, Plasma Cube 2,311 against 2,048 and the 3D City 3,898 against 3,639 begin a
   second run before the cut; Plasma 2,399 against 2,323 starts 74 steps before its music cue and shows
-  its first section again for about a second at the end; the Sine Landscape is cut 13 steps early; Ships
-  Fly-by spends 70 of its 521 steps on its own opening pause and loses the end of the flight; Techno Bars
-  is cut by the music before its slide-off; the Dot Tunnel (1,060) and Bouncing Dots (2,580) fit exactly.
-  Making these scenes follow the original part's cues, as the newer scenes do, is not done yet.
+  its first section again for about a second at the end; the Sine Landscape is cut 13 steps early; the
+  Dot Tunnel (1,060) and Bouncing Dots (2,580) fit exactly. Making these scenes follow the original
+  part's cues, as the newer scenes do, is in progress (2026-11-25). Done: Ships Fly-by (no pause, the
+  whole flight) and Techno Bars (confirmed right as it was: sections 1 and 2, 1,260 steps).
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads

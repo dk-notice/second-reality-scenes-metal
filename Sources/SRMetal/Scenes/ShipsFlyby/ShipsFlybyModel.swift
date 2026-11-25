@@ -11,6 +11,11 @@ import Foundation
 /// - the timetable: one animation frame per 1/70-second step (the original tied the animation to
 ///   the screen's refresh, not to how fast the PC drew), and a pause on the empty horizon between
 ///   passes, which is this version's own (the original waited for the music instead).
+///
+/// Inside Play Demo there is no pause: the script shows the scene on the step the music's cue is met
+/// (U2A.C 229-240), and the part's loop draws before it reads the animation, so the step the scene
+/// appears on shows frame 0 (the empty horizon) and the n-th step after it frame n. The part lasts the
+/// animation's 521 refreshes (the music's end cue, U2A.C 268-276, comes later), so frames 0...520 show.
 final class ShipsFlybyModel {
     static let width = VisuEngine.width
     static let height = VisuEngine.height
@@ -38,6 +43,12 @@ final class ShipsFlybyModel {
 
     /// Steps since the start of the loop, 0..<lengthInSteps.
     private(set) var step = 0
+    /// The pause before the animation, in steps: `pauseSteps` on its own, none inside Play Demo.
+    private(set) var pause = ShipsFlybyModel.pauseSteps
+    /// Inside Play Demo: no pause, and no second pass (the last frame stays until the part is cut).
+    private(set) var inDemo = false
+    /// The animation frame showing now.
+    var animationFrame: Int { world.frame }
     /// Where everything is at this step and at the next one, for the modern look to glide between.
     var currentPose: VisuPose { playback.currentPose }
     var nextPose: VisuPose { playback.nextPose }
@@ -58,6 +69,12 @@ final class ShipsFlybyModel {
         drawClassic()
     }
 
+    /// Play Demo, on the step it shows the scene: the flight starts at once.
+    func enterDemo() {
+        inDemo = true
+        pause = 0
+    }
+
     func reset() {
         playback.restart()
         step = 0
@@ -65,15 +82,16 @@ final class ShipsFlybyModel {
     }
 
     func tick() {
-        step += 1
-        if step >= Self.lengthInSteps {
-            reset()
+        let length = pause + Self.animationFrames + 1
+        if step + 1 >= length {
+            if !inDemo { reset() }
             return
         }
+        step += 1
         // A new animation frame on every step after the pause. The step after this one shows the
         // next animation frame, unless this is the pause or the last step of the loop.
-        playback.step(advancing: step > Self.pauseSteps,
-                      lookingAhead: step >= Self.pauseSteps && step + 1 < Self.lengthInSteps)
+        playback.step(advancing: step > pause,
+                      lookingAhead: step >= pause && step + 1 < length)
         // The 1993 picture is drawn on every step, in whichever look is showing, so that what the
         // engine carries from one picture to the next depends only on the step number.
         drawClassic()

@@ -18,21 +18,39 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
-- Self-test: 558 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- Self-test: 560 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository).
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
   the original program running.
 
 ## Next steps
-1. OLDER SCENES IN PLAY DEMO (found by the documentation audit, 2026-11-25; CHOSEN BY THE USER AS THE NEXT
-   JOB, in a new session, plan first): the
-   scenes built before Play Demo still run on their own clocks inside it, so they restart or are cut
-   short: Glenz (part 3,057 steps, scene 2,360: a second run shows), Plasma Cube (2,311 / 2,048), 3D City
-   (3,898 / 3,639), Plasma (starts 74 steps before its cue and loops for a second at the end), Sine
-   Landscape (cut 13 early), Ships Fly-by (its own 70-step pause costs the flight's end), Techno Bars (no
-   slide-off; probably right). Each needs the original part's waits read from its source and `demoUpdate`,
-   as the newer scenes have; standalone behaviour stays. The list is in `docs/demo-timeline.md`.
+1. OLDER SCENES IN PLAY DEMO (IN PROGRESS on branch `claude/older-scenes-timing-demo-23da19`; plan approved
+   by the user 2026-11-25). Each scene follows the original part's waits inside Play Demo through
+   `demoUpdate`; `DemoScript.steps` is NOT touched; standalone behaviour stays; one commit a scene with its
+   check (`Scenes/<Name>/<Name>Checks.swift`) and docs; the user looks at each (`--from <scene>`) before the merge.
+   - DONE: Techno Bars (right as it was: the original's section 3 never ran, its frame counter stood at
+     2,697 against a limit of 2,520; docs corrected). Ships Fly-by (no pause, frames 0-520).
+   - TO DO, in this order, with what was found (steps are from the part's start, measured from the script):
+     - Sine Landscape: black 24 steps until "music plus" >= 0; sinking starts on "music plus" > -30
+       (step 1,857) and the cut comes 178 steps later, so it is fully sunk for 18.
+     - Plasma Cube: black 312 steps until "music plus" >= 13, then the original's frames from 0 (no
+       16-step lead-in) for 1,999 steps; black from frame 1995.
+     - Plasma: WHITE 74 steps (the rotozoomer ends by setting all colours white), then the original's first
+       fade, 127 steps DOWN from white (`cop_drop` = 128), drops after frames 723/1491/1875/2259; no second run.
+     - 3D City: 100 steps of lead-in over the jelly logo's last picture (to white in 33, hold 16 + 2 + 16,
+       33 to black with the picture window's colours 253/254 kept white), 180 steps of waiting for section
+       19, the flight without this version's fades, then a 16-step whitening (+4 levels a step). Needs Play
+       Demo to hand a new scene the previous scene's last 1993 picture. STILL TO READ, and to show the user
+       before building: what `vid_init(11)` leaves on screen during the 180-step wait.
+     - Glenz: the title picture held 457 steps until "music plus" >= -19, then `zoomer2`'s 47-step wipe
+       (bars of colour 255 close in from top and bottom, colours 0-127 fade to grey 30), the 177-step plate
+       drop, the glenz at music frame 333 (so the original's pause was about 110 steps, NOT 156: the frame
+       counter is reset before the wipe), black for the last 134 steps. STILL TO READ, and to show the user:
+       the wipe's colours in the title picture's palette. The user chose the real wipe.
+   - Standalone lengths that differ from the original part on purpose and stay: Glenz 2,360 (35-step pause,
+     loops), Plasma 2,323 (fades from black), Plasma Cube 2,048 (16-step lead-in), Sine Landscape 2,048 (own
+     sink time), 3D City 3,639 (own fades), Ships 592 (70-step pause).
 2. CREDITS (part 18, `CREDITS/MAIN.C`), after that: research and plan first. Today: 21 pictures as
    stills, 362 steps each. Font decision with the user (compare sheets as before; the credits font has 10
    shades). Known: the 21 pictures survive only as the artist's files, `pic02` is a "PART PIC MISSING"

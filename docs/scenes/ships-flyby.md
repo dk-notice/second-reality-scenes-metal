@@ -220,18 +220,28 @@ picture; no such file is shipped.
   this version.
 - **The start and end as the demo showed them.** That the previous part leaves the same horizon on
   screen, and where in the music the scene began and was cut, were read from the source, not seen.
-  Whether the music cue arrived before the animation's end is not worked out here; the demo's script
-  now has both conditions ([demo-timeline.md](../demo-timeline.md)).
-- **Inside Play Demo** the scene is shown on the original's music cue and cut after at most 521 steps, as
-  the original was; but it still begins with its own 70-step pause on the empty horizon, so the last 70
-  frames of the flight are not reached there.
+  The demo's script has both end conditions ([demo-timeline.md](../demo-timeline.md)); run against the
+  music, the animation's 521 refreshes are over before the music's end cue comes.
 - **The page queue and frame skipping** are not modelled; every frame is drawn.
 - **The modern look by eye in the running app.** The motion check above was done by program on
   rendered pictures, plus looking at samples. The user is the first to watch it move.
 
+## Inside Play Demo
+
+Since 2026-11-25 the scene follows the original part there. The script shows it on the step the music's
+start cue is met (section > 10 and row > 46, `U2A.C` 229-240) and keeps it for the animation's 521
+refreshes. The part's loop draws a picture before it reads the animation, so the step the scene appears
+on shows frame 0 (the empty horizon, the same picture the script showed while it waited) and the n-th
+step after it shows frame n: there is no pause, and frames 0 to 520 show before the explosion part
+takes over. The scene is told it is inside Play Demo on the step it appears (`enterDemo`); it does not
+start a second pass. Checked by the self-test against the script's own 521, and proven to fail with a
+one-step pause put back.
+
+On its own the scene is unchanged: the 70-step pause, then the flight, 592 steps, and round again.
+
 ## Deliberate differences
 
-- **The pause.** The original appeared when the music reached its cue. This version holds the empty
+- **The pause** (on its own only). The original appeared when the music reached its cue. This version holds the empty
   horizon for 70 steps (one second) before each pass. The number is a judgement, not from the
   original: change `ShipsFlybyModel.pauseSteps` to taste.
 - **It loops.** After frame 521 it starts again. The last frame still has a 4-pixel speck of the big

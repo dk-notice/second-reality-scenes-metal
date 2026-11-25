@@ -118,6 +118,7 @@ final class ShipsFlybyScene: DemoScene {
 
     func reset() { model.reset() }
     func tick() { model.tick() }
+    func demoUpdate(_ context: DemoContext) { if context.justShown { model.enterDemo() } }
     func classicReferenceFrame() -> [UInt8] { model.classicReferenceFrame() }
 
     /// The modern look's ships are drawn into the engine's own off-screen picture first, because
