@@ -53,8 +53,13 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    choice; the Dolby logo through Super-xBR), Play Demo shows it. The part's real end is 1:20.1 (was
    approximated 1:12.9); timeline script, Python and `DemoTimelineCommand.expected` changed together, only
    the ships' start moved. Credits' picture 1 now captured from it (step 3664, the Code page).
-   main's app rebuilt; NOT pushed yet (ask first).
-3. Then polish, only when the user asks: the open questions below.
+   main's app rebuilt and pushed to GitHub (2026-11-25).
+3. CODE REVIEW AND SIMPLIFY (agreed 2026-11-25, in its own session): review the opening-credits work
+   (commits f40f208..6988dbf: `Scenes/OpeningCredits/`, `Demo/DemoSequencer.swift`,
+   `App/DemoTimelineCommand.swift`, `App/CoreChecks.swift`, `Scenes/Credits/CreditsModel.swift` and
+   `CreditsChecks.swift`, `tools/alku_reference.py`, `tools/demo_timeline.py`, `build.sh`); findings first,
+   fixes only after the user's OK. The user chose to leave the open questions below for now.
+4. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
 - Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
