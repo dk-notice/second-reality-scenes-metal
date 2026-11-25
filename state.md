@@ -252,6 +252,19 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   grey lines across the screen). 39 new self-test checks (361), incl. scroll 53 + shake 50 (matches
   the timing research) and the band list. Play Demo uses both; part starts unchanged.
   NEXT (suggested order): the end scroller (fonts decision first), then the rotozoomer.
+- END SCROLLER RESEARCH (2026-11-24): the SOURCE release has only test versions: `ENDSCRL/ENDSCROL.TXT`
+  is a joke WIP text ("A font test!!!") and `FONA` is 30 rows without Y, Z, ä, ö, /, &. The RELEASED demo
+  used a newer text (542 lines: "Second Reality / Copyright (C) 1993 by the Future Crew / This demo won
+  the Assembly'93 ...", sponsors, greetings; markers "[nn" = gap of nn rows, "%" = loop to start) and
+  a 25-row font with Z, ä (0x84), ö (0x94), Y, /, & added (same typeface). Both survive only in the C++
+  port's data (`../SecondRealityPlusPlus`: Blob 343536862 = endscrol.txt; `Parts/ENDSCRL/
+  ENDSCRL_MAIN_Data.cpp` = 25x1550 font, values 0-3 = greys 0/20/40/60), extracted by its authors from
+  the released demo; the port is Unlicense. Our copy of the released demo (`../second-reality-original`)
+  holds the parts compressed, so the text cannot be read from it directly. Program details (MAIN.C):
+  640x400 16-colour mode, one pixel row scrolled every 2 refreshes (35 a second), lines centred, glyph
+  gap 2 px, space 16 px; it runs until a key. Font comparison sheets (sharp / Super-xBR / SuperClarendon
+  / Georgia, modern fonts sized to 14-row capitals and the original line widths) in
+  `build/scaler-compare/fonts/`. WAITING for the user: which text+font version, and which font look.
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
