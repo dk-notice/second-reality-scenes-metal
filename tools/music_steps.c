@@ -11,10 +11,14 @@
 #include <stdlib.h>
 #include "libopenmpt.h"
 int main(int argc, char **argv) {
-  FILE *f = fopen(argv[1], "rb"); fseek(f, 0, SEEK_END); long n = ftell(f); rewind(f);
+  if (argc != 4) { fprintf(stderr, "usage: music_steps <song.s3m> <tempo, 0 for none> <start order>\n"); return 1; }
+  FILE *f = fopen(argv[1], "rb");
+  if (!f) { fprintf(stderr, "music_steps: cannot open %s\n", argv[1]); return 1; }
+  fseek(f, 0, SEEK_END); long n = ftell(f); rewind(f);
   unsigned char *d = malloc(n); fread(d, 1, n, f); fclose(f);
   int tempo = atoi(argv[2]); if (tempo) d[0x32] = tempo;
   openmpt_module *m = openmpt_module_create_from_memory2(d, n, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  if (!m) { fprintf(stderr, "music_steps: %s is not a song libopenmpt can read\n", argv[1]); return 1; }
   openmpt_module_select_subsong(m, -1);
   int start = atoi(argv[3]); if (start) openmpt_module_set_position_order_row(m, start, 0);
   static float buf[630 * 2];

@@ -49,8 +49,9 @@ final class SilentMusic: DemoMusicSource {
 /// `--demo-timeline`: runs the whole of Play Demo's script against the music, silently and much
 /// faster than real time, and checks every part starts at the step `tools/demo_timeline.py` gives.
 enum DemoTimelineCommand {
-    /// Each part's start, in 1/70 s steps, from `tools/demo_timeline.py <folder> 0 frames`
-    /// (2026-11-24; the opening credits' real end, 2026-11-25). The last number is when the credits end and the end scroller starts: 10:52.4.
+    /// Each part's start, in 1/70 s steps: the "Part starts (steps)" line of
+    /// `tools/demo_timeline.py <folder> 0 frames`. The last number is when the credits end and the end
+    /// scroller starts: 10:52.4.
     static let expected: [(name: String, step: Int)] = [
         ("Opening credits", 0), ("Ships fly-by", 5605), ("Explosion", 7087), ("Title picture", 7463),
         ("Glenz vectors", 7624), ("Dot tunnel", 10681), ("Rings, interference, techno bars, troll", 11741),
@@ -84,8 +85,9 @@ enum DemoTimelineCommand {
     }
 
     static func time(_ step: Int) -> String {
-        let seconds = Double(step) / 70
-        return String(format: "%d:%04.1f", Int(seconds) / 60, seconds.truncatingRemainder(dividingBy: 60))
+        // Rounded to tenths first, so 59.96 s shows as 1:00.0, not 0:60.0.
+        let tenths = Int((Double(step) / 7).rounded())
+        return String(format: "%d:%02d.%d", tenths / 600, tenths % 600 / 10, tenths % 10)
     }
 
     static func run(arguments: [String]) -> Bool {

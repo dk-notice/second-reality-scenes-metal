@@ -10,9 +10,6 @@ final class VisuWorld {
     let name: String
     /// 256 colours as the file has them: red, green, blue, each 0...63.
     let palette: [UInt8]
-    /// Byte 15 of the `.00M` file: `C` or `R` switched on special object ordering in U2A.C.
-    /// It is 0 in both shipped scenes, so those rules never ran.
-    let orderingFlag: UInt8
     /// `objects[0]` is the camera (it has no shape); the rest are the scene's objects.
     private(set) var objects: [VisuObject?]
     /// The camera's turn and position.
@@ -46,8 +43,9 @@ final class VisuWorld {
         let materials = try load("\(name).00M")
         guard materials.count >= 16 + 768 else { throw VisuError.badFile("\(name).00M", "too short") }
         let m = VisuBytes(bytes: materials)
-        palette = Array(materials[16..<16 + 768])
-        orderingFlag = materials[15]
+        palette = vgaLevels(materials[16..<16 + 768])
+        // (Byte 15, `C` or `R`, switched on special object ordering in U2A.C; it is 0 in both shipped
+        // scenes, so those rules never ran and are not built here.)
 
         // The object list: a count (which includes the camera), then one file number per object.
         // A number seen before means "another copy of that object".
@@ -96,7 +94,6 @@ final class VisuWorld {
     private init(copying other: VisuWorld) {
         name = other.name
         palette = other.palette
-        orderingFlag = other.orderingFlag
         objects = other.objects.map { $0.map { VisuObject(mesh: $0.mesh, fileNumber: $0.fileNumber) } }
         stream = other.stream
     }

@@ -15,16 +15,16 @@ import simd
 ///   Super-xBR), not text.
 final class OpeningCreditsScene: DemoScene {
     private(set) var model: OpeningCreditsModel
-    private let device: MTLDevice
     private let canvas: IndexedCanvas
     private let picturePipeline: MTLRenderPipelineState
     private let overlayPipeline: MTLRenderPipelineState
     private let sampler: MTLSamplerState
-    private let loader: MTKTextureLoader
-    /// The Modern look's horizon and logo (made on first use) and the text pictures (one per title and page).
-    private var horizon: ScenePicture?
-    private var logo: ScenePicture?
-    private var texts: [OpeningCreditsModel.Text: MTLTexture] = [:]
+    /// The Modern look's horizon and logo, and its text pictures (one per title and page). All are made
+    /// with the scene, not when first shown: each first shows on a music cue, the worst moment for a
+    /// picture to be late. The horizon's and the logo's Super-xBR versions are made on a background thread.
+    private let horizon: ScenePicture?
+    private let logo: ScenePicture?
+    private let texts: [OpeningCreditsModel.Text: MTLTexture]
 
     static let fontName = "Superclarendon-Regular"
     /// The text pictures: this many pixels per canvas pixel across, and per line down (a line is 0.6 as tall
@@ -45,11 +45,9 @@ final class OpeningCreditsScene: DemoScene {
     }
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
-        self.device = device
         model = try OpeningCreditsModel.load()
         canvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat,
                                    width: OpeningCreditsModel.width, height: OpeningCreditsModel.height)
-        loader = MTKTextureLoader(device: device)
         let library = try Shaders.library(device: device, source: Self.shaderSource)
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = try Shaders.function("opening_quad_vertex", in: library)
@@ -65,7 +63,26 @@ final class OpeningCreditsScene: DemoScene {
         blend.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         overlayPipeline = try device.makeRenderPipelineState(descriptor: descriptor)
         sampler = try Shaders.sampler(device: device, smooth: true)
+
+        horizon = try? ScenePicture.shared(named: "01-opening-horizon", device: device)
+        logo = Self.logoPicture(model, device: device)
+        horizon?.prepareUpscaledInBackground()
+        logo?.prepareUpscaledInBackground()
+        let loader = MTKTextureLoader(device: device)
+        var texts: [OpeningCreditsModel.Text: MTLTexture] = [:]
+        for text in Self.allTexts {
+            guard let image = Self.textImage(text, font: model.font) else { continue }
+            texts[text] = try? loader.newTexture(cgImage: image, options: ScenePicture.textLoadOptions)
+        }
+        self.texts = texts
     }
+
+    /// How many of the Modern look's pictures are ready: the texts, the horizon, the logo (for checks).
+    var modernPictures: (texts: Int, horizon: Bool, logo: Bool) { (texts.count, horizon != nil, logo != nil) }
+
+    /// Every text the part shows: the three titles and the four pages.
+    static let allTexts: [OpeningCreditsModel.Text] = OpeningCreditsModel.titles.indices.map { .title($0) }
+        + OpeningCreditsModel.pages.indices.map { .page($0) }
 
     func reset() { model.reset() }
     func tick() { model.tick() }
@@ -96,7 +113,7 @@ final class OpeningCreditsScene: DemoScene {
         let layout = Self.modernLayout(model, alpha: frame.alpha)
         let size = SIMD2<Float>(Float(OpeningCreditsModel.width), Float(OpeningCreditsModel.height))
         encoder.setFragmentSamplerState(sampler, index: 0)
-        if layout.brightness > 0, let horizon = horizonPicture() {
+        if layout.brightness > 0, let horizon {
             // Picture rows 0...149 on lines 50...349, columns from the scroll position.
             var quad = Quad(rect: SIMD4(0, 50, 320, 350),
                             uv: SIMD4(layout.position / 640, 0, (layout.position + 320) / 640, 150 / 200),
@@ -106,11 +123,11 @@ final class OpeningCreditsScene: DemoScene {
         }
         guard layout.text != .none, layout.textAmount > 0 else { return }
         encoder.setRenderPipelineState(overlayPipeline)
-        if let text = textPicture(layout.text) {
+        if let text = texts[layout.text] {
             var quad = Quad(rect: SIMD4(0, 0, 320, 400), uv: SIMD4(0, 0, 1, 1), canvas: size, amount: layout.textAmount, grey: 1)
             draw(text, quad: &quad, encoder: encoder)
         }
-        if layout.text == .title(2), let logo = logoPicture() {
+        if layout.text == .title(2), let logo {
             let lines = Self.logoLines
             var quad = Quad(rect: SIMD4(0, Float(lines.lowerBound), 320, Float(lines.upperBound)), uv: SIMD4(0, 0, 1, 1),
                             canvas: size, amount: layout.textAmount)
@@ -143,14 +160,8 @@ final class OpeningCreditsScene: DemoScene {
 
     // MARK: - The Modern look's pictures
 
-    private func horizonPicture() -> ScenePicture? {
-        if horizon == nil { horizon = try? ScenePicture.shared(named: "01-opening-horizon", device: device) }
-        return horizon
-    }
-
     /// The Dolby Surround logo as the 1993 title showed it (greys 10, 30 and 63 of 63), through Super-xBR.
-    private func logoPicture() -> ScenePicture? {
-        if let logo { return logo }
+    private static func logoPicture(_ model: OpeningCreditsModel, device: MTLDevice) -> ScenePicture? {
         let lines = Self.logoLines, w = OpeningCreditsModel.width
         let bits = model.titleBits[2]
         var rgba = [UInt8](repeating: 0, count: w * lines.count * 4)
@@ -166,18 +177,7 @@ final class OpeningCreditsScene: DemoScene {
         descriptor.usage = .shaderRead
         guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
         texture.replace(region: MTLRegionMake2D(0, 0, w, lines.count), mipmapLevel: 0, withBytes: rgba, bytesPerRow: w * 4)
-        logo = ScenePicture(texture, device: device)
-        return logo
-    }
-
-    private func textPicture(_ text: OpeningCreditsModel.Text) -> MTLTexture? {
-        if let made = texts[text] { return made }
-        guard let image = Self.textImage(text, font: model.font) else { return nil }
-        let made = try? loader.newTexture(cgImage: image, options: [.SRGB: false, .generateMipmaps: true,
-                                                                   .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                                                                   .textureStorageMode: MTLStorageMode.private.rawValue])
-        texts[text] = made
-        return made
+        return ScenePicture(texture, device: device)
     }
 
     /// A title's or page's text in Superclarendon, white on black, over the whole 320 x 400 canvas (1280 x

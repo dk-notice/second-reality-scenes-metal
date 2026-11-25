@@ -136,14 +136,10 @@ final class CreditsScene: DemoScene {
         guard modernScreen != k else { return }
         modernScreen = k
         modernPicture = Self.capture(k).flatMap {
-            try? loader.newTexture(URL: $0, options: [.SRGB: false, .generateMipmaps: true,
-                                                      .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                                                      .textureStorageMode: MTLStorageMode.private.rawValue])
+            try? loader.newTexture(URL: $0, options: ScenePicture.textLoadOptions)
         } ?? plainPicture(k)
         modernText = Self.textImage(CreditsModel.texts[k]).flatMap {
-            try? loader.newTexture(cgImage: $0, options: [.SRGB: false, .generateMipmaps: true,
-                                                          .textureUsage: MTLTextureUsage.shaderRead.rawValue,
-                                                          .textureStorageMode: MTLStorageMode.private.rawValue])
+            try? loader.newTexture(cgImage: $0, options: ScenePicture.textLoadOptions)
         }
     }
 

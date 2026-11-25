@@ -6,13 +6,13 @@
 /// exactly what the research simulated. Every condition comes from the original source; see
 /// `docs/demo-timeline.md` ("Sources of each condition") for where.
 
-/// What the screen shows. Everything is a stand-in for now, except the scenes this project has built.
+/// What the screen shows: a scene, or between scenes a picture or black.
 enum DemoVisual: Equatable {
     /// One of the project's scenes (an id from `SceneCatalog.all`), started from its beginning.
     case scene(String)
     /// A picture from `artwork/` by its base name, e.g. "04-title".
     case picture(String)
-    /// A title card naming a part that is not built yet.
+    /// A title card with a name: what Play Demo falls back to if a scene cannot be started.
     case card(String)
     case black
 }

@@ -23,23 +23,21 @@ extension CoreChecks {
         let turned = path.filter { abs($0.xa) > abs($0.ya) }.count
         check("Rotozoomer: the turned tile is read on 920 of the 2000 steps, as tools/rotozoom_reference.py counts",
               turned == 920, "\(turned)")
-        // Flash in over 15 steps, fade to white in 64 levels from step 1872, white at the end; on its own it
-        // starts again after 35 white steps.
+        // The fade's value on the steps either side of each change; on its own, 35 white steps at the end.
         var model = RotozoomerModel()
-        let first = model.fade()
-        for _ in 0..<15 { model.tick() }
-        let flashOver = model.fade()
-        for _ in 15..<1871 { model.tick() }
-        let beforeFade = model.fade()
-        model.tick()
-        let fadeStart = model.fade()
-        for _ in 1872..<2000 { model.tick() }
-        let white = model.showsPicture
+        func run(to step: Int) -> PictureFade {
+            while model.step < step { model.tick() }
+            return model.fade()
+        }
+        let first = run(to: 0), lastFlash = run(to: 13), flashOver = run(to: 14)
+        let beforeFade = run(to: 1871), fadeStart = run(to: 1872), fadeNext = run(to: 1873)
+        _ = run(to: 2000)
+        let stillShown = model.showsPicture
         for _ in 2000..<2035 { model.tick() }
-        check("Rotozoomer: flashes in from white over 15 steps, fades to white from step 1872, starts again after 2035 steps",
-              first.add == 70 && flashOver.add == 0 && flashOver.keep == 1 && beforeFade.keep == 1
-                && fadeStart.keep == 63 && fadeStart.outOf == 63 && !white && model.step == 0,
-              "\(first.add) \(flashOver.add) \(beforeFade.keep) \(fadeStart.keep)/\(fadeStart.outOf) \(white) \(model.step)")
+        check("Rotozoomer: flashes in from white over 14 steps (70 levels, 5 fewer a step), fades to white from step 1873 (one level every 2 steps), starts again after 2035 steps",
+              first.add == 70 && lastFlash.add == 5 && flashOver.add == 0 && flashOver.keep == 1 && beforeFade.keep == 1
+                && fadeStart.keep == 63 && fadeStart.outOf == 63 && fadeNext.keep == 62 && !stillShown && model.step == 0,
+              "\(first.add) \(lastFlash.add) \(flashOver.add) \(beforeFade.keep) \(fadeStart.keep)/\(fadeStart.outOf) \(fadeNext.keep) \(stillShown) \(model.step)")
         // Inside Play Demo it stops (white) as soon as "music plus" is above -4.
         var inDemo = RotozoomerModel()
         inDemo.musicPlus = -20

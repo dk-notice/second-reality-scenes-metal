@@ -334,10 +334,7 @@ def compile_instruction(text, proc):
             pc.flags_result(res, bits)
             d['set'](res)
         return f
-    if op == 'in' or op == 'int' or (op == 'rep' and rest != 'stosw'):
-        def f(): raise RuntimeError('not modelled: ' + text)
-        return f
-    if op == 'rep':                                    # rep stosw (clearing video memory in the mode set-up)
+    if op in ('in', 'int', 'rep'):                     # (rep stosw only clears video memory in the mode set-up)
         def f(): raise RuntimeError('not modelled: ' + text)
         return f
     return masm_compile(text, proc)
@@ -843,7 +840,6 @@ def png(path, pixels, palette):
                            + chunk(b'IDAT', zlib.compress(bytes(rows))) + chunk(b'IEND', b''))
 
 def case_palette(c):
-    pal = bytearray(Scene.__new__(Scene).__class__(c[2]).palette) if False else None
     mat = open(os.path.join(SRC, 'C', 'SCENE', c[2] + '.00M'), 'rb').read()
     pal = bytearray(mat[16:784])
     if c[2] == 'U2A':

@@ -13,7 +13,8 @@ docs/scenes/opening-credits.md). Set SR_ORIGINAL=<folder> if the original source
 Standard library only (besides deark).
 
 STEPS are Play Demo's: step 0 is the part's first (song 1 starting from section 0), and the music's sync
-values (DIS's `dis_sync`) reach 1...9 on the steps in CUES, measured from the script's silent run.
+values (DIS's `dis_sync`) reach 1...9 on the steps in CUES, measured from the script's silent run and
+equal to the "Opening credits' cues (steps)" line tools/demo_timeline.py prints.
 
 How the screen was made (as released):
 - 320 x 400: every one of the card's 400 lines shows its own memory row, 176 bytes (704 pixels) wide.

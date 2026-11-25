@@ -23,10 +23,27 @@ enum LensTables {
         return out
     }
 
-    static func ringTable() -> [UInt16]? {
-        guard let url = folder?.appendingPathComponent("LENS.EX4"), let data = try? Data(contentsOf: url),
-              data.count % 2 == 0 else { return nil }
-        return stride(from: 0, to: data.count, by: 2).map { UInt16(data[$0]) | UInt16(data[$0 + 1]) << 8 }
+    /// Table 4 from its file. nil if the file is missing or damaged: `LensModel.drawRow` reads by the
+    /// table's own offsets and counts, so they are checked here, once.
+    static func ringTable() -> [UInt16]? { bytes("LENS.EX4").flatMap(ringTable(bytes:)) }
+
+    /// One of the folder's files (as `MountainData.bytes`).
+    static func bytes(_ name: String) -> [UInt8]? {
+        guard let url = folder?.appendingPathComponent(name), let data = try? Data(contentsOf: url) else { return nil }
+        return [UInt8](data)
+    }
+
+    static func ringTable(bytes: [UInt8]) -> [UInt16]? {
+        guard bytes.count % 2 == 0 else { return nil }
+        let table = stride(from: 0, to: bytes.count, by: 2).map { UInt16(bytes[$0]) | UInt16(bytes[$0 + 1]) << 8 }
+        // Every row the lens draws: its header is there, and its list (a first word, then `count` words)
+        // lies inside the table.
+        guard table.count >= 2 * LensModel.lensHeight else { return nil }
+        for row in 0..<LensModel.lensHeight {
+            let start = Int(table[2 * row]) / 2, count = Int(table[2 * row + 1])
+            guard start + 1 + count <= table.count else { return nil }
+        }
+        return table
     }
 
     /// CALC.C's tables 1-3 from the shape. Microsoft C's `rand()` (seed 1, never reseeded) gives each

@@ -76,35 +76,63 @@ extension CoreChecks {
     }
 
     /// The Modern look's text: Superclarendon, capitals 14 lines tall on the 1993 glyphs' lines, each line as
-    /// wide as the 1993 line's ink.
+    /// wide as the 1993 line's ink: every line of all three titles and all four pages. And the logo's place.
     static func openingCreditsModern(_ check: (String, Bool, String) -> Void, model: OpeningCreditsModel) {
-        guard let image = OpeningCreditsScene.textImage(.page(0), font: model.font), let data = image.dataProvider?.data,
-              let bytes = CFDataGetBytePtr(data) else {
-            check("Opening credits: Modern text picture made", false, "")
-            return
-        }
         let down = OpeningCreditsScene.down, across = OpeningCreditsScene.across
-        func inked(_ y: Int) -> Bool { (0..<image.width).contains { bytes[y * image.bytesPerRow + $0] > 128 } }
-        // Each line of page 1: capitals from its line (+ 14 to the baseline) of the 400; ink across the 1993 line's
-        // width, 2 pixels right of centre.
-        var worst = "", ok = true
-        for (top, line) in OpeningCreditsModel.pages[0] {
-            let band = Int(CGFloat(100 + top) * down) - 4..<Int(CGFloat(100 + top + 14) * down) + 4
-            let rows = band.filter(inked)
-            let columns = (0..<image.width).filter { x in band.contains { bytes[$0 * image.bytesPerRow + x] > 128 } }
-            let left = CGFloat(160 - model.font.width(line) / 2 + 2) * across
-            let right = left + CGFloat(model.font.width(line) - 2) * across
-            let good = abs(CGFloat(rows.first ?? 0) - CGFloat(100 + top) * down) <= 2
-                && abs(CGFloat(rows.last ?? 0) - CGFloat(100 + top + 14) * down) <= 3
-                && abs(CGFloat(columns.first ?? 0) - left) <= 3 && abs(CGFloat((columns.last ?? 0) + 1) - right) <= 3
-            if !good || worst.isEmpty {
-                worst = "\(line): rows \(rows.first ?? -1)...\(rows.last ?? -1) (want \(Int(CGFloat(100 + top) * down))...\(Int(CGFloat(100 + top + 14) * down))), x \(columns.first ?? -1)...\(columns.last ?? -1) (want \(Int(left))...\(Int(right)))"
+        let logo = OpeningCreditsScene.logoLines
+        var worst = "", ok = true, linesMeasured = 0, logoClear = false
+        for text in OpeningCreditsScene.allTexts {
+            guard let image = OpeningCreditsScene.textImage(text, font: model.font), let data = image.dataProvider?.data,
+                  let bytes = CFDataGetBytePtr(data) else {
+                ok = false; worst = "no picture for \(text)"
+                continue
             }
-            ok = ok && good
+            // Titles are drawn from line 0 and centred; pages from line 100 and 2 pixels right.
+            let lines: [(top: Int, text: String)], first: Int, right: Int
+            switch text {
+            case .title(let k): (lines, first, right) = (OpeningCreditsModel.titles[k], 0, 0)
+            case .page(let k): (lines, first, right) = (OpeningCreditsModel.pages[k], 100, 2)
+            case .none: continue
+            }
+            func inked(_ y: Int) -> Bool { (0..<image.width).contains { bytes[y * image.bytesPerRow + $0] > 128 } }
+            // Each line: capitals from its line (+ 14 to the baseline) of the 400; ink across the 1993 line's width.
+            for (top, line) in lines where line != "[" && line != "]" {
+                let wantTop = CGFloat(first + top) * down, wantFoot = CGFloat(first + top + 14) * down
+                let band = Int(wantTop) - 4..<Int(wantFoot) + 4
+                let rows = band.filter(inked)
+                let columns = (0..<image.width).filter { x in band.contains { bytes[$0 * image.bytesPerRow + x] > 128 } }
+                let left = CGFloat(160 - model.font.width(line) / 2 + right) * across
+                let rightEdge = left + CGFloat(model.font.width(line) - 2) * across
+                // (A line with no capital, "in", has no ink at the capitals' top: only its foot is measured.
+                // The typeface's f, l and d rise a little above its capitals, "Wildfire" by 2.2 picture rows,
+                // under one of the 400 lines: allowed for, 3 rows above.)
+                let above = wantTop - CGFloat(rows.first ?? 0)
+                let topGood = !line.contains(where: \.isUppercase) || (above >= -2 && above <= 3)
+                let good = topGood && abs(CGFloat(rows.last ?? 0) - wantFoot) <= 3
+                    && abs(CGFloat(columns.first ?? 0) - left) <= 3 && abs(CGFloat((columns.last ?? 0) + 1) - rightEdge) <= 3
+                if !good || worst.isEmpty {
+                    worst += (worst.isEmpty ? "" : "; ") + "\(line): rows \(rows.first ?? -1)...\(rows.last ?? -1) (want \(Int(wantTop))...\(Int(wantFoot))), x \(columns.first ?? -1)...\(columns.last ?? -1) (want \(Int(left))...\(Int(rightEdge)))"
+                }
+                ok = ok && good
+                linesMeasured += 1
+            }
+            // The third title's logo is a picture, not text: no letters where it goes.
+            if text == .title(2) {
+                logoClear = !(Int(CGFloat(logo.lowerBound) * down)..<Int(CGFloat(logo.upperBound) * down)).contains(where: inked)
+            }
         }
-        check("Opening credits: Modern text in Superclarendon, capitals as tall as the 1993 ones (14 lines) on the same lines, each line as wide as the 1993 line",
-              CTFontCopyPostScriptName(CTFontCreateWithName(OpeningCreditsScene.fontName as CFString, 10, nil)) as String == "Superclarendon-Regular" && ok,
-              worst)
+        check("Opening credits: Modern text in Superclarendon, capitals as tall as the 1993 ones (14 lines) on the same lines, each line as wide as the 1993 line (all 19 lines of the 3 titles and 4 pages)",
+              CTFontCopyPostScriptName(CTFontCreateWithName(OpeningCreditsScene.fontName as CFString, 10, nil)) as String == "Superclarendon-Regular"
+                && ok && linesMeasured == 19,
+              "\(linesMeasured) lines measured; " + worst)
+
+        // The logo's picture covers exactly the lines the 1993 title has ink on below its "in".
+        let bits = model.titleBits[2], w = OpeningCreditsModel.width
+        let inkLines = (150..<OpeningCreditsModel.height).filter { y in (0..<w).contains { bits[y * w + $0] != 0 } }
+        // (Its two glyphs are drawn from lines 160 and 179, 29 rows each; their last rows are empty.)
+        check("Opening credits: the Modern logo is placed on the 1993 logo's lines (the two glyphs' rows, \(logo.lowerBound)...\(logo.upperBound - 1)), with no Modern text under it",
+              logo == 160..<(179 + 29) && inkLines.first == logo.lowerBound && (inkLines.last ?? 999) < logo.upperBound && logoClear,
+              "1993 ink on lines \(inkLines.first ?? -1)...\(inkLines.last ?? -1), text clear of it: \(logoClear)")
     }
 
     /// Inside Play Demo the scene shows from the part's first step for the script's steps, its model in step
@@ -113,10 +141,16 @@ extension CoreChecks {
         let run = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic())
         run.reset()
         // The script's own length for the part: the sum of its fixed waits and of its waits for cues.
-        var shown = 0, inStep = true, cues: [Int] = [], lastSync = 0, after: DemoVisual?
+        var shown = 0, inStep = true, cues: [Int] = [], lastSync = 0
         var scene = run.sceneShowing as? OpeningCreditsScene
         if scene == nil { run.tick(); scene = run.sceneShowing as? OpeningCreditsScene }
         let startStep = scene?.model.step ?? -1
+        // The Modern look's pictures exist as soon as the scene does: none is left to be made on the frame it
+        // first shows (each first shows on a music cue).
+        let ready = scene?.modernPictures
+        check("Opening credits: the Modern look's 7 text pictures, horizon and logo are made with the scene, not when first shown",
+              ready?.texts == 7 && ready?.horizon == true && ready?.logo == true,
+              "\(ready?.texts ?? -1) texts, horizon \(ready?.horizon ?? false), logo \(ready?.logo ?? false)")
         var schedule = ""
         for _ in 0..<7000 {
             guard let opening = run.sceneShowing as? OpeningCreditsScene else { break }
@@ -127,11 +161,11 @@ extension CoreChecks {
             shown += 1
             run.tick()
         }
-        if run.sceneShowing == nil { after = .picture("02-ships-horizon") }
+        let after = run.pictureShowing
         let ends = DemoTimelineCommand.expected.first { $0.name == "Ships fly-by" }?.step ?? -1
         check("Play Demo: the opening credits show as their scene from step 0 for the script's \(ends) steps, in step with it, the music's sync rising on the steps the scene uses on its own; then the ships' horizon",
               startStep == 0 && shown == ends && inStep && Array(cues.prefix(9)) == OpeningCreditsModel.cues
-                && after != nil && run.currentPart == "Ships fly-by" && schedule == "[1128, 1688, 2115] Optional(2658) [3387, 3945, 4503, 5061]",
-              "schedule \(schedule), from \(startStep), shown \(shown), in step \(inStep), cues \(cues.prefix(9)), then \(run.currentPart ?? "?")")
+                && after == "02-ships-horizon" && run.currentPart == "Ships fly-by" && schedule == "[1128, 1688, 2115] Optional(2658) [3387, 3945, 4503, 5061]",
+              "schedule \(schedule), from \(startStep), shown \(shown), in step \(inStep), cues \(cues.prefix(9)), then \(run.currentPart ?? "?") showing \(after ?? "no picture")")
     }
 }

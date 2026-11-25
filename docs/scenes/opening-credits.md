@@ -119,10 +119,18 @@ music's sync value each step, for the script's 5,605 steps; then the ships' hori
 - **The hand-over:** the last screen is the ships' horizon exactly.
 - **On its own:** 4,547 steps from 70 before the first title, then again.
 - **Modern text:** Superclarendon, each line's capitals on the 1993 lines and its ink as wide as the 1993
-  line. Proven to fail unstretched, and with the lines placed from the wrong point.
+  line: all 19 lines of the 3 titles and 4 pages (until the 2026-11-25 code review, page 1 only). Proven to
+  fail unstretched, with the lines placed from the wrong point, and with the titles moved down.
+- **The Modern logo** is on the 1993 logo's lines, with no Modern text under it. Proven to fail with the
+  logo moved 10 lines.
+- **The Modern look's pictures** (7 texts, horizon, logo) are made with the scene, not on the frame they
+  first show (each first shows on a music cue). Proven to fail with one left out.
 - **Play Demo:** the scene shows from step 0 for the script's 5,605 steps, in step with it, the music's sync
-  rising on the steps the scene uses on its own, with the same schedule; then the ships part. Proven to fail
-  with the music's sync read a step off.
+  rising on the steps the scene uses on its own, with the same schedule; then the ships part, showing the
+  ships' horizon picture. Proven to fail with the music's sync read a step off, and with black shown
+  instead of the horizon.
+- **The cues** (1,128 ... 5,045) and the part's end (5,605) are also what `tools/demo_timeline.py` prints,
+  from its own simulation of the music (it printed only seconds until the code review).
 - **The graphics chip matches the 1993 reference** at 17 steps (the generic per-scene check).
 - The credits' picture 1 (which shows this part's "Code" page) is now captured from this scene, step 3,664
   of its own count (see `docs/scenes/credits.md`).

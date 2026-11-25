@@ -16,6 +16,7 @@ Usage (FOLDER holds MUSIC0-unscrambled.s3m, MUSIC1-unscrambled.s3m and the three
   build/music_steps FOLDER/MUSIC1-unscrambled.s3m 0 0    > FOLDER/s2from0.txt
   build/music_steps FOLDER/MUSIC0-unscrambled.s3m 120 18 > FOLDER/s1from18.txt
   python3 tools/demo_timeline.py FOLDER 0 frames
+It prints each part's start and end in seconds, then the exact steps the Swift is checked against.
 """
 import sys
 S = sys.argv[1]; OFF = int(sys.argv[2]); TICKS = sys.argv[3] == 'ticks'
@@ -28,7 +29,9 @@ SYNC = [(0x0000,0),(0x0200,1),(0x0300,2),(0x032f,3),(0x042f,4),(0x052f,5),(0x062
 
 class Music:
     def __init__(s, steps, ordlist, adjust): s.st, s.ol, s.i, s.mf, s.tk, s.sum, s.adj = steps, ordlist, 0, 0.0, 0, 0, adjust
-    def cur(s): return s.st[min(s.i, len(s.st) - 1)]
+    def cur(s):
+        if s.i >= len(s.st): sys.exit(f'demo_timeline: the music steps ran out at step {s.i} (a truncated or wrong step file?)')
+        return s.st[s.i]
     def order(s): return s.cur()[1]                  # libopenmpt's current order
     def np_ord(s): return s.cur()[1] + OFF            # what the original player may have reported
     def row(s): return s.cur()[2]
@@ -56,14 +59,17 @@ class Clock:
 T = Clock(); M = None; log = []
 def frames(n):
     for _ in range(int(n)): M.tick(); T.t += 1
-def until(cond, cap=10**6):
+def until(cond, cap=float('inf')):
+    # Without a cap a wait must end on its own: if the music never gets there, the step file runs out
+    # and Music.cur stops the tool with an error.
     k = 0
     while not cond() and k < cap: frames(1); k += 1
 def part(name, body):
     start = T.t; body(); log.append((name, start, T.t))
 
 # ---- Song 1 (MUSIC0, tempo 120) from order 0 ----
-M = Music(load('s1from0.txt'), O1, 45000)
+S1 = load('s1from0.txt')
+M = Music(S1, O1, 45000)
 def alku():   # ALKU/MAIN.C as RELEASED (see docs/scenes/opening-credits.md): three titles, each on its sync
     # (1, 2, 3) or when the one before has faded out (427 refreshes); the scroll starts on sync 4 and moves
     # 1 pixel every 9 refreshes to 320 (2,881); the last fade (64) and the hand-over to the ships (2).
@@ -126,3 +132,12 @@ part('CRED credits', lambda: frames(7602))
 part('ENDSCRL end scroller (until a key)', lambda: frames(0))
 for name, a, b in log:
     print(f'{name:40} {a/70:7.1f} s -> {b/70:7.1f} s  ({(b-a)/70:5.1f} s)')
+# The exact steps, as the Swift quotes them: `expected` in Sources/SRMetal/App/DemoTimelineCommand.swift
+# (the part starts) and the opening credits' cues (`OpeningCreditsModel.cues`, CUES in alku_reference.py):
+# the first step on which song 1's sync value has reached 1...9.
+print('Part starts (steps):', ', '.join(str(a) for _, a, _ in log))
+cues = Music(S1, O1, 45000); first = []
+for c in range(1, 10):
+    while cues.sync() < c: cues.tick()
+    first.append(cues.i)
+print('Opening credits\' cues (steps):', ', '.join(map(str, first)))

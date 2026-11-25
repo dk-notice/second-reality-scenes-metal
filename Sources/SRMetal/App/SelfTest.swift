@@ -21,6 +21,11 @@ enum SelfTest {
     /// Whether a scene's checks run (its id or its title contains the word).
     static func wants(_ entry: SceneEntry) -> Bool { wants(entry.id + " " + entry.title) }
 
+    /// How many checks the full self-test runs. A check that silently stops running (its set-up failed, a
+    /// name it looked up is gone) makes the count wrong, and the run fails. Change it with each check
+    /// added or removed.
+    static let expectedChecks = 634
+
     static func run() -> Bool {
         var ok = true
         var checksRun = 0
@@ -663,26 +668,33 @@ enum SelfTest {
                 // must stay small. (Measured over all cases when written: 5.0 at most, out of 255.)
                 var far: [String] = []
                 for name in ["ship-turn1", "ships-0060", "bigship-1", "logo-1", "city-0100", "city-0800", "city-1420"] {
-                    guard let test = VisuTestCases.all.first(where: { $0.name == name }) else { continue }
+                    guard let test = VisuTestCases.all.first(where: { $0.name == name }) else {
+                        far.append("\(name): no such test case")
+                        continue
+                    }
                     let difference = try VisuTestCommand.difference(test.kind)
                     if difference > 8 { far.append("\(name) \(difference)") }
                 }
                 check("VISU modern look stays close to the 1993 picture in 7 test cases", far.isEmpty, far.joined(separator: ", "))
+                let glides = "VISU modern look glides between animation frames"
                 if let test = VisuTestCases.all.first(where: { $0.name == "city-0800" }) {
                     let still = try VisuTestCommand.modern(test.kind, blend: 0)
                     let between = try VisuTestCommand.modern(test.kind, blend: 0.5)
                     let moved = zip(still, between).reduce(0) { $0 + ($1.0 != $1.1 ? 1 : 0) }
-                    check("VISU modern look glides between animation frames",
-                          moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
+                    check(glides, moved > 1000 && moved < still.count / 2, "\(moved) bytes differ")
+                } else {
+                    check(glides, false, "no test case city-0800")
                 }
                 // The recording scales the big ship down as it leaves, and the original's light dims
                 // with that scale. The modern look must do the same (it once normalised the scale away:
                 // +4.5 here, against +0.7 now).
+                let lights = "VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)"
                 if let test = VisuTestCases.all.first(where: { $0.name == "ships-0100" }) {
                     let lean = try VisuTestCommand.brightnessLean(test.kind)
-                    check("VISU modern look lights a scaled object as the 1993 rule does (the big ship, ships frame 100)",
-                          lean.pixels > 50_000 && abs(lean.lean) < 2.5,
+                    check(lights, lean.pixels > 50_000 && abs(lean.lean) < 2.5,
                           String(format: "modern is %+.2f of 255 brighter on average over %d ship pixels", lean.lean, lean.pixels))
+                } else {
+                    check(lights, false, "no test case ships-0100")
                 }
 
                 // Both whole animations, every frame, through the 1993 replay: nothing the original
@@ -716,8 +728,17 @@ enum SelfTest {
                 // crash; and the engine must hold a polygon that clipping would grow without end.
                 let damaged = try VisuDamagedFiles.run()
                 check("VISU loader turns damaged data files away instead of crashing",
-                      damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty,
+                      damaged.tried > 2000 && damaged.refused > 500 && damaged.loaded > 500 && damaged.wronglyAccepted.isEmpty
+                        && damaged.named == 32,
                       damaged.wronglyAccepted.isEmpty ? damaged.summary : "not turned away: \(damaged.wronglyAccepted.joined(separator: ", "))")
+                // A palette byte above 63 (a damaged file): a VGA card used only its low six bits.
+                let loud = try VisuWorld(name: "U2A") { name in
+                    var file = try VisuData.load(name)
+                    if name.hasSuffix(".00M") { for i in 16..<(16 + 768) { file[i] |= 0xC0 } }
+                    return file
+                }
+                check("VISU loader keeps only the six bits of a palette level a VGA card used",
+                      loud.palette == ships.palette && ships.palette.allSatisfy { $0 < 64 }, "")
                 check("VISU engine stops a scribbled polygon growing past its record while being clipped",
                       damaged.scribblesStopped > 0, "\(damaged.scribblesStopped) corners refused")
             } catch {
@@ -1012,6 +1033,10 @@ enum SelfTest {
             print("\(checksRun) checks run: only the groups matching \"\(only)\", NOT the full self-test.")
         } else {
             print("\(checksRun) checks run.")
+            if checksRun != expectedChecks {
+                print("FAIL  \(checksRun) checks ran, expected \(expectedChecks): a check stopped running, or one was added or removed without changing SelfTest.expectedChecks")
+                ok = false
+            }
         }
         print(ok ? "All checks passed." : "Some checks FAILED.")
         return ok

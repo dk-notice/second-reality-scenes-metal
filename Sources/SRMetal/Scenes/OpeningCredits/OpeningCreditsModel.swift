@@ -117,7 +117,7 @@ struct OpeningCreditsModel {
             throw CreditsError.badData("OpeningCredits HORIZON.BIN")
         }
         let font = try Font(shades: OpeningCreditsData.load("FONT.BIN"))
-        return OpeningCreditsModel(palette: Array(horizon[16..<784]), pixels: Array(horizon[784...]), font: font)
+        return OpeningCreditsModel(palette: vgaLevels(horizon[16..<784]), pixels: Array(horizon[784...]), font: font)
     }
 
     init(palette: [UInt8], pixels: [UInt8], font: Font) {
@@ -196,7 +196,8 @@ struct OpeningCreditsModel {
     private(set) var sync4: Int?
     private(set) var pageR: [Int] = []
 
-    /// On its own: back to `standaloneStart` (or another step of the part, for checks), following the cues.
+    /// On its own: back to `standaloneStart` (or step 0, for checks), following the cues. The schedule is
+    /// built from `first` on, so `first` must not be later than the first cue.
     mutating func reset(from first: Int = standaloneStart) {
         step = first
         liveSync = nil
@@ -251,19 +252,18 @@ struct OpeningCreditsModel {
     enum Text: Hashable { case none, title(Int), page(Int) }
 
     /// What shows on a step: the palette (VGA levels), the scroll position (0...320), the text, and how far
-    /// the text has faded in (0...1, for the Modern look) and the picture (0...1).
+    /// the text has faded in (0...1, for the Modern look).
     struct Shown {
         var levels: [Int]
         var position: Int
         var text: Text
         var textAmount: Float
-        var pictureAmount: Float
     }
 
     /// Everything the screen shows on `step` (`step` itself by default), from the schedule so far.
     func shown(at: Int? = nil) -> Shown {
         let t = at ?? step
-        var out = Shown(levels: [Int](repeating: 0, count: 768), position: 0, text: .none, textAmount: 0, pictureAmount: 0)
+        var out = Shown(levels: [Int](repeating: 0, count: 768), position: 0, text: .none, textAmount: 0)
         for (k, start) in titleStarts.enumerated() {
             let j = t - start
             guard 1 <= j && j <= 427 else { continue }
@@ -275,7 +275,6 @@ struct OpeningCreditsModel {
         if let start4 = sync4, t >= start4 + 2 {
             let k = min(t - start4 - 1, 128)
             out.levels = Self.copperFade([Int](repeating: 0, count: 768), normal, k, 128)
-            out.pictureAmount = Float(k) / 128
             out.position = max(0, min(320, (t - start4 - 1) / Self.scrollStep))
         }
         for (k, r) in pageR.enumerated() {

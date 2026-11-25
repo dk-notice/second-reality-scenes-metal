@@ -24,18 +24,21 @@ struct MountainData {
     }
 
     /// nil if a file is missing or is not what the part expects.
-    static func load() -> MountainData? {
+    /// (`bytes` reads a file by name: the data folder's, unless a check hands in damaged ones.)
+    static func load(bytes: (String) -> [UInt8]? = MountainData.bytes) -> MountainData? {
         guard let hills = bytes("HILLBACK.CLX"), hills.count == 778 + 64000,
-              let o2 = bytes("O2.SCI"), o2.count >= 778 + textWidth * rows else { return nil }
+              let o2 = bytes("O2.SCI"), o2.count >= 778 + textWidth * rows,
+              // The text's values are 0...7 (the scene multiplies them by 36 into a byte).
+              o2[778..<(778 + textWidth * rows)].allSatisfy({ $0 < 8 }) else { return nil }
         var tables: [Table] = []
         for n in 1...3 {
             guard let d = bytes("POS\(n).DAT"), let table = ScrollTables.parse(d, columns: columns, rows: rows) else { return nil }
             tables.append(table)
         }
+        let levels = vgaLevels(hills[10..<778])
         var palette: [SIMD3<Int>] = []
-        for colour in 0..<256 {
-            let at = 10 + 3 * colour
-            palette.append(SIMD3<Int>(Int(hills[at]), Int(hills[at + 1]), Int(hills[at + 2])))
+        for at in stride(from: 0, to: 768, by: 3) {
+            palette.append(SIMD3<Int>(Int(levels[at]), Int(levels[at + 1]), Int(levels[at + 2])))
         }
         let textEnd = 778 + textWidth * rows
         return MountainData(palette: palette, background: Array(hills[778...]), text: Array(o2[778..<textEnd]), tables: tables)
@@ -72,7 +75,6 @@ struct MountainData {
 /// On its own: no wait; the fade-out starts on the same scroll draw as in the demo; then it starts again
 /// (2,036 steps).
 struct MountainScrollerModel {
-    static let width = 320, height = 200
     static let fadeInSteps = 64
     static let hillFadeDraws = 127
     static let fadeOutSteps = 65
@@ -100,8 +102,6 @@ struct MountainScrollerModel {
     private var window: [UInt8]
     private var nextColumn = 133
     private var table = 0
-    /// Scroll draws done.
-    private(set) var draws = 0
     /// Inside Play Demo: the music's "music plus", given before each step. nil on its own.
     var musicPlus: Int?
 
@@ -126,7 +126,6 @@ struct MountainScrollerModel {
         }
         nextColumn = 133
         table = 0
-        draws = 0
     }
 
     mutating func tick() {
@@ -164,7 +163,6 @@ struct MountainScrollerModel {
                 screen[address] = background[address] &+ value
             }
         }
-        draws += 1
         if table == 2 {
             // move(font[1], font[0], ...): every row's first column falls off, the next row's comes in at
             // its end and is overwritten by the new column at once.

@@ -4,9 +4,11 @@ set -e
 cd "$(dirname "$0")"
 
 APP="build/SRMetal.app"
-# Remove the last build's app BEFORE compiling. If the compile fails, the script stops (set -e)
-# and there is then no app at all, rather than an old one that looks like the result of this build.
+# Remove the last build's app BEFORE compiling, and remove a half-made one if any later step fails
+# (the compile, a copy, the credits' pictures, the signing): the script stops (set -e) and there is
+# then no app at all, rather than an old or unfinished one that looks like the result of this build.
 rm -rf "$APP"
+trap 'if [ $? -ne 0 ]; then rm -rf "$APP"; echo "Build failed: no app was left in build/." >&2; fi' EXIT
 
 # libopenmpt, the tracker-music library (ThirdParty/libopenmpt; see ThirdParty/README.md), built
 # as a STATIC library with every optional format switched off, so it ends up inside the program
@@ -96,7 +98,7 @@ cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT "$APP/Contents/R
 
 # The credits' Modern-look pictures, captured from the scenes themselves (Modern look), at the moments
 # in CreditsModel.captures. Made here, not kept in git: they always match the scenes as built.
-"$APP/Contents/MacOS/SRMetal" --credits-captures "$APP/Contents/Resources/Credits/Modern" || exit 1
+"$APP/Contents/MacOS/SRMetal" --credits-captures "$APP/Contents/Resources/Credits/Modern"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 # codesign refuses a folder carrying Finder information. When the project sits in a synced folder

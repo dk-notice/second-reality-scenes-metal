@@ -46,6 +46,9 @@ final class ScenePicture: @unchecked Sendable {
         self.init(texture, device: device)
     }
 
+    /// For pictures of text drawn at one size and shown smaller: the same, with smaller copies made.
+    static let textLoadOptions: [MTKTextureLoader.Option: Any] = loadOptions.merging([.generateMipmaps: true]) { $1 }
+
     static let loadOptions: [MTKTextureLoader.Option: Any] = [
         .SRGB: false,                       // the bytes as they are, like every scene's colours
         .textureUsage: MTLTextureUsage.shaderRead.rawValue,

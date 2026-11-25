@@ -80,7 +80,7 @@ struct StartupOptions {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown  --music on|off
                  --scene play-demo --from <scene id, or part number 1-\(DemoScript.partNames.count)>
-        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline, --demo-live, --scaler-compare (run one without arguments for its usage)
+        Commands: --selftest [word], --demo-timeline, --music-info (these three just run); --snapshot, --motion-check, --visu-test, --music-render, --music-play, --demo-live, --scaler-compare, --credits-match, --credits-captures (run one of these without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or \(DemoRunScene.id) for the whole demo
         """
     }

@@ -33,7 +33,7 @@ struct WaterData {
             guard let d = bytes("WAT\(n).DAT"), let table = ScrollTables.parse(d, columns: columns, rows: rows) else { return nil }
             tables.append(table)
         }
-        return WaterData(palette: Array(miekka[10..<778]), background: Array(bkg[778...]),
+        return WaterData(palette: vgaLevels(miekka[10..<778]), background: Array(bkg[778...]),
                          sword: Array(miekka[778..<(778 + swordWidth * rows)]), tables: tables)
     }
 

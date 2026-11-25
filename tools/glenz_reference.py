@@ -21,8 +21,7 @@ Departures from running the text exactly as written:
     numbers are kept in nine variables instead.
   - the C calling wrappers' stack handling (CBEG / CEND) and the debugging `setborder` macro are
     replaced by direct calls.
-Two small departures from running the text exactly as written, neither of which changes a result:
-the two above. One thing is watched for: the filler files each edge under the screen row it starts
+Neither departure changes a result. One thing is watched for: the filler files each edge under the screen row it starts
 on, in a table with 256 entries. An edge starting on row 256 or lower would be written outside
 that table. This tool counts edges starting on rows 200-255 (stored, never drawn) and stops with an
 error if one ever starts on row 256 or lower. Over the whole scene: 198 of the first kind, none of

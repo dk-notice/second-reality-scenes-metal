@@ -39,8 +39,13 @@ final class TrackerSong {
 
     /// The version of libopenmpt built into the program, e.g. "0.8.10".
     static var libraryVersion: String {
+        let v = libraryVersionNumbers
+        return "\(v.major).\(v.minor).\(v.patch)"
+    }
+
+    static var libraryVersionNumbers: (major: Int, minor: Int, patch: Int) {
         let v = openmpt_get_library_version()
-        return "\(v >> 24).\((v >> 16) & 0xFF).\(v & 0xFFFF)"
+        return (Int(v >> 24), Int((v >> 16) & 0xFF), Int(v & 0xFFFF))
     }
 
     var title: String { metadata("title") }

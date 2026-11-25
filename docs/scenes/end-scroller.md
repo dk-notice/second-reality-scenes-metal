@@ -72,6 +72,10 @@ picture of its own, and moved as it scrolls.
 | Font | released 25-row font | the same | SuperClarendon (macOS) |
 | Scroll | 1 row every 2 refreshes | the same | smooth, same speed |
 | End | until a key | Play Demo: until stopped; alone: loops | the same |
+| Characters the font has no glyph for | nothing shows | the same | the quotation marks around a nickname show (kept on purpose); the "%" loop line and tabs show nothing |
+
+Until 2026-11-25 the Modern look drew the "%" line (the marker that starts the text again) as a real
+percent sign just above "Second Reality" on every loop; found in the code review and fixed, with a check.
 
 ## Limits
 

@@ -16,6 +16,13 @@ extension CoreChecks {
             check("Mountain scroller: its data loads", false, "")
             return
         }
+        // A text picture with a value above 7 must be turned away at load, not crash when the scene is made.
+        let spoiled = MountainData.load { name in
+            guard var file = MountainData.bytes(name) else { return nil }
+            if name == "O2.SCI" { file[778 + 100] = 8 }
+            return file
+        }
+        check("Mountain scroller: a text picture with a value above 7 is turned away", spoiled == nil, "")
         var owners = [Int](repeating: 0, count: 64000)
         for table in data.tables { for address in table.addresses { owners[Int(address)] += 1 } }
         let covered = owners.filter { $0 > 0 }.count, shared = owners.filter { $0 > 1 }.count

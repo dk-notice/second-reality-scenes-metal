@@ -32,6 +32,7 @@ extension CoreChecks {
         check("Play Demo: Techno Bars flashes on the music rows it is given (7, 15, ...), not on its own estimate",
               flashes == [0, 0, 15, 14, 13, 12, 15], "\(flashes)")
         // And Play Demo does give it the music: run the demo silently into the techno bars.
+        let toldMusic = "Play Demo: a scene is told the music's position each step (Techno Bars)"
         if let device = MTLCreateSystemDefaultDevice(),
            let run = try? DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic()) {
             var agreed = 0, compared = 0
@@ -46,8 +47,9 @@ extension CoreChecks {
                     } else if compared == 1 { agreed += 1 }
                 }
             }
-            check("Play Demo: a scene is told the music's position each step (Techno Bars, \(compared) steps)",
-                  compared > 1000 && agreed == compared, "\(agreed) of \(compared)")
+            check(toldMusic, compared > 1000 && agreed == compared, "\(agreed) of \(compared) steps")
+        } else {
+            check(toldMusic, false, "Play Demo could not be made")
         }
         // The title and end pictures: fully in after 161 and 163 steps (as the demo script counts), and
         // inside Play Demo the end picture holds until "music plus" goes above -16, then fades to black.
@@ -76,6 +78,19 @@ extension CoreChecks {
             if troll.phase == .scroll { scrollSteps += 1 }
             if troll.phase == .shake { shakeSteps += 1; if firstFlash < 0 && troll.flash > 0 { firstFlash = troll.flash } }
         }
+        // On its own the troll starts again after its hold: the Modern look must not glide towards the
+        // restart on the last step (it did: the troll showed half-way off the screen for one step).
+        var alone = TrollModel()
+        var glidesBack: [Int] = [], restartAt = -1
+        for step in 1...600 where restartAt < 0 {
+            let before = alone
+            alone.tick()
+            if before.phase == .hold && alone.phase == .wait { restartAt = step }
+            if let after = before.next(), after.xpos < before.xpos - 100 { glidesBack.append(step) }
+        }
+        check("Troll: on its own it starts again after 438 steps, and the Modern look does not glide back across the restart",
+              restartAt == 438 && glidesBack.isEmpty && TrollModel().next() != nil,
+              "restart at \(restartAt), glides back on steps \(glidesBack)")
         check("Play Demo: the troll scrolls in over 53 refreshes, then shakes for 50 with a flash from 45",
               scrollSteps == 53 && shakeSteps == 50 && firstFlash == 45 && troll.xpos == 320,
               "\(scrollSteps) + \(shakeSteps), flash \(firstFlash), ends at \(troll.xpos)")
@@ -123,16 +138,26 @@ extension CoreChecks {
                   rows == 30 && glyphs.allSatisfy { font.width[Int($0)] > 0 } && gapIndex != nil && loopIndex != nil && looped
                     && firstInk.map { $0 >= font.lineStart(firstLine) } == true,
                   "rows \(rows), first ink \(firstInk ?? -1) from \(font.lineStart(firstLine)), loop line \(loopIndex ?? -1), looped \(looped)")
+            let blank = scroller.lines.first { $0 == [13] }
+            let loopText = loopIndex.map { EndScrollerScene.modernText(scroller.lines[$0]) }
+            check("End scroller: the Modern look draws no \"%\" for the loop line and nothing for blank lines, and keeps the text of the others",
+                  loopText == "" && blank.map(EndScrollerScene.modernText) == ""
+                    && EndScrollerScene.modernText([UInt8]("A\tb\r".utf8)) == "Ab"
+                    && scroller.lines.allSatisfy { !EndScrollerScene.modernText($0).contains("%") },
+                  "loop line: \"\(loopText ?? "none")\"")
             if let gapIndex {
-                var gap = fresh
-                while gap.placed.last.map({ $0.line != gapIndex - 1 }) ?? true { gap.tick() }
-                // The line before the gap started; it takes 25 rows, then the gap, then the next line.
-                let before = gap.placed.last!.firstRow
-                while gap.placed.last!.firstRow == before { gap.tick() }
-                let next = gap.placed.last!
-                let height = Int(String(bytes: gap.lines[gapIndex][1...2], encoding: .ascii) ?? "") ?? -1
+                // Run to where the line before the gap starts; it takes 25 rows, then the gap, then the next
+                // line. (Both waits are bounded, so a text they do not fit fails the check instead of hanging.)
+                var gap = fresh, waited = 0
+                let limit = 80_000
+                while gap.placed.last?.line != gapIndex - 1 && waited < limit { gap.tick(); waited += 1 }
+                let before = gap.placed.last?.firstRow ?? -1
+                while gap.placed.last?.firstRow == before && waited < limit { gap.tick(); waited += 1 }
+                let next = gap.placed.last ?? (line: -1, firstRow: -1)
+                let digits = gap.lines[gapIndex].dropFirst().prefix(2)
+                let height = Int(String(bytes: digits, encoding: .ascii) ?? "") ?? -1
                 check("End scroller: a \"[nn\" line is nn blank rows (line \(gapIndex): \(height))",
-                      next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
+                      waited < limit && next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
                       "next line \(next.line) after \(next.firstRow - before) rows")
             }
         } else {
