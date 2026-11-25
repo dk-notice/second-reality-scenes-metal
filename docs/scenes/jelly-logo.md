@@ -90,7 +90,8 @@ steps; no rows stay black.
   loop after 821 steps, and, in a silent Play Demo run, that the jelly starts on the very step the demo
   script gets past its music cue and the city follows 700 steps later. Each of those checks was seen to
   fail with the detail broken on purpose (no clamp, the cache cleared, the cue off by one).
-- `--motion-check jelly-logo modern`: two jumps, the loop back to black and the landing (step 86 to 87:
+- `--motion-check jelly-logo modern`: two moments stand out (listed as three lines, the landing twice),
+  the loop back to black and the landing (step 86 to 87:
   the bounce's first value already has the top 31 rows down, in 1993 too).
 
 ## Differences and limits

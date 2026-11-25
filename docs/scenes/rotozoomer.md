@@ -56,7 +56,7 @@ the carry at the tile's edge included, and the screen is shown through the faded
 
 **Modern look:** a shader works out, for each screen pixel, its point on the tile from the camera
 WITHOUT rounding (the formulas' unrounded values, blended between steps), so the turning and zooming
-glide. It samples the lens picture made 8x by Super-xBR (the same copy Play Demo's lens stand-in shows),
+glide. It samples the lens picture made 8x by Super-xBR (the same copy the Lens scene uses),
 mapped through the same tile rules. How fast the picture is crossed per screen pixel is worked out from
 the unbroken coordinates, so the smoothing does not flicker at the tile's edges. The flash and the fade
 glide too.
@@ -88,6 +88,4 @@ glide too.
   The original drew straight onto the screen being shown, so for part of a refresh the old picture and
   the new one were both on screen; this version shows whole pictures.
 - Modern leaves out the one-row shift at the tile's edge (a by-product of 16-bit sums).
-- The lens before it (the bouncing, tinting lens) is not built; Play Demo still shows the lens picture
-  for that part.
 - Not compared with the original running.

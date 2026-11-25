@@ -152,7 +152,9 @@ the original's perspective formula without the rounding.
 
 ## Differences from the original
 
-- **The text panels are left out.** They are a picture, and pictures are out of scope for this project.
+- **The text panels are left out.** They are a picture, and when this scene was built pictures were out
+  of scope. (They no longer are, and the panels are exported as `artwork/original/starfield-text-panels.png`,
+  but they have not been added.)
 - **It ends, and loops.** The original ran until a key was pressed, getting ever denser. This version stops
   adding stars after step 1984, plays the finished loop for the last 64 steps while fading to black (the
   original's 33-step fade-in, run backwards), and starts again from black. Step 1984 was chosen by eye:

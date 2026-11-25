@@ -12,7 +12,8 @@ reaches the end.
 - **Original:** `ENDSCRL/MAIN.C` (about 125 lines), built as `ENDSCRL.EXE`.
 - **This version:** `Sources/SRMetal/Scenes/EndScroller/` (added 2026-11-24). In the sidebar too.
 - **Data:** the released text and font, in `Data/EndScroller/` (see "The released text" below).
-- **Length:** the text is 542 lines; at 35 rows a second it takes about 6 minutes to pass, then it starts again.
+- **Length:** the text is 542 lines; its loop mark is on line 538, 11,278 rows down; at 35 rows a second that takes
+  about 5 minutes 20 seconds, then it starts again.
 
 ## How the original did it
 
@@ -59,7 +60,7 @@ and the graphics chip shows the model's screen exactly at 12 moments.
 **Modern look:** the same lines at the same places, but drawn in **SuperClarendon**, a Clarendon-style
 typeface that comes with macOS (so it costs nothing in the program's size). It was chosen by the user over
 the original font smoothed by Super-xBR, after comparing them on real lines of the text
-(`build/scaler-compare/fonts/`). Capitals are as tall as the original's 14 rows, sitting on the same row;
+(sheets made into `build/scaler-compare/fonts/`, a folder that is not kept in the repository). Capitals are as tall as the original's 14 rows, sitting on the same row;
 the original's tall pixel shape (1.2:1) is kept; the letters use the typeface's own spacing (the original
 font's letters were wider, so lines are a little narrower, but each is centred, as before). The text glides
 up smoothly instead of a row at a time. Each line is drawn once, at 4 times the original's width, into a

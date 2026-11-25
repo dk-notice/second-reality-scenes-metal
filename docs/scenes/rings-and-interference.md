@@ -11,7 +11,8 @@ Two scenes that share the same ring pictures:
 - **Interference:** two sets of purple-grey rings sliding over each other, colours flowing outward, with a
   sideways wave that grows until the picture looks like it is melting.
 
-In the original these ran back to back as the opening of the techno part. Here they are separate scenes.
+In the original these ran back to back as the opening of the techno part. Here they are separate scenes
+in the sidebar; Play Demo runs them back to back again (see "Inside Play Demo" below).
 
 - **Original:** `TECHNO/KOEB.ASM` (Rings) and `TECHNO/KOEA.ASM` (Interference), assembly by Psi.
 - **This version:** `Sources/SRMetal/Scenes/Interference/` (one model and one shader serve both scenes).
@@ -166,15 +167,23 @@ declared at the bottom of `InterferenceScene.swift`.
 
 ## Differences from the original, on purpose
 
-- **Two scenes instead of one sequence.**
+- **Two scenes instead of one sequence** (on their own; Play Demo joins them again).
 - **No white-out in Rings.** The original faded the rings in, then carried on adding brightness until the
   whole screen was white, and ended after 256 steps. Here Rings stops at full brightness and keeps flowing.
-- **Interference loops seamlessly.** The original ran about 980 steps and cut away on a music cue. Here it
-  runs 1024 steps. The two pictures' paths advance 5 and 7 places per step through a 1024-place sine table,
+- **Interference loops seamlessly.** The original cut away on a music cue: by the demo's timeline, worked
+  out later, 669 steps in (when the music's frame counter, started with Rings, reached 925; an earlier
+  estimate here said about 980). Here it runs 1024 steps. The two pictures' paths advance 5 and 7 places per step through a 1024-place sine table,
   so after 1024 steps both are exactly where they started, as are the wave and the colour rotation. The
   wave also shrinks back to nothing over the last 240 steps, which the original did not do. The self-test
   checks that the scene returns to its exact first frame.
 - **The colour flow starts immediately.** The original waited for a beat in the music.
+
+### Inside Play Demo
+
+Play Demo (2026-11-24) shows Rings for 256 steps, as long as the original's, then Interference until the
+music's frame counter reaches 925, which is 669 steps: it is cut at full wobble, before this scene's own
+shrinking-back and loop are reached. The scenes themselves are unchanged there: Rings still has no
+white-out, and neither waits for the music.
 
 One thing that is not a difference: the circles are round in pixels, and the canvas is shown at 4:3 as on a
 VGA monitor, so they appear as slightly tall ovals. They did in 1993 too.

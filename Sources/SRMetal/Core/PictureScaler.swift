@@ -12,7 +12,7 @@ import Metal
 /// - `xbrLv2`: Hyllian's xBR level 2: finds edges between pixels and redraws them as smooth lines and
 ///   curves, at any size in one pass.
 /// - `superXBR`: Hyllian's Super-xBR: three passes that each double the size, filtering along the edge
-///   directions it finds; run twice (4x), then stretched smoothly to the screen.
+///   directions it finds; run twice (4x) or three times (8x), then stretched smoothly to the screen.
 ///
 /// The xBR shaders are written for Metal from Hyllian's published shaders (libretro "slang-shaders",
 /// `edge-smoothing/xbr/shaders/xbr-lv2-standalone.slang` and `super-xbr/super-xbr-pass0..2.slang`,

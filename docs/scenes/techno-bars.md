@@ -10,7 +10,8 @@ that brighten where they overlap. The bars flash on the beat.
 - **Original:** `TECHNO/KOE.C` (`doit1`, `doit2`, `doit3`) in C, with the drawing in `TECHNO/KOEA.ASM` and
   `TECHNO/POLYCLIP.ASM`, by Psi.
 - **This version:** `Sources/SRMetal/Scenes/TechnoBars/`
-- **Length:** about 28 seconds in three sections, then it loops.
+- **Length:** about 28 seconds in three sections, then it loops. (Play Demo cuts it earlier: see
+  "Differences from the original".)
 
 | Section | Length | What happens |
 |---|---|---|
@@ -149,7 +150,9 @@ original. The self-test cannot catch a mistake there, because the processor does
 graphics chip only looks up colours.
 
 Also not reproduced: before each section, the original waits for one extra screen refresh, which moves the
-flash on by a step. Since the beat is recreated anyway (see below), this would only change where it starts.
+flash on by a step. On its own the beat is recreated anyway (see below), so this would only change where
+it starts; inside Play Demo, where the flash follows the real music, the extra refresh per section is
+still not counted.
 
 ## Differences from the original
 
@@ -157,8 +160,13 @@ flash on by a step. Since the beat is recreated anyway (see below), this would o
   (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything. **Inside Play Demo** (2026-11-24) the flash
   follows the real music instead: the scene is given the music's row each step and flashes on rows 7,
   15, 23 ... as the original did.
-- **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats)
-  and the picture that scrolls in after the slide-off.
+- **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats);
+  Play Demo holds black for those four beats. The picture that scrolls in afterwards is now a scene of
+  its own, the [Troll](troll-and-switch-off.md) (2026-11-24).
+- **Inside Play Demo it is cut by the music**, as the original was: when the music's frame counter passes
+  2520, the troll takes over. The bars start no earlier than frame 1030, so at most 1,491 of the scene's
+  2,000 steps show: section 3 gets about 3 seconds, and the slide-off (which on its own starts at step
+  1908) is never reached there.
 - **It loops.** After sliding off, the scene starts again from section 1.
 
 ### Quirks that were kept

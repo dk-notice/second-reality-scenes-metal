@@ -1,5 +1,10 @@
 # Third-party code
 
+Two things here come from other people: the libopenmpt library (below), and the licence of the xBR picture
+scalers. `Sources/SRMetal/Core/PictureScaler.swift` is written for Metal from Hyllian's published xBR
+level 2 and Super-xBR shaders (libretro "slang-shaders", copyright 2011-2022 Hyllian, MIT licence):
+[xBR-LICENSE.txt](xBR-LICENSE.txt). No file of theirs is included, only that licence.
+
 ## libopenmpt (tracker music)
 
 | | |

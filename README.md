@@ -1,7 +1,8 @@
 # Second Reality Scenes (Metal)
 
-Scenes from Future Crew's 1993 PC demo *Second Reality*, re-created from scratch as one native macOS app
-that draws on the graphics chip.
+Future Crew's 1993 PC demo *Second Reality*, re-created from scratch, scene by scene, as one native macOS
+app that draws on the graphics chip. Each scene can be watched on its own, and **Play Demo** runs them in
+the original order with the original music.
 
 Every scene can be shown two ways, switchable at any time:
 
@@ -9,25 +10,38 @@ Every scene can be shown two ways, switchable at any time:
 - **1993 look**: the original pixels (320x200 for most scenes) and 70 steps per second, as on a 486 with a
   VGA card.
 
+The 23 scenes, in the demo's order (the hidden starfield, which the demo only showed when asked, comes last):
+
 | | Modern look | 1993 look |
 |---|---|---|
+| Ships Fly-by | ![](docs/images/ships-flyby-modern.png) | ![](docs/images/ships-flyby-classic.png) |
+| Explosion | ![](docs/images/explosion-modern.png) | ![](docs/images/explosion-classic.png) |
+| Title Picture | ![](docs/images/title-picture-modern.png) | ![](docs/images/title-picture-classic.png) |
+| Glenz Vectors | ![](docs/images/glenz-vectors-modern.png) | ![](docs/images/glenz-vectors-classic.png) |
 | Dot Tunnel | ![](docs/images/dot-tunnel-modern.png) | ![](docs/images/dot-tunnel-classic.png) |
 | Rings | ![](docs/images/rings-modern.png) | ![](docs/images/rings-classic.png) |
 | Interference | ![](docs/images/interference-modern.png) | ![](docs/images/interference-classic.png) |
 | Techno Bars | ![](docs/images/techno-bars-modern.png) | ![](docs/images/techno-bars-classic.png) |
-| Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
+| Troll | ![](docs/images/troll-modern.png) | ![](docs/images/troll-classic.png) |
+| Screen Switches Off | ![](docs/images/switch-off-modern.png) | ![](docs/images/switch-off-classic.png) |
+| Mountain Scroller | ![](docs/images/mountain-scroller-modern.png) | ![](docs/images/mountain-scroller-classic.png) |
+| Lens | ![](docs/images/lens-modern.png) | ![](docs/images/lens-classic.png) |
+| Rotozoomer | ![](docs/images/rotozoomer-modern.png) | ![](docs/images/rotozoomer-classic.png) |
 | Plasma | ![](docs/images/plasma-modern.png) | ![](docs/images/plasma-classic.png) |
-| Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
-| 3D Sine Landscape | ![](docs/images/sine-landscape-modern.png) | ![](docs/images/sine-landscape-classic.png) |
 | Plasma Cube | ![](docs/images/plasma-cube-modern.png) | ![](docs/images/plasma-cube-classic.png) |
-| Glenz Vectors | ![](docs/images/glenz-vectors-modern.png) | ![](docs/images/glenz-vectors-classic.png) |
-| Ships Fly-by | ![](docs/images/ships-flyby-modern.png) | ![](docs/images/ships-flyby-classic.png) |
+| Bouncing Dots | ![](docs/images/bouncing-dots-modern.png) | ![](docs/images/bouncing-dots-classic.png) |
+| Water Scroller | ![](docs/images/water-scroller-modern.png) | ![](docs/images/water-scroller-classic.png) |
+| 3D Sine Landscape | ![](docs/images/sine-landscape-modern.png) | ![](docs/images/sine-landscape-classic.png) |
+| Jelly Logo | ![](docs/images/jelly-logo-modern.png) | ![](docs/images/jelly-logo-classic.png) |
 | 3D City | ![](docs/images/city-3d-modern.png) | ![](docs/images/city-3d-classic.png) |
+| End Picture | ![](docs/images/end-picture-modern.png) | ![](docs/images/end-picture-classic.png) |
+| End Scroller | ![](docs/images/end-scroller-modern.png) | ![](docs/images/end-scroller-classic.png) |
+| Hidden Starfield | ![](docs/images/starfield-modern.png) | ![](docs/images/starfield-classic.png) |
 
 ## What this is, and is not
 
-This is not a port of the demo, and it does not play the demo from start to finish. A complete port already
-exists (see [Credits](#credits-and-sources)). This project takes scenes one at a time, works out from the
+This is not a port of the original code. A complete port already exists (see
+[Credits](#credits-and-sources)). This project takes the demo's parts one at a time, works out from the
 original source code how each was done, and builds it again in a modern way, keeping a pixel-faithful 1993
 look alongside for comparison.
 
@@ -40,10 +54,11 @@ the original music (the real tracker songs, played live by libopenmpt, which is 
 [ThirdParty/README.md](ThirdParty/README.md)), changing parts on the same music cues the 1993 demo waited for.
 **Play Demo from Here** (Shift-P) starts it where the scene chosen in the sidebar first appears, and **Play
 Demo from Part** at any of its parts, with the music jumped to that moment, so everything after stays in
-step. The scenes in the sidebar play on their own, silently, and repeat. It is a skeleton for now:
-the parts this project has built appear as its scenes, cut where the original part ended; picture parts show
-the original pictures (in the Modern look made larger by Super-xBR, a pixel-art scaler); every other part shows a title card
-naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
+step. The scenes in the sidebar play on their own, silently, and repeat.
+
+Seventeen of the 19 parts are this project's scenes. Two are not built yet and show stand-ins: the opening
+credits (a title card naming the part, for its 73 seconds) and the credits (the 21 original pictures as
+stills). See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes
 
@@ -70,25 +85,34 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 | End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
-All twelve planned scenes are done: the purely calculated scenes and the 3D scenes. The last two, Ships
-Fly-by and the 3D City, share the original's 3D engine, which was built and checked against the original's
-code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
-out of scope at first. Since Play Demo exists (2026-11-24) the remaining parts are being added one at a
-time, starting with the Explosion (the original's hand-drawn animation), the title and end pictures, the troll and the screen
-switch-off, the end scroller, the lens, the rotozoomer, the jelly logo, the mountain scroller and the water scroller. The ideas are in
-[docs/future-ideas.md](docs/future-ideas.md).
+The first twelve scenes (2026-11-14) were the purely calculated ones and the 3D ones; Ships Fly-by and the
+3D City share the original's 3D engine, which was built and checked against the original's code first: see
+[docs/visu-engine.md](docs/visu-engine.md). Picture-based parts, scrollers and stills were out of scope at
+first. Since Play Demo exists (2026-11-24) they have been added one at a time: the Explosion, the title and
+end pictures, the troll and the screen switch-off, the end scroller, the rotozoomer, the lens, the jelly
+logo, the mountain scroller and the water scroller. Still to come: the opening credits and the credits.
+Undecided ideas are in [docs/future-ideas.md](docs/future-ideas.md).
 
-Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
-original). Glenz Vectors includes the original's hand-drawn chequered plate, because the scene cannot do
-without it. And Ships Fly-by is made of original material: the ships are the original's 3D models and
-recorded camera moves, read from [Data/Visu/](Data/Visu/README.md) (models and animation cannot be
-calculated), and they fly over the original's hand-painted horizon picture, kept at the user's request. The 3D City
-is likewise the original's models and recorded flight, with no picture. The Explosion is the original's
-hand-drawn animation frames, the Title and End Pictures are the original pictures, and the Lens and the
-Rotozoomer use the original lens picture (the Lens also one original table, see
-[Data/Lens/](Data/Lens/README.md)), and the Jelly Logo the original painting. The Mountain Scroller uses the original background, its
-text picture and three position tables that cannot be calculated ([Data/Mountain/](Data/Mountain/README.md)); the Water
-Scroller likewise its background, its sword picture and three such tables ([Data/Water/](Data/Water/README.md)).
+### What is calculated and what is original material
+
+The calculated scenes (Dot Tunnel, Rings, Interference, Techno Bars, Plasma, Plasma Cube, Bouncing Dots, 3D
+Sine Landscape, Hidden Starfield) ship no original data: their tables are worked out by the program. The
+others need material that cannot be calculated, all of it public domain like the rest of the original:
+
+| Scene | Original material it uses |
+|---|---|
+| Ships Fly-by, 3D City | The 3D models and recorded camera moves ([Data/Visu/](Data/Visu/README.md)); the ships also fly over the original horizon painting |
+| Glenz Vectors | The hand-drawn chequered plate |
+| Explosion | The hand-drawn animation frames |
+| Title Picture, End Picture, Troll, Screen Switches Off, Jelly Logo | The original pictures |
+| Lens, Rotozoomer | The original picture; the Lens also one table ([Data/Lens/](Data/Lens/README.md)) |
+| Mountain Scroller | Background, text picture and three position tables ([Data/Mountain/](Data/Mountain/README.md)) |
+| Water Scroller | Background, sword picture and three position tables ([Data/Water/](Data/Water/README.md)) |
+| End Scroller | The released text and font ([Data/EndScroller/](Data/EndScroller/README.md)) |
+| Play Demo | The two songs ([Data/Music/](Data/Music/README.md)) |
+
+The pictures are in [artwork/](artwork/README.md). In the Modern look they are made 8 times larger by
+Super-xBR, a pixel-art scaler; no AI-upscaled artwork is used.
 
 ## Build and run
 
@@ -234,7 +258,10 @@ shaders (MIT licence).
   these).
 - [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
   out from its source and simulated against the real music, and how Play Demo follows it.
-- [state.md](state.md): working notes: current status, decisions, and what is next.
+- [docs/future-ideas.md](docs/future-ideas.md): ideas discussed but not decided.
+- `Data/*/README.md`: what each folder of original data holds, and why it has to ship.
+- [state.md](state.md): working notes: current status, rules, and what is next.
+- [docs/dev-notes.md](docs/dev-notes.md): the detailed working notes up to 2026-11-25, kept as an archive.
 
 ## How faithful is the 1993 look?
 
@@ -253,13 +280,25 @@ It varies by scene, and each scene's page says exactly what was checked.
   pictures match exactly. The C code around the assembly was still ported by reading.
 
 - **Ships Fly-by, 3D City and the 3D engine under them**: the engine was ported from the assembly and checked
-  the same way, on 109 test pictures made from the original's models and animation. All match exactly, and
-  the scenes' pictures agree with the 15 and 31 of them that are frames of their animations. The small scene
+  the same way, on 124 test pictures made from the original's models and animation. All match exactly, and
+  the scenes' pictures agree with the 15 and 45 of them that are frames of their animations. The small scene
   programs around the engine were ported by reading.
 
-Some scenes also differ from the original on purpose, so that each works as a standalone, looping scene:
-for example there are no full-screen white flashes, and Interference loops seamlessly. Every such change is
-listed on the scene's page.
+- **Rotozoomer, Lens, Jelly Logo, Mountain Scroller, Water Scroller**: replayed on the processor from the
+  original's data, and each compared with a separate reference tool in `tools/` that replays the same
+  original files (for the rotozoomer and the jelly logo, the original's assembly worked through register
+  by register or instruction by instruction). The pictures match at every step compared. The timing
+  against the screen (which refresh shows what) was worked out by reading.
+- **Explosion, Title and End Pictures, Troll, Screen Switches Off, End Scroller**: the original pictures
+  with the original's fade, scroll and wipe arithmetic, ported by reading and checked against that
+  arithmetic, not against a running copy.
+
+Nothing has been compared with the original program running.
+
+Some of the first scenes also differ from the original on purpose, so that each works as a standalone,
+looping scene: for example Rings has no white flash at its end, and Interference loops seamlessly. The
+later scenes keep the original's flashes and fades, and inside Play Demo follow its music cues. Every
+difference is listed on the scene's page.
 
 ## Credits and sources
 
@@ -282,7 +321,7 @@ anniversary. Everything here was worked out from that release:
 - Fabien Sanglard's code review of the original: <https://fabiensanglard.net/second_reality/>
 
 No code from the original or from those ports is included here. The scenes were re-implemented from the
-original's logic, and tables the original shipped as data files are calculated instead (two exceptions: the
+original's logic, and tables the original shipped as data files are calculated instead (the exceptions: the
 lens's table 4 and the mountain and water scrollers' position tables, which cannot be, see
 [Data/Lens/](Data/Lens/README.md), [Data/Mountain/](Data/Mountain/README.md) and [Data/Water/](Data/Water/README.md)).
 

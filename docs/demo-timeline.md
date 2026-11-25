@@ -9,11 +9,11 @@ stepped 1/70 second at a time) to turn them into times. Tools: `tools/music_step
 ## The result
 
 Times are from the moment the music starts (after the setup screen). "Have" says what this project
-already has for the part.
+has for the part: a scene of its own, or only the original artwork so far.
 
 | # | Part | Song | Starts | Ends | Length | Have |
 |---|---|---|---|---|---|---|
-| 1 | Opening credits (`ALKU`) | 1 | 0:00.0 | 1:12.9 | 72.9 s | Picture: horizon, font |
+| 1 | Opening credits (`ALKU`) | 1 | 0:00.0 | 1:12.9 | 72.9 s | Not built: the horizon picture and font are exported; Play Demo shows a title card |
 | 2 | Ships fly-by (`U2A`), incl. ~21 s of horizon before the ships | 1 | 1:12.9 | 1:41.2 | 28.3 s | **Scene** |
 | 3 | Explosion (`PAM`), incl. ~2.7 s wait | 1 | 1:41.2 | 1:46.6 | 5.4 s | **Scene** (2026-11-24) |
 | 4 | Title picture (`BEGLOGO`) | 1 | 1:46.6 | 1:48.9 | 2.3 s | **Scene** (2026-11-24) |
@@ -32,7 +32,7 @@ already has for the part.
 | 15 | Jelly logo (`JPLOGO`) | 2 | 7:48.3 | 7:59.6 | 11.3 s | **Scene** (2026-11-25) |
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
 | 17 | End picture (`ENDLOGO`) | 1 | 8:55.3 | 9:03.8 | 8.6 s | **Scene** (2026-11-24) |
-| 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | 21 pictures, font (stopgaps) |
+| 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | Not built: Play Demo shows the 21 pictures as stills |
 | 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | until a key | — | **Scene** (2026-11-24; released text and font) |
 
 The hidden starfield (`DDSTARS`) is not in the normal run: the loader plays it only when chosen
@@ -52,7 +52,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 - **Checked:** `SRMetal --demo-timeline` (and the self-test) run the same script against the music rendered
   silently, as `tools/music_steps.c` does, and every part starts on exactly the step the Python simulation
   gives; the credits end at step 45,670 (10:52.4).
-- **Stand-ins** (`Demo/DemoRunScene.swift`), until each part is built properly:
+- **What each part shows** (`Demo/DemoRunScene.swift`); only the opening credits and the credits are still stand-ins:
 
   | Part | Shown now |
   |---|---|
@@ -71,9 +71,18 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
 
-  The scenes keep their own timing (they loop and differ from the original on purpose), so a scene
-  may loop or be cut mid-way. The end scroller's card stays, with the music playing, until the demo is
-  stopped (Escape).
+  The scenes in the "started at the part's start and cut at its end" row keep their own standalone
+  timing (they loop and differ from the original on purpose), so one may loop or be cut mid-way; the
+  others follow the original part's own steps and music cues. The end scroller runs, with the music
+  playing, until the demo is stopped (Escape).
+
+  What that means for the older scenes today (part length against the scene's own length, in steps):
+  Glenz 3,057 against 2,360, Plasma Cube 2,311 against 2,048 and the 3D City 3,898 against 3,639 begin a
+  second run before the cut; Plasma 2,399 against 2,323 starts 74 steps before its music cue and shows
+  its first section again for about a second at the end; the Sine Landscape is cut 13 steps early; Ships
+  Fly-by spends 70 of its 521 steps on its own opening pause and loses the end of the flight; Techno Bars
+  is cut by the music before its slide-off; the Dot Tunnel (1,060) and Bouncing Dots (2,580) fit exactly.
+  Making these scenes follow the original part's cues, as the newer scenes do, is not done yet.
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
@@ -91,7 +100,7 @@ where the demo restarts it for the city, its clock counts from a different place
 music). The scene is then shown as in a full run, including the music it is told on the step it first
 shows (the lens's cue is already met there).
 
-Checked: from each of the 19 scenes and 20 parts, a silent run carried on this way starts every later
+Checked: from each of the 22 scenes and 20 parts, a silent run carried on this way starts every later
 part on exactly the step of a full run (self-test); music skipped into is sample for sample the music
 played through (self-test, three places); and with the real sound output (`--demo-live`), later parts
 started within 0-3 steps (at most 0.04 s) of a full run, from the switch-off, the rotozoomer and the

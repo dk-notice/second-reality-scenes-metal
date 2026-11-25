@@ -36,7 +36,7 @@ The code is mostly assembly and C, with three parts in Turbo Pascal.
 | 10 | Lens, then rotozoomer | `LNS&ZOOM.EXE` | `LENS` | Psi |
 | 11 | Plasma, then plasma cube | `PLZPART.EXE` | `PLZPART` | Wildfire |
 | 12 | **Bouncing dots** | `MINVBALL.EXE` | `DOTS` | Psi |
-| 13 | Mirror-ball scroller over water | `RAYSCRL.EXE` | `WATER` | Trug |
+| 13 | Water scroller (a sword sliding over ray-traced water) | `RAYSCRL.EXE` | `WATER` | Trug |
 | 14 | 3D sine landscape | `3DSINFLD.EXE` | `COMAN` | Psi |
 | 15 | Jelly logo | `JPLOGO.EXE` | `JPLOGO` | Psi |
 | 16 | 3D city | `U2E.EXE` | `VISU` | Psi |
@@ -45,7 +45,8 @@ The code is mostly assembly and C, with three parts in Turbo Pascal.
 | 19 | End scroller | `ENDSCRL.EXE` | `ENDSCRL` | |
 | | Hidden starfield | `DDSTARS.EXE` | `DDSTARS` | Psi |
 
-Scenes in bold are re-created in this project. Several programs hold two or three effects back to back.
+All of these except the opening credits (1) and the credits (18) are re-created in this project (the
+bold marks only the first three that were). Several programs hold two or three effects back to back.
 The folder names do not always match the program names; some rows were matched from the existing port's
 naming and not confirmed from every build script.
 
@@ -58,7 +59,8 @@ get round that.
 
 Anything expensive is calculated in advance and stored in a table, by a separate small program. At run time
 the demo only looks values up. The dot tunnel's circles, the interference rings and every sine wave are
-tables.
+tables. The extreme case is the two scrollers: the hills and the water were ray-traced beforehand, and
+the tracer's answer (which screen pixels each piece of the text or sword lands on) was saved as lists.
 
 ### Let the palette do the work
 

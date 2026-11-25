@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (trimmed this day: the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (documentation audited against the program this day; trimmed this day: the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -31,7 +31,14 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    placeholder (the released demo may differ: check the port's data and the built `CRED.EXE`). The user's
    later idea: replace the miniature screenshots with ones from this project's own scenes (`--snapshot`).
 2. OPENING CREDITS (part 1, `ALKU`): research and plan, font decision first. Today: a title card for 73 s.
-3. Then polish, only when the user asks: the open questions below.
+3. OLDER SCENES IN PLAY DEMO (found by the documentation audit, 2026-11-25; the user decides when): the
+   scenes built before Play Demo still run on their own clocks inside it, so they restart or are cut
+   short: Glenz (part 3,057 steps, scene 2,360: a second run shows), Plasma Cube (2,311 / 2,048), 3D City
+   (3,898 / 3,639), Plasma (starts 74 steps before its cue and loops for a second at the end), Sine
+   Landscape (cut 13 early), Ships Fly-by (its own 70-step pause costs the flight's end), Techno Bars (no
+   slide-off; probably right). Each needs the original part's waits read from its source and `demoUpdate`,
+   as the newer scenes have; standalone behaviour stays. The list is in `docs/demo-timeline.md`.
+4. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
 - Code review findings left as they are: (3) a resumed part's name is lost if a new part starts on the

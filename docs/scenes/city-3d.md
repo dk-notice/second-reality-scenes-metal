@@ -179,11 +179,11 @@ to the next.
 - **Speed of the 1993 replay.** Measured over the whole loop on this Mac: **0.25 ms a step on
   average, about 1 ms at worst**, against the 14.3 ms a step lasts at 70 a second. So it holds 70 a
   second with more than tenfold room, and nothing needed optimising. The self-test measures this on
-  every run (and fails above 2 ms average or 10 ms worst). The whole self-test takes about 10
-  seconds; the sidebar picture needs 1,600 steps, about half a second, on a background thread.
+  every run (and fails above 2 ms average or 10 ms worst). The whole self-test took about 10
+  seconds then (about 35 now, with 558 checks); the sidebar picture needs 1,600 steps, about half a second, on a background thread.
 - **The two looks against each other.** Pictures at 26 moments across the flight were looked at side
   by side: same city, same viewpoint, same ship. The self-test holds the two looks together at 6
-  steps as the app draws them (average difference per colour channel 3.6 of 255 at most).
+  steps as the app draws them (average difference per colour channel 3.9 of 255 at most, as the self-test prints today; the limit is 8).
 - **Motion, every step of the loop, by program** (`--motion-check`, below). All 3,604 steps were
   drawn in the modern look both on the step and half-way to the next (7,207 pictures) and in the
   1993 look (1,882 different pictures, fades included), and each picture was compared with its neighbours for (a) a

@@ -281,9 +281,11 @@ independent reading of the two C files that had only ever been ported by reading
 - The texture and shift tables were calculated by the original at start-up, so there is no file to
   compare with. They depend on the 1993 compiler's `sin()` agreeing with today's to within rounding
   to a whole number, which is very likely but not proven.
-- When exactly the music started and ended the part is not known (the timing lived in the music
-  system). Whether viewers in 1993 saw the cube go fully dark, or the cut came a little earlier, is
-  therefore not known.
+- When the music started and ended the part was not known when this was written. The demo's timeline
+  (2026-11-24, [demo-timeline.md](../demo-timeline.md)) has since worked it out from `VECT.C`'s two music
+  cues: the part lasts 2,311 steps, longer than this scene's 2,048. Whether viewers in 1993 saw the cube
+  go fully dark has not been worked out from that. In Play Demo this scene still runs on its own clock:
+  it starts when the part does (not on the cue) and begins again 263 steps before the part ends.
 - Which moment of the refresh the palette and the page flip took effect was not modelled (see below).
 - The modern look's texture (the pattern on the faces) and its edge smoothing were checked by eye only,
   in still pictures. Its geometry, light and motion are now checked by program (see above).

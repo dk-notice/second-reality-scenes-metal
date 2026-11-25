@@ -87,7 +87,7 @@ numbers are little-endian (lowest byte first). "word" = 2 bytes, "long" = 4 byte
 **How the app carries them.** The data is too big and too binary for Swift source files, so
 `./build.sh` copies the folder into the app (`SRMetal.app/Contents/Resources/Visu/`) and the program
 reads the files from there. If it is run from somewhere else (for example `.build/release/SRMetal`),
-it looks for a `Data/Visu` folder next to or above itself. No new build tools are involved.
+it looks for a `Data/Visu` folder next to or above itself, then in the current folder (`Core/DataFolder.swift`). No new build tools are involved.
 
 **If a file is missing or damaged.** A missing file stops the scene from starting with a message
 that names it (`VISU data file not found: U2A.002 ...`). The files are full of counts and positions
@@ -312,6 +312,7 @@ third at 271. City: the first building at frame 1, the ship at 14, the logo at 1
 | `VisuEngine.swift` | one object to pixels: turn, project, hidden faces, light, clip, edge lists, fill |
 | `VisuPlayback.swift` | what the two scenes share: playing the recording, a second copy kept one frame ahead for the modern look's glide, restarting |
 | `VisuTest.swift`, `VisuTestCases.swift` | the test cases (the list is written by the reference tool) |
+| `VisuDamagedFiles.swift` | makes the deliberately damaged data files for the self-test and `--visu-test damaged` |
 
 `VisuEngine` draws into a plain 320x200 array of colour numbers, which `IndexedCanvas` can show
 through the palette. It was ported step for step from the assembly: the same 16-, 32- and 64-bit
@@ -537,7 +538,8 @@ demonstrated are listed as such, not fixed.
   folder, by a relative path, through a symbolic link, and as the bare program in `.build/`.
 - **Threads.** The sidebar builds scenes on a background thread while the main scene runs. Each
   scene has its own world, engine and renderer; the only things shared are tables and the data
-  folder's place, which are worked out once and never change. Four scenes built and stepped at
+  folder's place, which are worked out once and never change (and, since 2026-11-24, the picture
+  scaler that makes the ships' 8x background, one per graphics chip, behind a lock). Four scenes built and stepped at
   once on four threads draw exactly what one alone draws (self-test). That is a test, not a proof.
 - **Depth, the near plane and hidden faces in the modern look**, by reading the shader and
   `Math3D.perspectiveNearOverZ`: the near plane cuts exactly at the engine's distance, an object's
@@ -553,9 +555,9 @@ demonstrated are listed as such, not fixed.
 - **The cache of each model's triangles** is filed under the model's identity without holding on to
   the model. A renderer that outlived its scene's models and was handed new ones could mix them
   up. No renderer does: each belongs to one scene.
-- **A replacement background picture** (ships, modern look) is sampled through smaller copies of
-  itself when shown small, and the band's crisp top and bottom edges are only guarded at full
-  size. No such picture is shipped.
+- **The ships' Modern background** (the 8x picture since 2026-11-24, or a replacement picture; none is
+  shipped) is sampled through smaller copies of itself when shown small, and the band's crisp top and
+  bottom edges are only guarded at full size.
 - **A blend value outside 0...1** on the `--visu-test` command line is used as given.
 
 ### Possible tidy-ups (for a later `/simplify` pass; none is a bug)
@@ -570,8 +572,8 @@ demonstrated are listed as such, not fixed.
 - `ShipsFlybyModel.animationFrames` (521) and `City3DModel.animationFrames` (1801) are written out;
   `VisuWorld.frameCount` could supply them (the self-test checks they agree).
 - `VisuTest.worlds` is a shared, unguarded cache; only the self-test and `--visu-test` use it.
-- The self-test now takes about 14 seconds (10 before): the whole-animation check about 2 of them
-  and the damaged files about 1.5.
+- The self-test then took about 14 seconds (10 before): the whole-animation check about 2 of them
+  and the damaged files about 1.5. (Today, with every later scene's checks, about 35 seconds.)
 
 ### Still not verified
 

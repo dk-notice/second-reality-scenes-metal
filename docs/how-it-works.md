@@ -11,8 +11,9 @@ Some terms used throughout:
 - **Shader**: a small program that runs on the graphics chip, once per corner of a shape or once per pixel.
 - **Step** (or "tick"): one beat of the scene's clock, 1/70 of a second.
 - **Canvas**: a scene's own coordinate system, the size of the original screen: 320 wide by 200 high for
-  most scenes (Plasma, Hidden Starfield and Plasma Cube used 400-line screen modes, so their canvas is
-  320x400).
+  most scenes. Plasma, Plasma Cube, Hidden Starfield, the Jelly Logo, the Troll, the Screen Switching
+  Off and the title and end pictures used 400-line screen modes, so their canvas is 320x400; the
+  Rotozoomer's is 160x100 (it drew double-size pixels) and the End Scroller's 640x400.
 - **Palette**: a table that says which colour each pixel number means. A VGA card stored pixels as small
   numbers and looked the colours up in this table.
 
@@ -26,7 +27,12 @@ everything the scenes have in common.
 Sources/SRMetal/
   Core/        shared by every scene
   Scenes/      one folder per scene
-  App/         the window, the menu, the self-test, the picture saver, the list pictures
+  Demo/        Play Demo: the running order as a script, and the scene that follows it
+  Music/       the tracker songs: loading, playing, and where the music is right now
+  App/         the window, the menus, the self-test, the picture saver, the list pictures
+Data/          original files the program loads (3D models, songs, tables that cannot be calculated)
+artwork/       the original pictures, exported to PNG
+tools/         development-only scripts that replay the original's data, for checking
 ```
 
 ### The contract every scene follows
@@ -40,8 +46,8 @@ A scene must be able to do four things (`Core/DemoScene.swift`):
 | `draw(...)` | Draw its current state, in whichever look is asked for |
 | `classicReferenceFrame()` | Work out its 1993 picture on the processor, for the self-test |
 
-Scenes are listed in one place, `SceneCatalog.all`. The window's sidebar, the keyboard shortcuts, the
-`--scene` option and the self-test all read that list, so adding a scene is one new entry there.
+Scenes are listed in one place, `SceneCatalog.all`, in the demo's order. The window's sidebar, the
+keyboard shortcuts, the `--scene` option, the self-test and Play Demo all read that list.
 
 Most scenes are split into two files:
 
@@ -96,13 +102,19 @@ round in pixels, so they appear as slightly tall ovals, exactly as they did in 1
 Scenes use one of two approaches, depending on what the original did.
 
 **Calculate it on the graphics chip.** Where the original's picture follows from a formula, the shader
-applies the same formula with the same whole-number rounding. Dot Tunnel, Rings, Interference and Plasma
-work this way.
+applies the same formula with the same whole-number rounding. Rings, Interference and Plasma work this
+way.
 
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
-palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Techno Bars,
-Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors and Ships Fly-by work this way.
+palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Dot Tunnel (since the
+code review: its dots are drawn and erased one by one, as in 1993), Techno Bars,
+Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors, Ships Fly-by, the 3D City,
+the Rotozoomer, the Lens, the Jelly Logo, the two scrollers and the End Scroller work this way.
+
+**Show the original picture.** The Explosion, the title and end pictures and the Troll show an original
+picture through the shared picture toolkit (see "Pictures in the Modern look" below), with the original's
+fade arithmetic. The Screen Switching Off has a shader of its own.
 
 Some originals showed two slightly different pictures on alternate frames and let the eye mix them.
 `IndexedCanvas` can be given both pictures and shows their even mix (Plasma Cube does this).
@@ -114,7 +126,7 @@ The window (`App/SRMetalApp.swift`) is the standard Mac two-part layout, which S
 rest. The toolbar holds the Modern / 1993 switch and a restart button.
 
 All of these controls do the same simple thing: they change one small object, `AppModel`, which holds the
-current scene, the current look, and whether the sidebar is showing. The sidebar highlight, the toolbar
+current scene, the current look, whether the sidebar is showing, and whether Play Demo is running. The sidebar highlight, the toolbar
 switch, the window title, the menu and the picture all follow that object, so they cannot disagree.
 
 **Restart** asks the scene to `reset()` and zeroes the clock. The self-test checks that every scene's
@@ -136,7 +148,8 @@ No picture files are shipped. When the window opens, `App/Thumbnails.swift` draw
 small picture (256x192, Modern look), using the same function as the `--snapshot` option
 (`Snapshot.render`). Each scene's entry in the scene list names the step to draw (`thumbnailStep`).
 
-Getting to that step means running the scene's rules from the start, up to 1700 steps, which takes a moment.
+Getting to that step means running the scene's rules from the start, up to 1700 steps, which takes a moment
+(and some scenes first make their 8x pictures).
 So the work is done on a **background thread** (a second line of work running alongside the one that draws
 the window). The window appears at once with grey placeholders, and each picture pops in when it is ready.
 
@@ -178,8 +191,21 @@ list. Two black pictures match each other, so at least half of a scene's checkpo
 **Scene behaviour.** For example, that Dot Tunnel loops back to an empty tunnel, and that Interference
 returns to its exact first frame after one full run.
 
+**Replays against a second replay.** The scenes that replay original data (rotozoomer, lens, jelly logo,
+the two scrollers and others) each have a reference tool in `tools/`, written separately in Python, that
+replays the same original files and prints checksums of the picture at chosen steps. The self-test holds
+the app's 1993 pictures to those checksums.
+
+**Play Demo.** The running order is run silently against the music (the whole demo in a fraction of a
+second) and every part must start on the step the research simulation gives; started part-way from each
+scene and part, every later part must still start on the same step; and each scene that waits for the
+music must react on the very step the script gets past that cue.
+
+There are 558 checks in all (2026-11-25); the test's last lines give the number run. Each new check is
+first shown to fail with the thing it guards broken on purpose.
+
 **The 3D engine against the original's code.** The engine in `Core/Visu/` is also tested by itself,
-apart from the scenes that use it: 109 test pictures (single objects, clipping cases, whole frames of the ships and city
+apart from the scenes that use it: 124 test pictures (single objects, clipping cases, whole frames of the ships and city
 animations) are drawn and their checksums compared with those from the original assembly, run by
 `tools/visu_reference.py`. Its modern look is held loosely to the 1993 pictures. See
 [visu-engine.md](visu-engine.md).
@@ -202,10 +228,15 @@ assembly carefully, not by running the original. Each scene's page says which ki
 ## Adding a scene
 
 1. Create `Sources/SRMetal/Scenes/<Name>/` with a model and a scene class that follows the contract.
-2. Add one entry to `SceneCatalog.all` in `Core/DemoScene.swift`, with a few checkpoints and a
-   `thumbnailStep` (the step that makes a good small picture for the sidebar).
+2. Add one entry to `SceneCatalog.all` in `Core/DemoScene.swift` (at its place in the demo's order), with
+   a few checkpoints and a `thumbnailStep` (the step that makes a good small picture for the sidebar).
 3. Implement `classicReferenceFrame()`. The self-test then covers the scene automatically.
-4. Write `docs/scenes/<name>.md`: how the original did it, how this version does, what was checked, and any
+4. For a scene that replays original data: a reference tool `tools/<scene>_reference.py`, and the scene's
+   own checks in `Scenes/<Name>/<Name>Checks.swift` (one line in `CoreChecks.run` calls them).
+5. If the scene is a part of the demo: show it in the running order (`DemoScript.steps` in
+   `Demo/DemoSequencer.swift`) and, if it waits for the music, implement `demoUpdate(_:)`.
+6. Data that cannot be calculated goes in `Data/<Name>/` with a README, and `build.sh` copies it.
+7. Write `docs/scenes/<name>.md`: how the original did it, how this version does, what was checked, and any
    deliberate differences.
 
 Useful shared pieces in `Core/`:
@@ -217,6 +248,10 @@ Useful shared pieces in `Core/`:
 | `IndexedCanvas.swift` | Shows a picture of pixel numbers through a palette of up to 256 colours, or the even mix of two such pictures |
 | `Math3D.swift` | For scenes made of 3D shapes: the matrix that reproduces an original's perspective, turns about each axis, the original engine's combined turn matrix, placing a point on the canvas, and the "does this face point at the camera" test (in 3D and on the screen) |
 | `SmoothTriangles.swift` | Flat-coloured triangles with smooth edges that meet without seams, for scenes made of polygons |
+| `PictureLayer.swift` | An original picture in both versions, drawn over the canvas with the original's fades (see "Pictures in the Modern look") |
+| `PictureScaler.swift` | Super-xBR: makes a small picture 8 times larger for the Modern look |
+| `ScrollTables.swift` | For the mountain and water scrollers: reads their position tables and fits the Modern look's smooth map to them |
+| `DataFolder.swift` | Finds a folder of original data, inside the app or in the project while developing |
 | `Visu/` | The original demo's 3D engine, for the ships and city scenes: loads the original models and animation, replays the 1993 engine into a picture of pixel numbers, and draws the same objects as real triangles with a depth buffer for the modern look. See [visu-engine.md](visu-engine.md) |
 
 A scene may also implement `prepare(commands:frame:)`. It is called just before `draw`, while no
@@ -228,7 +263,8 @@ Most scenes leave it out.
 A scene may also implement `demoUpdate(_:)`, which only Play Demo calls, just before each step: it
 gives the music's position (section, row, "music plus", sync), so a scene can react to the music as the
 original part did. Shown on its own, a scene is never called this and keeps its own clock. Techno Bars
-uses it for its flash on the beat (2026-11-24). It is also called once on the step a scene is first shown
+uses it for its flash on the beat; the troll, the end picture, the lens, the rotozoomer, the jelly logo
+and the two scrollers use it to wait for the same music cues as the original parts. It is also called once on the step a scene is first shown
 (`justShown`), before the demo script checks its next cue: the Lens uses that to start on the same step as
 the script when its music cue is already met (2026-11-24).
 
@@ -239,8 +275,9 @@ window it is one scene, which shows other scenes, pictures and title cards in tu
 
 ## Pictures in the Modern look
 
-Some scenes and parts show a picture from the 1993 demo (the Ships horizon, the Glenz plate, Play
-Demo's pictures). The 1993 look shows it as it was, as hard-edged pixels. The Modern look runs it once
+Many scenes show a picture from the 1993 demo (the Ships horizon, the Glenz plate, the explosion's
+frames, the title and end pictures, the troll, the lens picture, the jelly logo, the scrollers'
+backgrounds, and the credits pictures Play Demo still shows as stills). The 1993 look shows it as it was, as hard-edged pixels. The Modern look runs it once
 through **Super-xBR** (`Core/PictureScaler.swift`), a pixel-art scaler by Hyllian: it finds the edges
 between the picture's pixels and redraws them as smooth lines and curves, making the picture 8 times
 larger in three doubling rounds (320x200 becomes 2560x1600); that is then scaled smoothly to the screen. It only blends the
@@ -266,14 +303,22 @@ These came out of building the first scenes.
   prove it reproduces the file exactly, and calculate the table.
 - **Keep the 1993 look pixel-faithful in how things are drawn**, including the original's quirks where they
   affect pixels.
-- **No original artwork unless a scene cannot do without it.** Two exceptions so far, each declared
-  at the top of the scene's page: Glenz Vectors (its chequered plate is a hand-drawn picture, kept as a
-  Swift source file) and Ships Fly-by (original 3D models and animation, and the original horizon
-  painting behind them, kept as data files in `Data/Visu/`).
-- **Make each scene work on its own.** Scenes loop cleanly. Full-screen white flashes and lead-ins to other
-  scenes are left out. Straying from the original for this is fine, as long as the scene's page says so.
+- **Original artwork is declared.** At first the rule was "no original artwork unless a scene cannot do
+  without it" (Glenz Vectors' plate, the ships' models and horizon). Since Play Demo (2026-11-24) the
+  picture-based parts are built too, so many scenes now use original pictures and data; each says so at
+  the top of its page, and the README lists them. No AI-upscaled artwork: the Modern look scales the
+  originals with Super-xBR.
+- **Make each scene work on its own.** Scenes loop cleanly, silently. The first scenes leave out
+  full-screen white flashes and lead-ins to other scenes; the later ones keep what the original part
+  showed. A scene on its own gets no invented pause where the demo waited for the music, unless the
+  original really showed something during that wait. Straying from the original is fine, as long as the
+  scene's page says so.
+- **Inside Play Demo a scene follows the music** as the original part did, to the step.
 
 ## Code review of the core and the app (2026-11-14)
+
+This section is a record of that day: its counts (twelve scenes, 235 checks, 109 test pictures) are that
+day's, not today's.
 
 The code in `Core/` (except the 3D engine in `Core/Visu/`, reviewed separately), in `App/` (except
 `VisuTestCommand.swift`), `build.sh` and `Package.swift` was reviewed after all twelve scenes were done:

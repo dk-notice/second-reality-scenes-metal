@@ -289,8 +289,8 @@ and the chip is handed triangles already placed on the screen; nothing here need
 - **Three small changes to the assembly text in the tool**: `rotlist` writes numbers into its own
   instructions, which the tool keeps in variables instead; the C calling wrappers are bypassed; a
   debugging macro is emptied. None should change a result.
-- **Timing against the music**: how long the original paused between the plate and the glenz, and
-  when the music cut the part off.
+- **Timing against the music**: not checked when this was written. The demo's timeline (2026-11-24,
+  [demo-timeline.md](../demo-timeline.md)) now has the original's cues: see "The pause" below.
 - **The modern look's colours in motion.** Positions are now checked by program (above); how the
   colours and blending look while moving was checked only by the picture-difference numbers of
   `--motion-check` and a few still pictures, not by a person watching.
@@ -301,8 +301,12 @@ and the chip is handed triangles already placed on the screen; nothing here need
 
 - **The lead-in is left out**: the wait for the music and `zoomer2`, which wipes away the previous
   scene's title picture. The scene starts with the plate dropping into a black screen.
-- **The pause is a guess.** The original waited for music frame 333 between the plate settling and the
-  glenz; this version waits 35 steps.
+- **The pause is shorter than the original's.** The original waited for music frame 333 between the plate
+  settling and the glenz, the counter having been started 177 steps earlier: a pause of about 156 steps.
+  This version waits 35 steps (chosen before the music was worked out).
+- **Inside Play Demo it runs on its own clock.** The part lasts 3,057 steps and this scene 2,360, so it
+  begins again 697 steps before the tunnel takes over: the plate drops and the glenz bounces a second
+  time. It does not yet wait for the music as the original did.
 - **It loops.** After the fade it restarts at step 2360; the original stayed black until a music cue.
 - **One picture per step.** The original advanced the script once per screen refresh but drew only as
   often as the PC could. On a fast PC that is the same thing. On a slow one, faces would have been

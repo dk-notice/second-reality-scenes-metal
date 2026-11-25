@@ -1,6 +1,7 @@
 # Future ideas
 
-Ideas that have been discussed but not decided. Nothing here is planned work.
+Ideas that have been discussed but not decided. Nothing here is planned work. (The second idea on this
+page has since been built; its section says how.)
 
 ## A third look: "Reimagined"
 
@@ -60,10 +61,14 @@ Raised 2026-11-14. With the ships and the city done (2026-11-14), the app holds 
 effects. The user's view: the existing complete port is the original code at the original resolution, so
 the whole demo redrawn in the modern look, with music, would be something that does not yet exist.
 
-**Status: likely direction after the 3D city, not yet started and not yet scheduled.** This widens the
-scope beyond "purely calculated and 3D scenes" to the picture-based scenes too.
+**Status: BUILT, 2026-11-24/25, as Play Demo** (see [demo-timeline.md](demo-timeline.md)). All 19 parts run
+in order with the music; 17 are scenes with both looks; the opening credits and the credits are still to
+come. It was done differently from the plan below in two ways: the music is the original tracker songs
+played live by libopenmpt (not rendered to audio beforehand), because the parts synchronised on the
+music's live position; and the pictures are scaled by Super-xBR on the graphics chip (no AI upscaling).
+The rest of this section is the plan as first written, kept for the record.
 
-### The pieces, in suggested order
+### The pieces, in suggested order (as planned 2026-11-14)
 
 1. **Music.** Render the two tracker songs (`MAIN/MUSIC0.S3M`, `MAIN/MUSIC1.S3M` in the original source)
    to ordinary audio once, with a tool built on libopenmpt, and play them with what macOS provides (no new

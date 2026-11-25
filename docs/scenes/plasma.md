@@ -186,7 +186,8 @@ page said that code was missing from the source release. It is there; only the s
 
 **Still not verified**
 
-See the next section. One finding there needs a decision: the length of a "music frame".
+See the next section. One finding there was the length of a "music frame"; it has since been settled
+as 1/70 second (the update of 2026-11-24 below), which is what Play Demo uses.
 
 **Possible tidy-ups** (left for a later clean-up pass, nothing wrong with the picture)
 
@@ -213,7 +214,7 @@ None of this has been compared with the original program running.
   second, not 70. The "-45" in the timetable is also about the length of the 64-frame fall if a tick is
   1/52 second (0.87 s against 0.91 s), which would land each fall on a bar of the music. If that is
   right, the original's sections were about a third longer than here (the whole scene about 43 seconds,
-  not 32). It is not proven: the player itself is only in the release as a compiled library, and the
+  not 33). It is not proven: the player itself is only in the release as a compiled library, and the
   tempo may change within the tune. Nothing was changed; the scene still uses 1/70 second.
   **Update 2026-11-24:** simulating the whole demo against the real music (`docs/demo-timeline.md`)
   points the other way: with music ticks the later parts overrun song 2, and a recording places the
@@ -234,6 +235,10 @@ None of this has been compared with the original program running.
   exact first palette.
 - **It loops.** In the original the fourth fall was the end: the plasma cube followed. Here that fall leads
   back to the first section. The loop point is a black screen, so nothing jumps.
+- **Inside Play Demo it starts too early (a known fault, found 2026-11-25).** The original waited for
+  "music plus" ≥ 0 before starting; Play Demo shows this scene 74 steps before that, and the scene has no
+  way to wait. Its sections therefore run 74 steps ahead of the music, and at the end it loops: the first
+  red-and-blue section is back on screen for about a second before the plasma cube takes over.
 - **Drawing is instant.** The original program drew as fast as the PC could, not once per refresh, while
   the four numbers moved on every refresh regardless. On a slow PC the picture was therefore built from
   slightly different moments. This version draws every frame complete, as an infinitely fast PC would.

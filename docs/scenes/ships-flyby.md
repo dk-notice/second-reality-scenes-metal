@@ -142,7 +142,7 @@ from one picture to the next (see "Kept quirks").
 **Swapping in a better background later.** If a file called `U2ABG-modern.png` is put in `Data/Visu/`
 (and the app rebuilt), the modern look uses it instead of the scaled-up original. It must show the
 whole 320x200 screen, bars included, so its shape should be 4:3 as displayed (for example 1280x800,
-2560x1600, or 1440x1080: any size works, it is stretched to the canvas); the scenery belongs in the
+2560x1600, or 1440x1080: any size up to 8192 pixels works, it is stretched to the canvas); the scenery belongs in the
 middle three quarters, rows 25 to 174 of 200. The 1993 look never uses it. This was tried with a test
 picture; no such file is shipped.
 
@@ -220,7 +220,11 @@ picture; no such file is shipped.
   this version.
 - **The start and end as the demo showed them.** That the previous part leaves the same horizon on
   screen, and where in the music the scene began and was cut, were read from the source, not seen.
-  Whether the music cue arrived before the animation's end is not known.
+  Whether the music cue arrived before the animation's end is not worked out here; the demo's script
+  now has both conditions ([demo-timeline.md](../demo-timeline.md)).
+- **Inside Play Demo** the scene is shown on the original's music cue and cut after at most 521 steps, as
+  the original was; but it still begins with its own 70-step pause on the empty horizon, so the last 70
+  frames of the flight are not reached there.
 - **The page queue and frame skipping** are not modelled; every frame is drawn.
 - **The modern look by eye in the running app.** The motion check above was done by program on
   rendered pictures, plus looking at samples. The user is the first to watch it move.
@@ -236,7 +240,7 @@ picture; no such file is shipped.
 - **The picture is shown the step it is made.** The original showed each picture one or more
   refreshes after drawing it.
 - **Modern look only:**
-  - The background is smoothly scaled, not shown as hard-edged pixels.
+  - The background is made 8x larger by Super-xBR and then smoothly scaled, not shown as hard-edged pixels.
   - Where two objects overlap, the depth buffer decides pixel by pixel; the original drew whole
     objects in order of one point each. In this scene the two never disagree visibly (the ships do
     not interlock).
@@ -305,9 +309,9 @@ Reviewed with the `/code-review` tool and by hand against `VISU/C/U2A.C` (compar
 
 **Looked at, not demonstrated, left alone**
 
-- A replacement background (`U2ABG-modern.png`) is shown through smaller copies of itself when the
-  window is small, and the band's crisp top and bottom edges are only guarded at full size, so a
-  large replacement shown small might have slightly darkened edge rows. None is shipped.
+- The Modern background (the 8x picture, or a replacement `U2ABG-modern.png`; none is shipped) is shown
+  through smaller copies of itself when the window is small, and the band's crisp top and bottom edges
+  are only guarded at full size, so shown small it might have slightly darkened edge rows. Not measured.
 
 **Possible tidy-ups** (none is a bug): `ShipsFlybyModel.animationFrames` (521) is written out
 though the engine can count the frames; the background is copied (64,000 bytes) on every step
