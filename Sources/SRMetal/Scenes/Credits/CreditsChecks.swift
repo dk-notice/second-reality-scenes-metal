@@ -66,9 +66,9 @@ extension CoreChecks {
         }
         let known = Set(SceneCatalog.all.map(\.id))
         let scenes = CreditsModel.captures.compactMap { $0?.scene }
-        check("Credits: the Modern look's 20 captured pictures are in the app at 1280x960, from scenes that exist (picture 1 is made the plain way)",
-              missing.isEmpty && CreditsModel.captures.count == 21 && CreditsModel.captures[0] == nil
-                && scenes.count == 20 && scenes.allSatisfy(known.contains),
+        check("Credits: the Modern look's 21 captured pictures are in the app at 1280x960, from scenes that exist (picture 1 from the opening credits)",
+              missing.isEmpty && CreditsModel.captures.count == 21 && CreditsModel.captures[0]?.scene == "opening-credits"
+                && scenes.count == 21 && scenes.allSatisfy(known.contains),
               missing.isEmpty ? "" : "missing: " + missing.joined(separator: ", "))
         // Held, the Modern picture covers exactly the 1993 picture's place (x 80...239, lines 0...199), and the
         // text area starts on the line after the split, as the 1993 text does. Mid-slide it follows the fine

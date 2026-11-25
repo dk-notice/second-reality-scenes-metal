@@ -155,7 +155,7 @@ final class CreditsScene: DemoScene {
         return url
     }
 
-    /// The released picture through Super-xBR (picture 1, and any capture not made).
+    /// The released picture through Super-xBR (any capture not made).
     private func plainPicture(_ index: Int) -> MTLTexture? {
         if let made = upscaled[index] { return made.upscaled }
         guard let picture = try? ScenePicture(named: CreditsModel.pictureNames[index], device: device) else { return nil }

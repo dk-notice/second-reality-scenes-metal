@@ -75,12 +75,13 @@ struct CreditsModel {
 
     /// What each picture is in the Modern look (user, 2026-11-25): the scene it shows, captured in its
     /// Modern look at the step whose 1993 look is most like the released picture (`--credits-match`;
-    /// the ships by eye, as no step matches their picture well). `build.sh` renders them into the app
-    /// (`--credits-captures`). nil: the released picture through Super-xBR (picture 1: the opening
-    /// credits are not built yet). Picture 21 shows this very screen: it is this scene's own Modern
-    /// screen 21, captured with that picture made the plain way.
+    /// the ships by eye, as no step matches their picture well; the opening credits within the page the
+    /// picture shows, as dimmer steps match its darker colours better). `build.sh` renders them into the
+    /// app (`--credits-captures`). nil: the released picture through Super-xBR (none now). Picture 21
+    /// shows this very screen: it is this scene's own Modern screen 21, captured with that picture made
+    /// the plain way.
     static let captures: [(scene: String, step: Int)?] = [
-        nil, ("ships-flyby", 360), ("explosion", 124), ("title-picture", 158), ("glenz-vectors", 594),
+        ("opening-credits", 3664), ("ships-flyby", 360), ("explosion", 124), ("title-picture", 158), ("glenz-vectors", 594),
         ("dot-tunnel", 745), ("interference", 218), ("techno-bars", 68), ("troll", 87),
         ("mountain-scroller", 338), ("lens", 456), ("rotozoomer", 3400), ("plasma", 726),
         ("plasma-cube", 458), ("bouncing-dots", 1527), ("water-scroller", 1013), ("sine-landscape", 546),
