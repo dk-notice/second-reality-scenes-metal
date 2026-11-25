@@ -16,6 +16,22 @@ final class ScenePicture: @unchecked Sendable {
         self.device = device
     }
 
+    /// One of the exported pictures, shared while any scene still holds it: the troll and the switch-off
+    /// follow each other in Play Demo and show the same picture, so its Modern-look version is made once.
+    static func shared(named name: String, device: MTLDevice) throws -> ScenePicture {
+        sharedLock.lock()
+        defer { sharedLock.unlock() }
+        let key = "\(device.registryID)-\(name)"
+        if let picture = sharedPictures[key]?.picture { return picture }
+        let picture = try ScenePicture(named: name, device: device)
+        sharedPictures = sharedPictures.filter { $0.value.picture != nil }
+        sharedPictures[key] = WeakPicture(picture: picture)
+        return picture
+    }
+    private struct WeakPicture { weak var picture: ScenePicture? }
+    private static let sharedLock = NSLock()
+    private static var sharedPictures: [String: WeakPicture] = [:]
+
     /// A picture whose Modern-look version is made some other way (Play Demo's title cards, drawn large).
     convenience init(_ original: MTLTexture, modern: MTLTexture, device: MTLDevice) {
         self.init(original, device: device)
@@ -141,7 +157,21 @@ final class PictureLayer {
         var unused = SIMD2<Float>(0, 0)
     }
 
-    init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
+    /// One per graphics device and pixel format, shared by every scene (it keeps no drawing state, and
+    /// compiling its shader takes a moment, which would otherwise come at every part change of Play Demo).
+    static func shared(device: MTLDevice, pixelFormat: MTLPixelFormat) throws -> PictureLayer {
+        lock.lock()
+        defer { lock.unlock() }
+        let key = "\(device.registryID)-\(pixelFormat.rawValue)"
+        if let layer = layers[key] { return layer }
+        let layer = try PictureLayer(device: device, pixelFormat: pixelFormat)
+        layers[key] = layer
+        return layer
+    }
+    private static let lock = NSLock()
+    private static var layers: [String: PictureLayer] = [:]
+
+    private init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + Self.source)
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = try Shaders.function("canvas_vertex", in: library)

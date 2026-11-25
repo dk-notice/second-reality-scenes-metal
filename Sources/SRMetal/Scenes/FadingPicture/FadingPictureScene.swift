@@ -94,7 +94,7 @@ final class FadingPictureScene: DemoScene {
         model = FadingPictureModel(timing: timing)
         pictureName = name
         picture = try ScenePicture(named: name, device: device)
-        layer = try PictureLayer(device: device, pixelFormat: pixelFormat)
+        layer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
     }
 
     /// The title picture (BEG.C): 32 refreshes of white, then the fade in; the demo moves on right after.

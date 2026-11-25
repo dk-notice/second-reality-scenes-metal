@@ -199,7 +199,7 @@ enum CoreChecks {
         }
         texture.replace(region: MTLRegionMake2D(0, 0, levels.count, 1), mipmapLevel: 0, withBytes: rgba, bytesPerRow: levels.count * 4)
         let picture = ScenePicture(texture, device: device)
-        let layer = try PictureLayer(device: device, pixelFormat: Renderer.pixelFormat)
+        let layer = try PictureLayer.shared(device: device, pixelFormat: Renderer.pixelFormat)
         var wrong = 0, tried = 0
         for fade in [PictureFade.none, .white(1), .white(32), .white(63), .fromWhite(keep: 0, outOf: 128),
                      .fromWhite(keep: 37, outOf: 128), .fromWhite(keep: 127, outOf: 128), .toBlack(keep: 63, outOf: 64),

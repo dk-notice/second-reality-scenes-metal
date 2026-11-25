@@ -130,7 +130,7 @@ final class SwitchOffScene: DemoScene {
     }
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
-        picture = try ScenePicture(named: "07-troll", device: device)
+        picture = try ScenePicture.shared(named: "07-troll", device: device)
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + Self.shaderSource)
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.vertexFunction = try Shaders.function("canvas_vertex", in: library)

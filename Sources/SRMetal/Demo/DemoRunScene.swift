@@ -75,7 +75,7 @@ final class DemoRunScene: DemoScene {
         self.music = music
         self.sequencer = DemoSequencer(music: music)
         self.loader = MTKTextureLoader(device: device)
-        self.pictureLayer = try PictureLayer(device: device, pixelFormat: pixelFormat)
+        self.pictureLayer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
 
         hookUp()
     }

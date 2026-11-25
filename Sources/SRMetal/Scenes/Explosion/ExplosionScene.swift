@@ -20,7 +20,7 @@ final class ExplosionScene: DemoScene {
         frames = try (1...ExplosionModel.frameCount).map {
             try ScenePicture(named: ExplosionModel.pictureName($0), device: device)
         }
-        layer = try PictureLayer(device: device, pixelFormat: pixelFormat)
+        layer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
     }
 
     func reset() {

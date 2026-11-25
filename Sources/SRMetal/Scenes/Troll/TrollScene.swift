@@ -86,8 +86,8 @@ final class TrollScene: DemoScene {
     private let layer: PictureLayer
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
-        picture = try ScenePicture(named: "07-troll", device: device)
-        layer = try PictureLayer(device: device, pixelFormat: pixelFormat)
+        picture = try ScenePicture.shared(named: "07-troll", device: device)
+        layer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
     }
 
     func reset() { model.reset() }

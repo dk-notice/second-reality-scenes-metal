@@ -43,7 +43,7 @@ final class PictureScaler {
     /// mipmapped) sampler. Safe to call from any thread; waits for the graphics chip.
     static func upscaled(_ picture: MTLTexture, device: MTLDevice) throws -> MTLTexture {
         let scaler = try shared(device)
-        guard let queue = device.makeCommandQueue(), let commands = queue.makeCommandBuffer() else {
+        guard let commands = scaler.queue.makeCommandBuffer() else {
             throw RendererError.noCommandQueue
         }
         var result = picture
@@ -71,11 +71,15 @@ final class PictureScaler {
     }
 
     private let device: MTLDevice
+    /// For `upscaled` (a command queue can be used from any thread).
+    private let queue: MTLCommandQueue
     private let pipelines: [String: MTLRenderPipelineState]
     private let linear: MTLSamplerState
 
     init(device: MTLDevice) throws {
         self.device = device
+        guard let queue = device.makeCommandQueue() else { throw RendererError.noCommandQueue }
+        self.queue = queue
         let library = try Shaders.library(device: device, source: Shaders.canvasVertexSource + Self.source)
         let vertex = try Shaders.function("canvas_vertex", in: library)
         var made: [String: MTLRenderPipelineState] = [:]
