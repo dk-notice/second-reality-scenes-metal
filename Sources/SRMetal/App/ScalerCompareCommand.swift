@@ -29,8 +29,11 @@ enum ScalerCompareCommand {
             return false
         }
         let name = arguments[flag + 1]
+        let label = URL(fileURLWithPath: name).deletingPathExtension().lastPathComponent
         let folder = URL(fileURLWithPath: arguments[flag + 2])
-        guard let url = DemoPictures.url(name) else {
+        // A picture by its artwork name, or any PNG file by its path.
+        let file = name.hasSuffix(".png") ? URL(fileURLWithPath: name) : nil
+        guard let url = file ?? DemoPictures.url(name) else {
             print("No picture called \(name) (names are those in artwork/original/rgb, without .png)")
             return false
         }
@@ -54,11 +57,11 @@ enum ScalerCompareCommand {
                 let pictures = try methods.map { method -> CGImage in
                     try draw(source, method: method, region: region, scaler: scaler, device: device, queue: queue)
                 }
-                let title = suffix == "full" ? "\(name), whole picture"
+                let title = suffix == "full" ? "\(label), whole picture"
                     : String(format: "%@, part from (%.0f, %.0f), %.0f source pixels wide", name,
-                             region.x * w, region.y * h, region.z * w)
+                             region.x * w, region.y * h, region.z * w).replacingOccurrences(of: name, with: label)
                 guard let sheet = sheet(pictures, labels: methods.map(\.title), title: title),
-                      Snapshot.writePNG(sheet, to: folder.appendingPathComponent("\(name)-\(suffix).png")) else { return false }
+                      Snapshot.writePNG(sheet, to: folder.appendingPathComponent("\(label)-\(suffix).png")) else { return false }
             }
             return true
         } catch {
