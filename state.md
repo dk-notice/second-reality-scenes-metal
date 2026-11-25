@@ -499,7 +499,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   findings 3, 5, 6; skip the black waits when starting "from here"?; the troll flash question; the jelly
   logo's white border.
 
-## Water scroller notes (2026-11-25; plan approved by the user ("Yes, build it"), BUILT on branch `claude/water-scroller-plan-79ae73`, NOT yet seen by the user, NOT merged)
+## Water scroller notes (2026-11-25; plan approved by the user ("Yes, build it"), built, seen by the user, merged)
 - Original: `WATER/DEMO.PAS` + `ROUTINES.ASM` (`putrouts1`), Trug. It scrolls NO TEXT: `MIEKKA.SCI` ("miekka" =
   sword; = our `13-water-font`, 400 x 34 used, its header's 250 rows is wrong) is a PICTURE OF A SWORD with a
   flame in front and sparks behind, sliding over the water and mirrored in the chrome balls.
@@ -569,8 +569,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   `Data/Water/README.md`; README, demo-timeline, artwork/README (the "font" is a sword) updated.
 - Seen by Claude: snapshots of both looks at step 1500 (they agree), Modern at 60 (pink highlights). NOT
   seen: the running app, motion by eye, Play Demo with sound. Not compared with the original running.
-- AFTER THE USER'S OK: merge into main, rebuild main's app, push (main was one commit ahead of GitHub).
-  Then: credits, then opening credits (font decisions first). Still open: review findings 3, 5, 6; skip
+- Seen by the user in the running app (2026-11-25: "Looks good"); merged into main and pushed the same
+  day, main's app rebuilt.
+- NEXT (agreed order): credits, then opening credits (font decisions first). Still open: review findings 3, 5, 6; skip
   the black waits when starting "from here"?; the troll flash question; the jelly logo's white border.
   `deark` (Homebrew) was installed for the PKLITE check; not needed by the build.
 - Sheet for the user: `build/scaler-compare/water/water-sword-compare.png` in the worktree
