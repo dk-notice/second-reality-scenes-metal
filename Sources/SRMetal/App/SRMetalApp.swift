@@ -27,6 +27,9 @@ enum Main {
         if CommandLine.arguments.contains("--music-render") {
             exit(MusicRenderCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        if CommandLine.arguments.contains("--scaler-compare") {
+            exit(ScalerCompareCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--demo-timeline") {
             exit(DemoTimelineCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
@@ -59,7 +62,7 @@ struct StartupOptions {
     static var usage: String {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
-        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline (run one without arguments for its usage)
+        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline, --scaler-compare (run one without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or play-demo for the whole demo
         """
     }

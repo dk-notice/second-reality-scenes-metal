@@ -905,6 +905,14 @@ Ranks 3-6 were judged from file sizes and may swap once read. 7 and 8 share one 
   dithering); (2) if approved, use it for every picture (Play Demo, Ships background, Glenz plate);
   (3) later, one at a time: re-made pictures (water via POV-Ray, credits from scenes). The user wants
   to talk more before starting.
+  SCALER COMPARISON DONE (2026-11-24): `Core/PictureScaler.swift` has four methods as Metal shaders
+  (smooth, sharp pixels, xBR level 2, Super-xBR 4x then smooth), the xBR ones written from Hyllian's
+  MIT-licensed libretro shaders (default-preset settings). `--scaler-compare <picture> <folder> [x y w]`
+  makes labelled 2x2 sheets (whole picture, and a zoomed part). Sheets for troll, title, Glenz plate
+  and Ships horizon are in `build/scaler-compare/` (not in git). Claude's read: xBR level 2 turns the
+  painted shading into hard contour bands (rejected); Super-xBR gives clean edges and smooth shading,
+  slightly soft; it once turned two neighbouring stars into a short streak. Nothing in the app uses
+  the scaler yet: WAITING for the user's choice.
 The planned list of scenes is complete (2026-11-14).
 - DONE (2026-11-14): the code review. Techno Bars was reviewed first, then five parallel sessions, each in its
   own worktree, reviewed everything else against the original source (early scenes; the plasma pair; starfield,

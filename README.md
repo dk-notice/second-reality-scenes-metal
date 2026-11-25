@@ -183,6 +183,15 @@ runs Play Demo's whole running order against the music, silently, in well under 
 part starts. It checks every start against the research simulation (`tools/demo_timeline.py`); the self-test
 does the same.
 
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --scaler-compare 07-troll out-folder 120 15 80
+```
+
+saves two sheets comparing four ways of scaling up one of the original pictures for the Modern look
+(smooth, sharp pixels, xBR level 2, Super-xBR): the whole picture, and a part of it (here 80 pixels
+wide from 120, 15) as it would look filling a screen. The xBR scalers are written from Hyllian's
+shaders (MIT licence).
+
 ## Documentation
 
 - [docs/how-it-works.md](docs/how-it-works.md): how the app is put together, the two looks, the self-test,
@@ -247,7 +256,13 @@ original's logic, and tables the original shipped as data files are calculated i
 
 The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see
-[ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside code in the program.
+[ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside library in the program.
+
+The xBR level 2 and Super-xBR picture scalers (`Sources/SRMetal/Core/PictureScaler.swift`) are written
+for Metal from Hyllian's published shaders (libretro "slang-shaders", copyright 2011-2016 Hyllian),
+used under the MIT licence: "Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software ... The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software."
 
 ## Licence
 
