@@ -19,6 +19,8 @@ final class EndScrollerScene: DemoScene {
     private let loader: MTKTextureLoader
     /// Pictures of the text lines on screen (Modern look), by line number.
     private var lineTextures: [Int: MTLTexture] = [:]
+    /// Whether each line has anything to draw in the Modern look (not the blank lines, not the "%" line).
+    private let hasText: [Bool]
 
     static let fontName = "SuperClarendon-Regular"
     /// Each line's picture: this many pixels per original pixel across (and 1.2 times as many down).
@@ -36,6 +38,7 @@ final class EndScrollerScene: DemoScene {
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
         self.device = device
         model = try EndScrollerModel.load()
+        hasText = model.lines.map { !Self.modernText($0).isEmpty }
         canvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat,
                                    width: EndScrollerModel.width, height: EndScrollerModel.height)
         loader = MTKTextureLoader(device: device)
@@ -73,7 +76,8 @@ final class EndScrollerScene: DemoScene {
         encoder.setFragmentSamplerState(sampler, index: 0)
         for placed in model.placed {
             let top = Float(placed.firstRow) - topRow
-            guard top < Float(EndScrollerModel.height), top + Float(EndScrollerFont.rows) > 0 else { continue }
+            guard hasText[placed.line], top < Float(EndScrollerModel.height), top + Float(EndScrollerFont.rows) > 0
+            else { continue }
             keep.insert(placed.line)
             guard let texture = lineTexture(placed.line) else { continue }
             let pad = Float(Self.linePadding)
@@ -107,8 +111,7 @@ final class EndScrollerScene: DemoScene {
         else { return nil }
         context.setFillColor(gray: 0, alpha: 1)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-        // The text as the DOS character set had it (0x84 is "ä"), without its carriage return.
-        let text = String(String.UnicodeScalarView(line.filter { $0 != 13 }.compactMap { UnicodeScalar(dosCharacter($0)) }))
+        let text = modernText(line)
         guard !text.isEmpty else { return context.makeImage() }
         let probe = CTFontCreateWithName(fontName as CFString, 100, nil)
         let font = CTFontCreateWithName(fontName as CFString, 100 * 14 / CTFontGetCapHeight(probe) * scale, nil)
@@ -123,6 +126,16 @@ final class EndScrollerScene: DemoScene {
         context.textPosition = .zero
         CTLineDraw(ct, context)
         return context.makeImage()
+    }
+
+    /// What the Modern look draws of a text line: the text as the DOS character set had it (0x84 is "ä"),
+    /// without its carriage return or tabs. Nothing for the "%" line, which only tells the scroller to
+    /// start the text again (the 1993 font has no glyph for it, so the original showed nothing either).
+    /// One straying, kept on purpose: the quotation marks around a nickname show here; the 1993 font has
+    /// no glyph for them.
+    static func modernText(_ line: [UInt8]) -> String {
+        guard line.first != UInt8(ascii: "%") else { return "" }
+        return String(String.UnicodeScalarView(line.filter { $0 >= 32 }.compactMap { UnicodeScalar(dosCharacter($0)) }))
     }
 
     /// The few non-ASCII bytes the text uses, from the DOS character set.

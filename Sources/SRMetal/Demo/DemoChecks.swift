@@ -76,6 +76,19 @@ extension CoreChecks {
             if troll.phase == .scroll { scrollSteps += 1 }
             if troll.phase == .shake { shakeSteps += 1; if firstFlash < 0 && troll.flash > 0 { firstFlash = troll.flash } }
         }
+        // On its own the troll starts again after its hold: the Modern look must not glide towards the
+        // restart on the last step (it did: the troll showed half-way off the screen for one step).
+        var alone = TrollModel()
+        var glidesBack: [Int] = [], restartAt = -1
+        for step in 1...600 where restartAt < 0 {
+            let before = alone
+            alone.tick()
+            if before.phase == .hold && alone.phase == .wait { restartAt = step }
+            if let after = before.next(), after.xpos < before.xpos - 100 { glidesBack.append(step) }
+        }
+        check("Troll: on its own it starts again after 438 steps, and the Modern look does not glide back across the restart",
+              restartAt == 438 && glidesBack.isEmpty && TrollModel().next() != nil,
+              "restart at \(restartAt), glides back on steps \(glidesBack)")
         check("Play Demo: the troll scrolls in over 53 refreshes, then shakes for 50 with a flash from 45",
               scrollSteps == 53 && shakeSteps == 50 && firstFlash == 45 && troll.xpos == 320,
               "\(scrollSteps) + \(shakeSteps), flash \(firstFlash), ends at \(troll.xpos)")
@@ -123,6 +136,12 @@ extension CoreChecks {
                   rows == 30 && glyphs.allSatisfy { font.width[Int($0)] > 0 } && gapIndex != nil && loopIndex != nil && looped
                     && firstInk.map { $0 >= font.lineStart(firstLine) } == true,
                   "rows \(rows), first ink \(firstInk ?? -1) from \(font.lineStart(firstLine)), loop line \(loopIndex ?? -1), looped \(looped)")
+            let blank = scroller.lines.first { $0 == [13] }
+            check("End scroller: the Modern look draws no \"%\" for the loop line and nothing for blank lines, and keeps the text of the others",
+                  loopIndex.map { EndScrollerScene.modernText(scroller.lines[$0]) } == "" && blank.map(EndScrollerScene.modernText) == ""
+                    && EndScrollerScene.modernText([UInt8]("A\tb\r".utf8)) == "Ab"
+                    && scroller.lines.filter { !EndScrollerScene.modernText($0).contains("%") }.count == scroller.lines.count,
+                  "loop line: \"\(loopIndex.map { EndScrollerScene.modernText(scroller.lines[$0]) } ?? "none")\"")
             if let gapIndex {
                 var gap = fresh
                 while gap.placed.last.map({ $0.line != gapIndex - 1 }) ?? true { gap.tick() }

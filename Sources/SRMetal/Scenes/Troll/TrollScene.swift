@@ -69,11 +69,13 @@ struct TrollModel {
         flash = (1...Self.flashSteps).contains(phaseStep) ? 45 - 3 * (phaseStep - 1) : 0
     }
 
-    /// Where a step after this one would be (for the Modern look's gliding).
-    func next() -> TrollModel {
+    /// Where a step after this one would be (for the Modern look's gliding). nil on the last step before
+    /// the scene starts again on its own: nothing glides across the restart (the troll would be drawn
+    /// half-way back to its starting place for one step).
+    func next() -> TrollModel? {
         var copy = self
         copy.tick()
-        return copy
+        return phase == .hold && copy.phase == .wait ? nil : copy
     }
 }
 
@@ -99,8 +101,7 @@ final class TrollScene: DemoScene {
     /// The view at `xpos` shows the troll moved left by xpos - 320 (it starts a whole screen to the right).
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
         var xpos = Float(model.xpos), flash = Float(model.flash)
-        if frame.look == .modern {
-            let after = model.next()
+        if frame.look == .modern, let after = model.next() {
             xpos += (Float(after.xpos) - xpos) * frame.alpha
             flash += (Float(after.flash) - flash) * frame.alpha
         }
