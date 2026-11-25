@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import MetalKit
 
 /// A picture from the 1993 demo, ready for both looks: the original pixels (1993 look) and the same made
@@ -57,6 +58,27 @@ final class ScenePicture: @unchecked Sendable {
         lock.unlock()
     }
 
+    /// A picture's red, green, blue bytes (for 1993-look references worked out on the processor), row by row, read from its file.
+    static func pixels(_ name: String) -> [UInt8]? {
+        guard let url = DemoPictures.url(name), let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+        let width = image.width, height = image.height
+        var rgba = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn = rgba.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                                          bytesPerRow: width * 4,
+                                          space: image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,   // no conversion
+                                          bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn else { return nil }
+        var rgb = [UInt8]()
+        rgb.reserveCapacity(width * height * 3)
+        for i in 0..<(width * height) { rgb += [rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2]] }
+        return rgb
+    }
+
     var isUpscaled: Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -73,21 +95,28 @@ enum PictureError: Error, CustomStringConvertible {
     }
 }
 
-/// How far a picture has faded towards white or black, by the 1993 rule: each colour level c (0...63)
-/// became (target * a + (64 - a) * c) / 64, a = 0 (none) to 63 (the PAM explosion's `pal` table;
-/// fades elsewhere in the demo work the same way).
+/// How far a picture has faded towards white or black, by the 1993 rule the demo's parts used: each
+/// colour level c (0...63) became (target · (outOf − keep) + c · keep) / outOf in whole numbers, keeping
+/// `keep` parts in `outOf` of the picture's colour. The explosion faded in 64ths (`PAM/OUTTAA.C`), the
+/// title and end pictures faded in from white in 128ths and the end picture out to black in 64ths
+/// (`BEG/BEG.C`, `END/END.C`).
 struct PictureFade {
-    var amount: Float            // a: 0...63; may be fractional in the Modern look (smooth fades)
     var towardWhite: Bool
+    var keep: Float              // may be fractional in the Modern look (smooth fades)
+    var outOf: Float
 
-    static let none = PictureFade(amount: 0, towardWhite: true)
-    static func white(_ amount: Float) -> PictureFade { PictureFade(amount: amount, towardWhite: true) }
-    static func black(_ amount: Float) -> PictureFade { PictureFade(amount: amount, towardWhite: false) }
+    static let none = PictureFade(towardWhite: true, keep: 1, outOf: 1)
+    /// `amount` (0...63) of the way towards white in 64ths, as the explosion's table gives it.
+    static func white(_ amount: Float) -> PictureFade { PictureFade(towardWhite: true, keep: 64 - amount, outOf: 64) }
+    /// Keeping `keep` of `outOf` parts of the picture, the rest white.
+    static func fromWhite(keep: Float, outOf: Float) -> PictureFade { PictureFade(towardWhite: true, keep: keep, outOf: outOf) }
+    /// Keeping `keep` of `outOf` parts of the picture, the rest black.
+    static func toBlack(keep: Float, outOf: Float) -> PictureFade { PictureFade(towardWhite: false, keep: keep, outOf: outOf) }
 
     /// The 1993 result for one colour level, worked out on the processor (for checks and references).
     func classicLevel(_ level: Int) -> Int {
-        let a = Int(amount.rounded(.down)), target = towardWhite ? 63 : 0
-        return (target * a + (64 - a) * level) / 64
+        let k = Int(keep.rounded(.down)), n = Int(outOf), target = towardWhite ? 63 : 0
+        return (target * (n - k) + level * k) / n
     }
 }
 
@@ -100,10 +129,10 @@ final class PictureLayer {
 
     /// Must match `PictureFadeUniforms` below.
     private struct Uniforms {
-        var amount: Float
+        var keep: Float
+        var outOf: Float
         var target: Float
         var classic: Float
-        var unused: Float = 0
     }
 
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
@@ -129,7 +158,7 @@ final class PictureLayer {
 
     func draw(_ picture: ScenePicture, into encoder: MTLRenderCommandEncoder, look: Look, fade: PictureFade = .none) {
         let classic = look == .classic
-        var uniforms = Uniforms(amount: classic ? fade.amount.rounded(.down) : fade.amount,
+        var uniforms = Uniforms(keep: classic ? fade.keep.rounded(.down) : fade.keep, outOf: fade.outOf,
                                 target: fade.towardWhite ? 63 : 0, classic: classic ? 1 : 0)
         encoder.setRenderPipelineState(pipeline)
         encoder.setFragmentTexture(classic ? picture.original : picture.upscaled, index: 0)
@@ -140,10 +169,10 @@ final class PictureLayer {
 
     static let source = """
     struct PictureFadeUniforms {
-        float amount;    // 0...63
+        float keep;      // parts of the picture's colour kept ...
+        float outOf;     // ... out of this many; the rest is the target
         float target;    // 63 (white) or 0 (black), in 1993 colour levels
         float classic;   // 1: whole 1993 levels and the original's rounding; 0: smooth
-        float unused;
     };
 
     fragment float4 picture_layer_fragment(CanvasOut in [[stage_in]], texture2d<float> tex [[texture(0)]],
@@ -153,11 +182,11 @@ final class PictureLayer {
             // Back to the 1993 level (0...63), faded with whole numbers as the original did, and shown
             // as the VGA card showed that level.
             float3 level = round(c * 63.0);
-            float3 faded = floor((u.target * u.amount + (64.0 - u.amount) * level) / 64.0);
+            float3 faded = floor((u.target * (u.outOf - u.keep) + level * u.keep) / u.outOf);
             return float4(round(faded * 255.0 / 63.0) / 255.0, 1.0);
         }
         float3 target = float3(u.target / 63.0);
-        return float4(mix(c, target, u.amount / 64.0), 1.0);
+        return float4(mix(target, c, u.keep / u.outOf), 1.0);
     }
     """
 }

@@ -1,5 +1,3 @@
-import CoreGraphics
-import ImageIO
 import Metal
 
 /// The explosion (part 3 of the demo, `PAM`): a hand-drawn animation of 40 frames, made in Autodesk
@@ -60,28 +58,7 @@ final class ExplosionScene: DemoScene {
     /// faded by the original's rule.
     func classicReferenceFrame() -> [UInt8] {
         let fade = PictureFade.white(Float(ExplosionModel.fade(at: model.step)))
-        guard let rgb = Self.pixels(ExplosionModel.pictureName(ExplosionModel.frame(at: model.step))) else { return [] }
+        guard let rgb = ScenePicture.pixels(ExplosionModel.pictureName(ExplosionModel.frame(at: model.step))) else { return [] }
         return rgb.map { byteFromVGA(fade.classicLevel(Int((Double($0) * 63 / 255).rounded()))) }
-    }
-
-    /// A picture's red, green, blue bytes, row by row, read from its file.
-    static func pixels(_ name: String) -> [UInt8]? {
-        guard let url = DemoPictures.url(name), let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
-        let width = image.width, height = image.height
-        var rgba = [UInt8](repeating: 0, count: width * height * 4)
-        let drawn = rgba.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
-                                          bytesPerRow: width * 4,
-                                          space: image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!,   // no conversion
-                                          bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
-            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-            return true
-        }
-        guard drawn else { return nil }
-        var rgb = [UInt8]()
-        rgb.reserveCapacity(width * height * 3)
-        for i in 0..<(width * height) { rgb += [rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2]] }
-        return rgb
     }
 }

@@ -206,7 +206,9 @@ enum CoreChecks {
         let picture = ScenePicture(texture, device: device)
         let layer = try PictureLayer(device: device, pixelFormat: Renderer.pixelFormat)
         var wrong = 0, tried = 0
-        for fade in [PictureFade.none, .white(1), .white(32), .white(63), .black(20), .black(63)] {
+        for fade in [PictureFade.none, .white(1), .white(32), .white(63), .fromWhite(keep: 0, outOf: 128),
+                     .fromWhite(keep: 37, outOf: 128), .fromWhite(keep: 127, outOf: 128), .toBlack(keep: 63, outOf: 64),
+                     .toBlack(keep: 20, outOf: 64), .toBlack(keep: 0, outOf: 64)] {
             let drawn = try draw(width: levels.count, height: 1, device: device, queue: queue) { encoder in
                 layer.draw(picture, into: encoder, look: .classic, fade: fade)
             }
@@ -217,7 +219,7 @@ enum CoreChecks {
                 if got != expected { wrong += 1 }
             }
         }
-        check("Pictures: 1993-look fades to white and black give exactly the original rule's colours",
+        check("Pictures: 1993-look fades (64ths and 128ths, to white and to black) give exactly the original rules' colours",
               wrong == 0, "\(wrong) of \(tried) pixels differ")
     }
 
@@ -272,6 +274,23 @@ enum CoreChecks {
             check("Play Demo: a scene is told the music's position each step (Techno Bars, \(compared) steps)",
                   compared > 1000 && agreed == compared, "\(agreed) of \(compared)")
         }
+        // The title and end pictures: fully in after 161 and 163 steps (as the demo script counts), and
+        // inside Play Demo the end picture holds until "music plus" goes above -16, then fades to black.
+        var title = FadingPictureModel(timing: FadingPictureScene.titleTiming)
+        for _ in 0..<160 { title.tick() }
+        let titleAlmost = title.fade().keep
+        title.tick()
+        var end = FadingPictureModel(timing: FadingPictureScene.endTiming)
+        end.musicPlus = -32
+        for _ in 0..<163 { end.tick() }
+        let holding = end.phase
+        for _ in 0..<2000 { end.tick() }
+        let stillHolding = end.phase
+        end.musicPlus = -10
+        end.tick()
+        check("Play Demo: the title picture is fully in after 161 steps, the end picture after 163, then holds for the music cue and fades out",
+              titleAlmost == 128 && title.phase == .end && holding == .hold && stillHolding == .hold && end.phase == .fadeOut,
+              "\(titleAlmost) \(title.phase) \(holding) \(stillHolding) \(end.phase)")
         let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
         check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))

@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|city-3d`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -232,8 +232,17 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   17 new self-test checks (292): all 15 checkpoints match the rule pixel for pixel. Play Demo: the
   Ships horizon during the wait for sync 10, then the explosion; all part starts unchanged.
   `docs/scenes/explosion.md` with its two pictures. NOT seen by the user in the app yet.
-  NEXT (suggested): title and end picture fades with the toolkit, then the troll scroll-in, end
-  scroller (fonts decision), rotozoomer.
+  TITLE AND END PICTURES DONE (2026-11-24; the user said to keep going in the suggested order):
+  `PictureFade` generalised to "keep k of n parts" (64ths and 128ths, to white or black; explosion
+  unchanged); `ScenePicture.pixels` shared. `Scenes/FadingPicture/`: `FadingPictureModel` (white,
+  fade-in 129 steps in 128ths, then for the end picture a hold until music plus > -16 via demoUpdate
+  (375 steps alone), fade to black in 64ths) and `FadingPictureScene`, set up as "title-picture"
+  (BEG.C, 32 white) and "end-picture" (END.C, 34 white). Neither picture uses colour 255 (left out of
+  the original fades; checked). 28 new self-test checks (320). Play Demo shows both scenes; all part
+  starts unchanged. `docs/scenes/title-and-end-pictures.md`. Credit "Future Crew": who drew the two
+  pictures is not recorded in our docs.
+  NEXT (suggested order): the troll scroll-in plus the screen switch-off (PANIC), then the end
+  scroller (fonts decision), then the rotozoomer.
 
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.

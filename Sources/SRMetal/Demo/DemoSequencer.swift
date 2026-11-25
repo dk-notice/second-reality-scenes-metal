@@ -79,7 +79,7 @@ enum DemoScript {
         // While the original waited for its cue, the screen still showed the ships' horizon.
         s += [.part("Explosion"), .show(.picture("02-ships-horizon")), until { $0.sync >= 10 },
               .show(.scene("explosion")), .frames(ExplosionModel.length)]
-        s += [.part("Title picture"), .show(.picture("04-title")), .frames(161)]
+        s += [.part("Title picture"), .show(.scene("title-picture")), .frames(161)]
         // ---- Song 2 (MUSIC1) from section 0 ----
         s += [.part("Glenz vectors"), .playSong(.second, order: 0), .show(.scene("glenz-vectors")),
               .frames(47), until { $0.plus >= -19 }, .resetFrameCounter, .frames(177),
@@ -116,7 +116,7 @@ enum DemoScript {
         // ---- Song 1 again, from section 18 ----
         s += [.part("3D city"), .playSong(.first, order: 18), .show(.scene("city-3d")), .frames(100),
               until { $0.order > 18 }, .frames(1801 * 2 + 16)]
-        s += [.part("End picture"), .show(.picture("17-end-picture")), .frames(163),
+        s += [.part("End picture"), .show(.scene("end-picture")), .frames(163),
               until(cap: 5000) { $0.plus > -16 }, .frames(64)]
         s += [.part("Credits")]
         for picture in creditsPictures { s += [.show(.picture(picture)), .frames(362)] }

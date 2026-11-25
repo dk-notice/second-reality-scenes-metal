@@ -204,6 +204,18 @@ enum SceneCatalog {
             make: { device, format in try ExplosionScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
+            id: "title-picture",
+            title: "Title Picture",
+            credit: "Future Crew",
+            // 320x400, like the original.
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 31, 32, 33, 50, 96, 159, 160, 161, 250],
+            thumbnailStep: 200,
+            make: { device, format in
+                try FadingPictureScene(picture: "04-title", timing: FadingPictureScene.titleTiming, device: device, pixelFormat: format)
+            }
+        ),
+        SceneEntry(
             id: "city-3d",
             title: "3D City",
             credit: "Psi",
@@ -211,6 +223,17 @@ enum SceneCatalog {
             checkpoints: [0, 2, 40, 200, 660, 1210, 1600, 1920, 2360, 2920, 3200, 3560, 3603],
             thumbnailStep: 1600,
             make: { device, format in try City3DScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "end-picture",
+            title: "End Picture",
+            credit: "Future Crew",
+            canvasSize: SIMD2(320, 400),
+            checkpoints: [0, 33, 34, 60, 162, 163, 300, 538, 539, 560, 601, 602, 620],
+            thumbnailStep: 300,
+            make: { device, format in
+                try FadingPictureScene(picture: "17-end-picture", timing: FadingPictureScene.endTiming, device: device, pixelFormat: format)
+            }
         )
     ]
 }
