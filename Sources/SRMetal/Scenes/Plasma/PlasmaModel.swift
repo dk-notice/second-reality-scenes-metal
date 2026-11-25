@@ -17,6 +17,13 @@ import simd
 ///    the two mixed.
 ///  - Colours come from a 256-colour palette. Four times in the scene the plasma band falls off the
 ///    bottom of the screen, then reappears at once with a new palette fading up from black.
+///
+/// Inside Play Demo it follows the part (PLZ.C 68-95, COPPER.ASM `do_drop`): the whole screen is white
+/// (left by the rotozoomer, and set again by `init_plz`) until "music plus" >= 0; the music's frame
+/// counter starts there, and the n-th step after the cue is the part's n-th refresh. The first palette
+/// fades DOWN from white over 127 refreshes (`cop_drop` starts at 128), colour 0 and so the borders with
+/// it; the band falls when the frame counter passes 723, 1491, 1875 and 2259; the fourth fall is the
+/// end, and the screen stays empty until the script moves on. No second run.
 struct PlasmaModel {
     // MARK: - Tables
 
@@ -137,13 +144,46 @@ struct PlasmaModel {
     private(set) var shownPalette = [UInt8](repeating: 0, count: 768)
     private var paletteWaiting = false
 
+    /// Inside Play Demo: the music, given before each step. nil on its own.
+    private(set) var music: DemoMusicState?
+    /// Inside Play Demo: whether the start cue has been met, and whether the last fall is over.
+    private(set) var cued = false
+    private(set) var ended = false
+    private var ending = false
+    static let startCue = 0
+    /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white.
+    static let firstFade = 128
+
     mutating func reset() { self = PlasmaModel() }
 
+    /// Play Demo's music, before each step; `justShown` on the step the scene appears.
+    mutating func update(music: DemoMusicState, justShown: Bool) {
+        if justShown {
+            self = PlasmaModel()
+            // Every colour white: the rotozoomer's last palette, and `init_plz`'s first.
+            shownPalette = [UInt8](repeating: 63, count: 768)
+            fadePalette = [UInt16](repeating: 63 << 8, count: 768)
+            dropCounter = Self.firstFade
+            // The script tests the cue on the very step it shows the scene.
+            cued = music.plus >= Self.startCue
+        }
+        self.music = music
+    }
+
     mutating func tick() {
-        ticks += 1
-        if ticks == Self.lengthInTicks {
-            reset()
-            return
+        if let music {
+            guard cued else {
+                if music.plus >= Self.startCue { cued = true }
+                return
+            }
+            if ended { return }
+            ticks += 1
+        } else {
+            ticks += 1
+            if ticks == Self.lengthInTicks {
+                reset()
+                return
+            }
         }
 
         if paletteWaiting {
@@ -158,13 +198,33 @@ struct PlasmaModel {
             // The main program notices it is time: clear the fade and start the fall.
             for i in 0..<768 { fadePalette[i] &= 0x00FF }
             dropCounter = 1
-            section = drop.nextSection
+            // Inside Play Demo the fourth fall is the end, as in the original.
+            if music != nil && drop.step == Self.drops.last?.step { ending = true } else { section = drop.nextSection }
         }
 
         guard dropCounter != 0 else { return }
         dropCounter += 1
         if dropCounter <= 64 {
             return                      // falling; `fields` works out where the band is
+        }
+        if dropCounter > Self.firstFade {
+            // The part's first fade (Play Demo only): 127 refreshes down from white.
+            if dropCounter >= 256 {
+                dropCounter = 0
+                return
+            }
+            paletteWaiting = true
+            let target = Self.palettes[0]
+            for i in 0..<256 {
+                for part in 0..<3 {
+                    fadePalette[i * 3 + part] &+= UInt16(truncatingIfNeeded: (target[i][part] - 63) * 2)
+                }
+            }
+            return
+        }
+        if ending && dropCounter == 65 {
+            ended = true                // hidden (`fields`), and it stays so
+            return
         }
         if dropCounter > 64 + 32 {
             dropCounter = 0             // fade finished

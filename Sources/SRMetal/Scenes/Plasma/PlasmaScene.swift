@@ -52,6 +52,7 @@ final class PlasmaScene: DemoScene {
 
     func reset() { model.reset() }
     func tick() { model.tick() }
+    func demoUpdate(_ context: DemoContext) { model.update(music: context.music, justShown: context.justShown) }
     func classicReferenceFrame() -> [UInt8] { model.classicReferenceFrame() }
 
     func draw(into encoder: MTLRenderCommandEncoder, frame: FrameInfo) {
@@ -172,7 +173,8 @@ final class PlasmaScene: DemoScene {
 
         float row = pos.y - u.top.x;
         if (u.hidden != 0 || row < 0.0 || row >= 280.0) {
-            return float4(0.0, 0.0, 0.0, 1.0);
+            // Colour 0: black, except while the part's first palette fades down from white (Play Demo).
+            return float4(palette[0].rgb, 1.0);
         }
         // Column c's four pixels are centred on c + 0.5; row y's line on y + 0.5.
         float c = (pos.x + 1.0) / 4.0 - 0.5;

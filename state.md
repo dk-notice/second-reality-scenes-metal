@@ -18,7 +18,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene EXCEPT TWO: the opening credits (a title card) and the credits (21 still pictures).
-- Self-test: 564 checks, all pass. `--demo-timeline`: every part starts on the step the research
+- Self-test: 566 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository).
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
@@ -32,10 +32,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - DONE: Techno Bars (right as it was: the original's section 3 never ran, its frame counter stood at
      2,697 against a limit of 2,520; docs corrected). Ships Fly-by (no pause, frames 0-520). Sine Landscape
      (black 24 steps until "music plus" >= 0, sinks while a pass reads -29...-1, sunk 18 steps before the cut). Plasma Cube (empty screen 312 steps until "music plus" >= 13 and on the cue
-     step, then the original's frame n on the n-th step, fresh start without the 16-step lead-in, 1,998 frames).
+     step, then the original's frame n on the n-th step, fresh start without the 16-step lead-in, 1,998 frames). Plasma (WHITE 74 steps until "music plus" >= 0,
+     the first palette fades DOWN from white in 127 refreshes, falls a refresh after music frame 723/1491/
+     1875/2259, empty after the fourth; `fadepal`'s starting value is not in the source, taken as 63).
+   - NONE of these four has been seen by the user in the app yet (`--scene play-demo --from ships-flyby`,
+     `plasma`, `plasma-cube`, `sine-landscape`).
    - TO DO, in this order, with what was found (steps are from the part's start, measured from the script):
-     - Plasma: WHITE 74 steps (the rotozoomer ends by setting all colours white), then the original's first
-       fade, 127 steps DOWN from white (`cop_drop` = 128), drops after frames 723/1491/1875/2259; no second run.
      - 3D City: 100 steps of lead-in over the jelly logo's last picture (to white in 33, hold 16 + 2 + 16,
        33 to black with the picture window's colours 253/254 kept white), 180 steps of waiting for section
        19, the flight without this version's fades, then a 16-step whitening (+4 levels a step). Needs Play

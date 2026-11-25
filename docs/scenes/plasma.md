@@ -223,22 +223,48 @@ None of this has been compared with the original program running.
 - **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (now twice).
 - The pictures in `docs/images/` were remade after the review was merged, so they show the corrected 1993 look.
 
+## Inside Play Demo
+
+Since 2026-11-25 the scene follows the part there (`PLZ.C` 68-95, `COPPER.ASM` `do_drop`):
+
+- **White for 74 steps.** The part waited for "music plus" >= 0 with the screen as the rotozoomer left
+  it: every colour set to white. The step that meets the cue is still white (`init_plz` sets its new
+  screen mode's 256 colours white as well), and the music's frame counter starts there: the n-th step
+  after the cue is the part's n-th refresh.
+- **The first palette fades DOWN from white** over 127 refreshes (`cop_drop` starts at 128 and the fade
+  runs while it is 129 to 255; each level moves by (target - 63) x 2 / 256 a refresh, and the card is
+  given the result a refresh later). Colour 0 fades with the rest, so the borders above and below the
+  band go from white to black too. The band is in place from the start; it does not drop in.
+- **The falls follow the frame counter:** the band starts to fall a refresh after the counter passes
+  723, 1491, 1875 and 2259 (`timetable`), each time with the next palette fading up from black as on its
+  own. The fourth fall is the end: the band is gone 64 refreshes later and the screen stays empty for
+  the one step left before the plasma cube's part begins. No second run.
+
+The self-test runs Play Demo silently from this scene and compares the white steps, the four falls, the
+end and the cube's start with the script's own numbers (0, 2259, 65) and `timetable`'s, and the first
+fade with the palette it must end on; proven to fail with the cue moved by one and with the fade's
+length changed.
+
+Not settled from the source: `fadepal`, the memory the fade works in, is declared without a starting
+value (`db 768*2 dup(?)`). The increments only make sense if it starts at 63 (white), which is what this
+version does, and then the fade ends on the exact palette. If the released program's memory held zeros
+there instead, its first palette would have ended one level brighter, with full-strength levels black.
+That would need the released `PLZPART.EXE` unpacked, or the original running, to tell.
+
+On its own the scene is unchanged (the first palette fades up from black, 2,323 steps, then it loops).
+
 ## Differences from the original, on purpose
 
 - **The 1993 look shows the two alternating frames averaged, not one after the other.** On a 70 Hz monitor
   the flipping chessboard blurred into a smooth mix. A Mac display refreshes at 60 or 120 Hz, and showing 70
   alternating frames per second on that produces a slow, ugly flicker. So each picture is the average of
   the two, which is what the viewer saw. Both frames use the same moment's numbers.
-- **No white fade at the start.** The original began with the whole screen white (left by the previous
+- **No white fade at the start**, on its own. The original began with the whole screen white (left by the previous
   scene) and faded down to the first palette over 127 frames. Here the first palette fades up from black in
   31 steps, exactly like the other three. The increments for it are chosen so it ends on the original's
   exact first palette.
-- **It loops.** In the original the fourth fall was the end: the plasma cube followed. Here that fall leads
+- **It loops**, on its own. In the original the fourth fall was the end: the plasma cube followed. Here that fall leads
   back to the first section. The loop point is a black screen, so nothing jumps.
-- **Inside Play Demo it starts too early (a known fault, found 2026-11-25).** The original waited for
-  "music plus" ≥ 0 before starting; Play Demo shows this scene 74 steps before that, and the scene has no
-  way to wait. Its sections therefore run 74 steps ahead of the music, and at the end it loops: the first
-  red-and-blue section is back on screen for about a second before the plasma cube takes over.
 - **Drawing is instant.** The original program drew as fast as the PC could, not once per refresh, while
   the four numbers moved on every refresh regardless. On a slow PC the picture was therefore built from
   slightly different moments. This version draws every frame complete, as an infinitely fast PC would.

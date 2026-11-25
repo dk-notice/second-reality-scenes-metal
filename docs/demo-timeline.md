@@ -68,7 +68,8 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Water scroller | Its own scene (2026-11-25): black until its first music cue, the fade-in, the still picture until the music's next section, the sword until the fade-out cue |
   | 3D sine landscape | Its own scene: black until its music cue, the rise, the sinking on the music's "plus" above -30, cut at -7 (2026-11-25) |
   | Plasma cube | Its own scene: an empty screen until its music cue, then the original's frames from the first, black at the cut (2026-11-25) |
-  | Glenz, tunnel, plasma, dots, city | The project's scene, started at the part's start and cut at its end |
+  | Plasma | Its own scene: white until its music cue, the first palette fading down from white, the falls on the music's frame counter, empty after the fourth (2026-11-25) |
+  | Glenz, tunnel, dots, city | The project's scene, started at the part's start and cut at its end |
   | Techno | Black, rings, interference, black (the original's lead-in on four beats), techno bars (sections 1 and 2: the original's third section never got to run, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
   | Credits | The 21 credits pictures in the original order, 362 steps each |
@@ -80,11 +81,10 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
 
   What that means for the older scenes today (part length against the scene's own length, in steps):
   Glenz 3,057 against 2,360 and the 3D City 3,898 against 3,639 begin a
-  second run before the cut; Plasma 2,399 against 2,323 starts 74 steps before its music cue and shows
-  its first section again for about a second at the end; the
+  second run before the cut; the
   Dot Tunnel (1,060) and Bouncing Dots (2,580) fit exactly. Making these scenes follow the original
   part's cues, as the newer scenes do, is in progress (2026-11-25). Done: Ships Fly-by (no pause, the
-  whole flight), the Sine Landscape (waits for its cue, sinks on the music), the Plasma Cube (waits for its cue, the original's frames) and Techno Bars (confirmed right as it was: sections 1 and 2, 1,260 steps).
+  whole flight), the Sine Landscape (waits for its cue, sinks on the music), the Plasma (white until its cue, the fade down from white), the Plasma Cube (waits for its cue, the original's frames) and Techno Bars (confirmed right as it was: sections 1 and 2, 1,260 steps).
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
