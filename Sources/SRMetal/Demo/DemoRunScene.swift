@@ -57,6 +57,8 @@ final class DemoRunScene: DemoScene {
     private let music: DemoMusicSource
     /// Called with each part's name as it starts.
     var onPart: ((String) -> Void)?
+    /// Whether each part change is written to the log (the running app; not checks or snapshots).
+    var logsParts = false
 
     private var sequencer: DemoSequencer
     private enum Shown {
@@ -67,6 +69,8 @@ final class DemoRunScene: DemoScene {
     }
     private var shown = Shown.black
     private var partsStarted = 0
+    /// The step at which the thing showing appeared.
+    private var shownSince = 0
 
     private let pipeline: MTLRenderPipelineState
     private let smooth: MTLSamplerState
@@ -118,6 +122,10 @@ final class DemoRunScene: DemoScene {
 
     /// The part playing now.
     var currentPart: String? { sequencer.currentPart }
+    /// The scene showing now, if the part shows one (for checks).
+    var sceneShowing: DemoScene? { if case .scene(let scene, _) = shown { return scene } else { return nil } }
+    /// The music's row as the parts see it now (for checks).
+    var musicRow: Int { sequencer.musicState.row }
 
     // MARK: - DemoScene
 
@@ -130,14 +138,19 @@ final class DemoRunScene: DemoScene {
 
     func tick() {
         // The scene showing moves on first, so a scene the script starts now is seen at its first step.
-        if case .scene(let scene, _) = shown { scene.tick() }
+        if case .scene(let scene, _) = shown {
+            scene.demoUpdate(DemoContext(music: sequencer.musicState,
+                                         partSteps: sequencer.time - (sequencer.partStarts.last?.step ?? 0),
+                                         sceneSteps: sequencer.time - shownSince))
+            scene.tick()
+        }
         sequencer.tick()
         if sequencer.partStarts.count != partsStarted {
             partsStarted = sequencer.partStarts.count
             if let (name, step) = sequencer.partStarts.last {
                 let p = music.position
-                NSLog("SR Metal: Play Demo part %d \"%@\" at step %d (%@); music section %d row %d",
-                      partsStarted, name, step, DemoTimelineCommand.time(step), p.order, p.row)
+                if logsParts { NSLog("SR Metal: Play Demo part %d \"%@\" at step %d (%@); music section %d row %d",
+                      partsStarted, name, step, DemoTimelineCommand.time(step), p.order, p.row) }
                 onPart?(name)
             }
         }
@@ -182,6 +195,7 @@ final class DemoRunScene: DemoScene {
     // MARK: - Changing what is shown
 
     private func show(_ visual: DemoVisual) {
+        shownSince = sequencer.time
         switch visual {
         case .scene(let id):
             guard let entry = SceneCatalog.all.first(where: { $0.id == id }) else { shown = .black; return }

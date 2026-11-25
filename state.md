@@ -210,6 +210,17 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Not done / ideas: the Music menu's check mark does not show during Play Demo; a "start from part N"
   option (needs the music jumped to the right place); the end scroller is only a card.
 
+## PLAY DEMO plug-in work (2026-11-24, plan approved by the user)
+- Plan: (1) scenes can see the music inside Play Demo, proven on Techno Bars' flash; (2) a shared
+  picture-and-fade toolkit; (3) the explosion as a real scene (frames made 8x on the fly, the next one
+  prepared ahead, fade laid on after scaling, original 17.5 frames a second; also in the sidebar).
+- STEP 1 DONE: `DemoScene.demoUpdate(_ context: DemoContext)` (default empty; only Play Demo calls it,
+  before each tick): music state, steps since the part started, steps since the scene appeared.
+  Techno Bars sets `TechnoBarsModel.musicRow` from it (nil standalone = the old estimate). 2 self-test
+  checks (274): the flash follows the rows given; a silent Play Demo run gives Techno Bars the music's
+  row on all 1,260 of its steps (on the step it appears, it has not been told yet: by design, as a
+  new scene is seen at its first step). Part-change log lines now only in the running app.
+
 ## Code review of core and app (2026-11-14)
 - Reviewed: `Core/` (not `Core/Visu/`), `App/` (not `VisuTestCommand.swift`), `build.sh`, `Package.swift`.
   Full account, with how each finding was proven: `docs/how-it-works.md`, "Code review of the core and the app".

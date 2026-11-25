@@ -223,6 +223,11 @@ modern look needs this: it uses a depth buffer (a per-pixel record of distance, 
 far things) and four samples per pixel for smooth edges, and the app's main drawing pass has neither.
 Most scenes leave it out.
 
+A scene may also implement `demoUpdate(_:)`, which only Play Demo calls, just before each step: it
+gives the music's position (section, row, "music plus", sync) and how long the part has been running,
+so a scene can react to the music as the original part did. Shown on its own, a scene is never called
+this and keeps its own clock. Techno Bars uses it for its flash on the beat (2026-11-24).
+
 A scene may also give a `currentCanvasSize` when its canvas changes as it runs; the window and
 `--snapshot` then use that instead of the entry's fixed size. Only Play Demo needs it (2026-11-24): to the
 window it is one scene, which shows other scenes, pictures and title cards in turn (`Demo/`; see

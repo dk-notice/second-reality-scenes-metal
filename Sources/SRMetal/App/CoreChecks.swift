@@ -213,6 +213,35 @@ enum CoreChecks {
         }
         let unknown = scenes.filter { !ids.contains($0) }
         check("Play Demo: every scene it shows exists (\(scenes.count) uses)", unknown.isEmpty, unknown.joined(separator: ", "))
+        // A scene can follow the music inside Play Demo: Techno Bars flashes on rows 7, 15, 23 ... of
+        // the music it is given (KOE.C `waitborder`), once per row change, and the flash then dies away.
+        var bars = TechnoBarsModel()
+        var flashes: [Int] = []
+        for row in [5, 6, 7, 7, 8, 14, 15] {
+            bars.musicRow = row
+            bars.tick()
+            flashes.append(bars.shownFlash)
+        }
+        check("Play Demo: Techno Bars flashes on the music rows it is given (7, 15, ...), not on its own estimate",
+              flashes == [0, 0, 15, 14, 13, 12, 15], "\(flashes)")
+        // And Play Demo does give it the music: run the demo silently into the techno bars.
+        if let device = MTLCreateSystemDefaultDevice(),
+           let run = try? DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic()) {
+            var agreed = 0, compared = 0
+            for _ in 0..<14_500 {
+                run.tick()
+                if let techno = run.sceneShowing as? TechnoBarsScene {
+                    compared += 1
+                    // Given before the step, so at most one row behind (63 is one row behind 0). On the
+                    // step the scene appears it has not been updated yet.
+                    if let given = techno.model.musicRow {
+                        if [0, 1].contains((run.musicRow - given + 64) % 64) { agreed += 1 }
+                    } else if compared == 1 { agreed += 1 }
+                }
+            }
+            check("Play Demo: a scene is told the music's position each step (Techno Bars, \(compared) steps)",
+                  compared > 1000 && agreed == compared, "\(agreed) of \(compared)")
+        }
         let missing = DemoScript.pictures.filter { DemoPictures.url($0) == nil }
         check("Play Demo: every picture it shows is there (\(DemoScript.pictures.count) pictures)",
               missing.isEmpty, missing.joined(separator: ", "))

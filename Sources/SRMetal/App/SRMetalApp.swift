@@ -160,6 +160,7 @@ final class AppModel: ObservableObject {
             let scene = try DemoRunScene(device: device, pixelFormat: format,
                                          music: LiveDemoMusic(player: self.music, look: { [unowned self] in self.look }))
             scene.onPart = { [weak self] name in self?.demoPart = name }
+            scene.logsParts = true
             return scene
         })
 

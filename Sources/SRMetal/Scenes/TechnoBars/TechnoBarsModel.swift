@@ -35,6 +35,10 @@ struct TechnoBarsModel {
     /// recreated from the song's settings (speed 3, tempo 130): one row lasts this many steps.
     static let musicRowInTicks = 3.0 * 2.5 / 130.0 * 70.0
 
+    /// Inside Play Demo: the music's real row, given each step before `tick` (then the flash comes on
+    /// the real beat, as in the original). nil when the scene runs on its own: the row is estimated.
+    var musicRow: Int?
+
     /// What a frame's bars looked like, kept for the modern look to glide between.
     struct BarState {
         /// Angle, in 1/1024 turns. Keeps counting up rather than wrapping.
@@ -179,7 +183,7 @@ struct TechnoBarsModel {
         shownSlide = 320 - xpos
         // The beat flash, set just after the refresh (KOE.C `waitborder`).
         sceneTicks += 1
-        let row = Int(Double(sceneTicks) / Self.musicRowInTicks)
+        let row = musicRow ?? Int(Double(sceneTicks) / Self.musicRowInTicks)
         if row != lastRow {
             lastRow = row
             if row & 7 == 7 { flash = 15 }

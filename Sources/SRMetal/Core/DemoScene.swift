@@ -48,11 +48,27 @@ protocol DemoScene: AnyObject {
     /// The canvas size right now, for a scene whose size changes as it runs (Play Demo, which
     /// shows other scenes and pictures). nil, the default, means the entry's `canvasSize`.
     var currentCanvasSize: SIMD2<Float>? { get }
+    /// Only while Play Demo runs: called just before each `tick` with where the music is and how long
+    /// the part has been running, for a scene that reacts to the music as the original part did (for
+    /// example the techno bars' flash on the beat). Shown on its own, a scene is never called this and
+    /// keeps its own clock. The default does nothing.
+    func demoUpdate(_ context: DemoContext)
 }
 
 extension DemoScene {
     func prepare(commands: MTLCommandBuffer, frame: FrameInfo) {}
     var currentCanvasSize: SIMD2<Float>? { nil }
+    func demoUpdate(_ context: DemoContext) {}
+}
+
+/// What Play Demo tells a scene each step (see `DemoScene.demoUpdate`).
+struct DemoContext {
+    /// The music as the original parts saw it: section, row, "music plus", sync value.
+    var music: DemoMusicState
+    /// Steps since the current part of the demo started.
+    var partSteps: Int
+    /// Steps since this scene appeared (a part may show several things in turn).
+    var sceneSteps: Int
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.

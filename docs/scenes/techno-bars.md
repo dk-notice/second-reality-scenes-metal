@@ -154,7 +154,9 @@ flash on by a step. Since the beat is recreated anyway (see below), this would o
 ## Differences from the original
 
 - **The beat is recreated.** With no music, the flash timing comes from the song file's own settings
-  (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything.
+  (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything. **Inside Play Demo** (2026-11-24) the flash
+  follows the real music instead: the scene is given the music's row each step and flashes on rows 7,
+  15, 23 ... as the original did.
 - **Left out:** the original's lead-in (a white flash, then four columns dropping to black on four beats)
   and the picture that scrolls in after the slide-off.
 - **It loops.** After sliding off, the scene starts again from section 1.

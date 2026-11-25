@@ -44,6 +44,8 @@ final class TechnoBarsScene: DemoScene {
 
     func reset() { model.reset() }
     func tick() { model.tick() }
+    /// In Play Demo the flash follows the real music (see `TechnoBarsModel.musicRow`).
+    func demoUpdate(_ context: DemoContext) { model.musicRow = context.music.row }
 
     func classicReferenceFrame() -> [UInt8] {
         let palette = model.classicPalette()
