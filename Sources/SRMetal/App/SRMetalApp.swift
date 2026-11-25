@@ -30,6 +30,9 @@ enum Main {
         if CommandLine.arguments.contains("--scaler-compare") {
             exit(ScalerCompareCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        if CommandLine.arguments.contains("--demo-live") {
+            exit(DemoTimelineCommand.live(arguments: CommandLine.arguments) ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--demo-timeline") {
             exit(DemoTimelineCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
@@ -49,20 +52,26 @@ enum Main {
 }
 
 /// The start-up choices given on the command line: `--look classic|modern`, `--scene <id>`
-/// (e.g. `--scene interference`) and `--sidebar hidden|shown`.
+/// (e.g. `--scene interference`), `--from <scene id | part number>` (with `--scene play-demo`: start the
+/// demo there), `--music on|off` (off: muted) and `--sidebar hidden|shown`.
 struct StartupOptions {
     var look: Look?
     var sceneIndex: Int?
     /// `--scene play-demo`: start with Play Demo.
     var playDemo = false
+    /// `--from`: where Play Demo starts.
+    var demoStart: DemoStart?
+    /// `--music off`: start with the music muted.
+    var muted = false
     var sidebarHidden = false
     /// What is wrong with the options, in words. Empty when all is well.
     var problems: [String] = []
 
     static var usage: String {
         """
-        Options: --scene <id>  --look modern|classic  --sidebar hidden|shown
-        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline, --scaler-compare (run one without arguments for its usage)
+        Options: --scene <id>  --look modern|classic  --sidebar hidden|shown  --music on|off
+                 --scene play-demo --from <scene id, or part number 1-\(DemoScript.partNames.count)>
+        Commands: --selftest, --snapshot, --motion-check, --visu-test, --music-info, --music-render, --music-play, --demo-timeline, --demo-live, --scaler-compare (run one without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or \(DemoRunScene.id) for the whole demo
         """
     }
@@ -76,7 +85,7 @@ struct StartupOptions {
             // Only options starting with two dashes are ours. macOS adds single-dash ones of its
             // own (with values) when it starts an app in some ways; those are left alone.
             guard option.hasPrefix("--") else { continue }
-            guard ["--look", "--scene", "--sidebar"].contains(option) else {
+            guard ["--look", "--scene", "--sidebar", "--from", "--music"].contains(option) else {
                 problems.append("Unknown option \(option)")
                 continue
             }
@@ -90,6 +99,12 @@ struct StartupOptions {
             case "--look":
                 if let chosen = Look(rawValue: value) { look = chosen }
                 else { problems.append("Unknown look \"\(value)\" (use modern or classic)") }
+            case "--from":
+                if let start = DemoStart(argument: value) { demoStart = start }
+                else { problems.append("Play Demo cannot start from \"\(value)\" (a scene the demo shows, or a part number 1-\(DemoScript.partNames.count))") }
+            case "--music":
+                if value == "off" { muted = true }
+                else if value != "on" { problems.append("Unknown music setting \"\(value)\" (use on or off)") }
             case "--scene":
                 if value == DemoRunScene.id { playDemo = true }
                 else if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
@@ -126,11 +141,14 @@ final class AppModel: ObservableObject {
 
     private var keyMonitor: Any?
 
-    /// The music player (Music menu). `nowPlaying` mirrors it for the menu's check marks.
+    /// The music, played by Play Demo. The scenes in the sidebar are silent.
     let music = MusicPlayer()
-    @Published private(set) var nowPlaying: Song?
-    /// Why the last attempt to play failed, if it did (shown in the Music menu).
-    @Published private(set) var musicProblem: String?
+    /// Music muted (M). The song keeps playing underneath, so Play Demo keeps its timing.
+    @Published var musicMuted = false {
+        didSet { music.muted = musicMuted }
+    }
+    /// Where Play Demo started (nil: the beginning). Read again on each restart.
+    @Published private(set) var demoStart: DemoStart?
 
     init() {
         // Optional start-up choices (see `StartupOptions`).
@@ -142,12 +160,16 @@ final class AppModel: ObservableObject {
             sceneIndex = index
         }
         if options.playDemo {
+            demoStart = options.demoStart
             playingDemo = true
+        }
+        if options.muted {
+            musicMuted = true
+            music.muted = true   // didSet does not run inside init
         }
         if options.sidebarHidden {
             columns = .detailOnly
         }
-        music.onFinished = { [weak self] in self?.nowPlaying = nil }
     }
 
     var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
@@ -155,24 +177,35 @@ final class AppModel: ObservableObject {
     /// Play Demo, as a scene the window can show, with the real music.
     private lazy var demoEntry = DemoRunScene.entry(
         music: { [unowned self] in LiveDemoMusic(player: self.music, look: { [unowned self] in self.look }) },
+        start: { [unowned self] in self.demoStart },
         configure: { [weak self] scene in
             scene.onPart = { [weak self] name in self?.demoPart = name }
             scene.logsParts = true
         })
 
-    /// Starts the whole demo from its beginning, with its music.
-    func playDemo() {
-        if playingDemo { restartScene() }   // already running: start again
+    /// Starts the demo with its music: from the beginning, or (`start`) where a scene first shows or a
+    /// part begins, with the music jumped to that moment.
+    func playDemo(from start: DemoStart? = nil) {
+        demoStart = start
+        if playingDemo { restartScene() }   // already running: start again (the run reads `demoStart`)
         demoPart = nil
         playingDemo = true
     }
+
+    /// The scene chosen in the sidebar, if the demo shows it ("Play Demo from Here").
+    var demoStartHere: DemoStart? {
+        let id = SceneCatalog.all[sceneIndex].id
+        return DemoScript.sceneIDs.contains(id) ? .scene(id) : nil
+    }
+
+    func toggleMute() { musicMuted.toggle() }
 
     /// Stops Play Demo and its music (nothing happens if it is not running).
     func endDemo() {
         guard playingDemo else { return }
         playingDemo = false
         demoPart = nil
-        stopMusic()
+        music.stop()
     }
     var hasSeveralScenes: Bool { SceneCatalog.all.count > 1 }
 
@@ -187,25 +220,6 @@ final class AppModel: ObservableObject {
 
     func restartScene() {
         restartCount += 1
-    }
-
-    func playMusic(_ song: Song) {
-        if playingDemo {   // the menu's song replaces the demo's: leave the demo first
-            playingDemo = false
-            demoPart = nil
-        }
-        do {
-            try music.play(song, look: look)
-            musicProblem = nil
-        } catch {
-            musicProblem = "\(error)"
-        }
-        nowPlaying = music.nowPlaying
-    }
-
-    func stopMusic() {
-        music.stop()
-        nowPlaying = nil
     }
 
     /// Makes the single-key shortcuts work wherever the keyboard focus is.
@@ -231,6 +245,7 @@ final class AppModel: ObservableObject {
                 case "l": if !event.isARepeat { self.toggleLook() }
                 case "r": if !event.isARepeat { self.restartScene() }
                 case "p": if !event.isARepeat { self.playDemo() }
+                case "m": if !event.isARepeat { self.toggleMute() }
                 default: return event
                 }
             }
@@ -273,6 +288,14 @@ struct SRMetalApp: App {
 
                 Button(model.playingDemo ? "Play Demo from the Start" : "Play Demo") { model.playDemo() }
                     .keyboardShortcut("p", modifiers: [])
+                Button("Play Demo from Here") { model.playDemo(from: model.demoStartHere) }
+                    .keyboardShortcut("p", modifiers: [.shift])
+                    .disabled(model.demoStartHere == nil)
+                Menu("Play Demo from Part") {
+                    ForEach(Array(DemoScript.partNames.enumerated()), id: \.offset) { number, name in
+                        Button("\(number + 1). \(name)") { model.playDemo(from: number == 0 ? nil : .part(number)) }
+                    }
+                }
                 Button("Stop Demo") { model.endDemo() }
                     .disabled(!model.playingDemo)
 
@@ -286,20 +309,11 @@ struct SRMetalApp: App {
                     .disabled(!model.hasSeveralScenes)
             }
 
-            // The demo's two original songs, played live by libopenmpt. The sound follows the look:
-            // smooth in the Modern look, gritty (no smoothing) in the 1993 look.
+            // The music plays with Play Demo (the original songs, live, by libopenmpt; the sound follows
+            // the look). Muting keeps the song running underneath, so the demo keeps its timing.
             CommandMenu("Music") {
-                ForEach(Song.allCases, id: \.self) { song in
-                    Button((model.nowPlaying == song ? "✓ " : "") + "Play \(song.menuTitle)") { model.playMusic(song) }
-                }
-                Divider()
-                Button("Stop Music") { model.stopMusic() }
-                    .keyboardShortcut(".", modifiers: [.command])
-                    .disabled(model.nowPlaying == nil)
-                if let problem = model.musicProblem {
-                    Divider()
-                    Text("Could not play: \(problem)")
-                }
+                Button(model.musicMuted ? "Unmute Music" : "Mute Music") { model.toggleMute() }
+                    .keyboardShortcut("m", modifiers: [])
             }
         }
     }

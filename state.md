@@ -30,8 +30,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 - Music groundwork (2026-11-24): libopenmpt 0.8.10 is in `ThirdParty/libopenmpt` (unmodified source),
   built by `build.sh` as a static library and linked into the program; the two original songs are in
   `Data/Music` (scrambled, as shipped) and unscrambled at load. `--music-info` describes them.
-  MUSIC PLAYER (2026-11-24): a "Music" menu plays either song (whole song, all sub-songs) or stops
-  (Command-.); the sound follows the look (1993 = no interpolation). See "MUSIC" under Decisions.
+  MUSIC PLAYER (2026-11-24): a "Music" menu played either song or stopped; REMOVED later the same day
+  (user's decision): the music now plays only with Play Demo, the Music menu has only Mute (M). The sound
+  follows the look (1993 = no interpolation). See "MUSIC" under Decisions and "PLAY DEMO FROM HERE".
 - PLAY DEMO SKELETON (2026-11-24): Scene menu "Play Demo" (P; Escape stops) runs all 19 parts in the
   original order with the original music, changing parts on the original's music cues. Stand-ins: the
   11 built scenes (cut at the part's end), the original artwork pictures (smoothly stretched in
@@ -198,8 +199,8 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   Title cards drawn with Core Text. `build.sh` copies `artwork/original/rgb` into the app
   (`Resources/Artwork/`; app 5 MB). (At first it also carried the AI pictures, 165 MB, removed.)
 - AppModel: `playingDemo`; the demo's SceneEntry is not in `SceneCatalog.all` (not in the sidebar, not
-  in the per-scene self-tests). Choosing a scene, Escape or Stop Demo ends it and stops the music; the
-  Music menu replaces the demo's song and leaves the demo. Window title shows the part. Each part
+  in the per-scene self-tests). Choosing a scene, Escape or Stop Demo ends it and stops the music.
+  Window title shows the part. Each part
   change is logged (NSLog) with the music position.
 - Seen by Claude: snapshots of the title card, title picture, troll (1993), plasma, credits picture 1
   (both looks). LIVE RUN (2026-11-24, `--scene play-demo`, window open, music through the speakers):
@@ -207,8 +208,31 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   the music cues keep it from growing); credits ended 10:52.7 vs 10:52.4; no errors logged; song
   switches landed on song 2 section 0 and song 1 section 18. NOT verified by Claude: how it looks and
   sounds to a viewer, fullscreen, switching look mid-demo, Escape/P/menu by hand.
-- Not done / ideas: the Music menu's check mark does not show during Play Demo; a "start from part N"
-  option (needs the music jumped to the right place); the end scroller is only a card.
+- Not done / ideas: (start from part N: DONE, see "PLAY DEMO FROM HERE".)
+
+## PLAY DEMO FROM HERE (2026-11-24, plan approved by the user)
+- User's decisions: scene list in the demo's order (hidden starfield last; done first, commit `e69e0b2`);
+  "Play Demo from Here" (Shift-P: where the sidebar's scene first shows) and "Play Demo from Part" (submenu,
+  21 parts); the song-player Music menu REMOVED, replaced by Mute (M; keeps the song running underneath, so
+  the demo keeps its timing); sidebar scenes stay silent and looping.
+- How: `DemoSequencer.fastForward(to: DemoStart)` runs the script silently (SilentMusic, nothing drawn) to
+  the step the start shows; `DemoSequencer(continuing:music:)` carries on; the music source starts the song
+  the script last started from the SAME section and SKIPS the time since (`TrackerSong.skip`: render and
+  throw away; sample-exact; 0.14 s for 370 s of song 2 at 48 kHz). `DemoRunScene(from:)`, `startProvider`
+  (restart re-reads the start), `show(_:musicAtShow:)` (justShown gets the music of the show step).
+  `DemoMusicSource.play(_:fromOrder:skipping:)`. AppModel: `playDemo(from:)`, `demoStartHere`,
+  `musicMuted`; options `--from <scene|part 1-21>`, `--music on|off`; command `--demo-live <start> <s> [sound]`.
+- FOUND: libopenmpt's set_position_seconds lands on a row start, and its clock (and get_time_at_position)
+  counts song 1 sections after the "---" marks from a different place (section 18 = 0 s): jumping by
+  seconds sent the city to the wrong music (caught by the new check: later parts 124 s late). Hence skip.
+- Checks (4 new, 445 in all, all pass): 39 starts (19 scenes, 20 parts) each carried on silently give every later part on
+  the full run's step; skipped music = played-through music sample for sample (3 places, incl. song 1
+  from 18); a run started at the troll/lens/water shows the right thing (lens uncovering at once); command
+  line parsing. LIVE (`--demo-live`, real sound output, muted): from part 8 (switch-off): later parts 0/-1/-1
+  steps; from the rotozoomer: plasma +0; from the end picture: credits +3 (0.04 s).
+- The app's window could NOT be driven by Claude: launched from here its window is not on screen (not in
+  the window list), so its picture and clock do not run and nothing is logged; `--demo-live` replaces that.
+  NOT verified: the menus and keys by hand, how a start sounds (the user listens), mute in the window.
 
 ## PLAY DEMO plug-in work (2026-11-24, plan approved by the user)
 - Plan: (1) scenes can see the music inside Play Demo, proven on Techno Bars' flash; (2) a shared
@@ -341,6 +365,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   `./build.sh` then passed with a valid signature (only `com.apple.provenance` left). Looks like a
   one-off while the folder was new (Documents seems synced by a file provider). If it comes back:
   `xattr -cr build/SRMetal.app && codesign --force --sign - build/SRMetal.app`.
+  It DID come back once more (2026-11-24, Play Demo from here work) with SRMetal NOT running (checked with
+  pgrep) and the FinderInfo tag present; the two commands above fixed it and the next build passed. The
+  user suspected a running app; this case says it is the file sync tagging the folder. Not fixed in build.sh.
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,

@@ -35,11 +35,12 @@ The interesting part is the comparison. The original is full of tricks for makin
 A modern graphics chip needs none of them, so each scene's documentation explains what the trick was and
 what replaced it.
 
-The demo's two original songs can be played from the **Music** menu: the real tracker music, played live by
-libopenmpt, which is built into the program (see [ThirdParty/README.md](ThirdParty/README.md)).
-
 **Play Demo** (in the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
-the original music, changing parts on the same music cues the 1993 demo waited for. It is a skeleton for now:
+the original music (the real tracker songs, played live by libopenmpt, which is built into the program: see
+[ThirdParty/README.md](ThirdParty/README.md)), changing parts on the same music cues the 1993 demo waited for.
+**Play Demo from Here** (Shift-P) starts it where the scene chosen in the sidebar first appears, and **Play
+Demo from Part** at any of its parts, with the music jumped to that moment, so everything after stays in
+step. The scenes in the sidebar play on their own, silently, and repeat. It is a skeleton for now:
 the parts this project has built appear as its scenes, cut where the original part ended; picture parts show
 the original pictures (in the Modern look made larger by Super-xBR, a pixel-art scaler); every other part shows a title card
 naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
@@ -111,21 +112,23 @@ The window has a list of scenes down the left (the sidebar) and a toolbar along 
 | Play the current scene again from its start | The circular-arrow button at the right of the toolbar, or press R |
 | Hide or show the sidebar | The sidebar button at the left of the toolbar, or Control-Command-S |
 | Fullscreen | The green window button, or Control-Command-F (in newer macOS versions also the Globe key with F) |
-| Play one of the demo's two songs, from its start | **Music** menu, "Play Song 1" or "Play Song 2" |
-| Stop the music | **Music** menu, "Stop Music", or Command-. (full stop) |
 | Play the whole demo with its music | **Scene** menu, "Play Demo", or press P (again: from the start) |
+| Play the demo from the chosen scene on | **Scene** menu, "Play Demo from Here", or Shift-P |
+| Play the demo from one of its parts | **Scene** menu, "Play Demo from Part" |
+| Mute or unmute the music | **Music** menu, "Mute Music", or press M (the demo keeps its timing) |
 | Stop the demo | Escape, **Scene** menu "Stop Demo", or choose any scene |
 
 In fullscreen the sidebar and toolbar get out of the way so that only the scene shows; the keys above still
 work, and moving the pointer to the top of the screen brings the toolbar back. Leaving fullscreen puts the
 sidebar back as it was.
 
-The look, restart and next/previous actions are also in the **Scene** menu.
+The look, restart and next/previous actions are also in the **Scene** menu. Restart during Play Demo starts
+it again from where it was started.
 
 The music's sound follows the look: smooth in the Modern look; in the 1993 look the samples are played
-without smoothing, which sounds grittier, closer to a sound card of the time. Each song plays to its end
-(Song 1 lasts about 10 minutes, Song 2 about 7). Song 1 plays at tempo 120, as the demo played it, not at
-the 125 written in the file.
+without smoothing, which sounds grittier, closer to a sound card of the time. Song 1 plays at tempo 120, as
+the demo played it, not at the 125 written in the file. Muting keeps the song playing underneath, because
+Play Demo follows the music's position.
 
 ### Options
 
@@ -137,6 +140,8 @@ Put these after `--args` when starting the app, for example
 | `--scene <id>` | Start on a scene: `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `sine-landscape`, `city-3d`, `end-picture`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
+| `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |
+| `--music off` | Start with the music muted |
 
 A mistyped option or scene name is reported (run the program directly to see the message) and the app
 does not start.
@@ -194,6 +199,14 @@ build/SRMetal.app/Contents/MacOS/SRMetal --demo-timeline
 runs Play Demo's whole running order against the music, silently, in well under a second, and lists when each
 part starts. It checks every start against the research simulation (`tools/demo_timeline.py`); the self-test
 does the same.
+
+```bash
+build/SRMetal.app/Contents/MacOS/SRMetal --demo-live troll 30
+```
+
+starts Play Demo's running order at a scene (or a part number) with the real music player, muted (add
+`sound` to hear it), for 30 seconds, drawing nothing, and prints when each later part starts compared
+with a full run: a check that the music, started part-way, keeps the demo on time.
 
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --scaler-compare 07-troll out-folder 120 15 80

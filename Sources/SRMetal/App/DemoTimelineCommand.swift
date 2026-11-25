@@ -3,16 +3,25 @@ import Foundation
 /// The music for a run of the demo without sound: libopenmpt renders each song silently, 1/70 s
 /// (630 samples at 44,100 Hz) per step, exactly as `tools/music_steps.c` does for the Python simulation.
 final class SilentMusic: DemoMusicSource {
+    static let sampleRate = 44_100
+    static let framesPerStep = 630
     private var song: TrackerSong?
     private var buffer = [Float]()
     private(set) var orderList: [Int] = []
     private(set) var problem: String?
+    /// The section the song was started from, and how many sample pairs have passed since.
+    private var startOrder = 0
+    private var framesSinceStart = 0
 
-    func play(_ which: Song, fromOrder order: Int) {
+    func play(_ which: Song, fromOrder order: Int, skipping seconds: Double) {
         do {
             let tracker = try TrackerSong.wholeSong(which, fromOrder: order)
+            let frames = Int((seconds * Double(Self.sampleRate)).rounded())
+            tracker.skip(seconds: seconds, sampleRate: Self.sampleRate)
             song = tracker
             orderList = tracker.orderList
+            startOrder = order
+            framesSinceStart = frames
         } catch {
             problem = "\(error)"
         }
@@ -23,9 +32,17 @@ final class SilentMusic: DemoMusicSource {
         return MusicPosition(song: song.song, order: song.currentOrder, row: song.currentRow)
     }
 
+    /// The song playing, the section it was started from and exactly how long it has played since
+    /// (to the sample), or nil.
+    var playing: (song: Song, order: Int, seconds: Double)? {
+        song.map { ($0.song, startOrder, Double(framesSinceStart) / Double(Self.sampleRate)) }
+    }
+
     /// Lets 1/70 s of music pass.
     func stepPassed() {
-        song?.render(into: &buffer, frames: 630, sampleRate: 44_100)
+        guard let song else { return }
+        song.render(into: &buffer, frames: Self.framesPerStep, sampleRate: Self.sampleRate)
+        framesSinceStart += Self.framesPerStep
     }
 }
 
@@ -86,5 +103,49 @@ enum DemoTimelineCommand {
         print(String(format: "Simulated %@ of demo in %.1f s. ", time(sequencer.time), Date().timeIntervalSince(started))
               + (wrong.isEmpty ? "Every part starts at the step tools/demo_timeline.py gives." : "\(wrong.count) differences."))
         return wrong.isEmpty && problem == nil
+    }
+
+    /// `--demo-live <scene id | part number> <seconds> [sound]`: Play Demo's script from that point with the
+    /// REAL music player (muted unless `sound` is given), stepped by the clock, nothing drawn. Prints when
+    /// each part starts against the full run's step: proof the live music, started part-way, keeps the
+    /// demo on time (the app's own window only steps while it is on screen).
+    static func live(arguments: [String]) -> Bool {
+        guard let flag = arguments.firstIndex(of: "--demo-live"), flag + 2 < arguments.count,
+              let start = DemoStart(argument: arguments[flag + 1]), let seconds = Double(arguments[flag + 2]) else {
+            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound]")
+            return false
+        }
+        guard let ahead = DemoSequencer.fastForward(to: start) else { print("The demo never reaches \(start)"); return false }
+        let player = MusicPlayer()
+        player.muted = !arguments.contains("sound")
+        let music = LiveDemoMusic(player: player, look: { .modern })
+        let sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
+        let began = Date()
+        if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
+        print(String(format: "Started at %@ (step %d, %@), %@ from section %d + %.3f s (music ready in %.0f ms)",
+                     "\(start)", sequencer.time, time(sequencer.time), ahead.song?.rawValue ?? "no song", ahead.order,
+                     ahead.seconds, Date().timeIntervalSince(began) * 1000))
+        let firstStep = sequencer.time
+        var parts = sequencer.partStarts.count
+        var worst = 0
+        let clock = Date()
+        while Date().timeIntervalSince(clock) < seconds {
+            let due = firstStep + Int(Date().timeIntervalSince(clock) * 70)
+            while sequencer.time < due {
+                sequencer.tick()
+                if sequencer.partStarts.count != parts, let part = sequencer.partStarts.last {
+                    parts = sequencer.partStarts.count
+                    let want = expected.first { $0.name == part.name }?.step ?? -1
+                    worst = max(worst, abs(part.step - want))
+                    let p = player.position
+                    print(String(format: "  %-40@ step %d, full run %d (%+d steps = %+.2f s); music section %d row %d",
+                                 part.name, part.step, want, part.step - want, Double(part.step - want) / 70, p.order, p.row))
+                }
+            }
+            usleep(2_000)
+        }
+        player.stop()
+        print("Worst difference: \(worst) steps (\(String(format: "%.2f", Double(worst) / 70)) s)")
+        return worst <= 35
     }
 }

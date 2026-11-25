@@ -77,6 +77,24 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads
   its 3D data) can take a moment at the start of a part.
 
+### Starting part-way ("Play Demo from Here", 2026-11-24)
+
+Play Demo can start where a scene first shows or where a part begins (Scene menu, or `--from`). The script
+is run silently up to that step, with the music rendered silently as in `--demo-timeline` (the whole demo
+takes about 0.2 s), then carried on live: the song the script last started is started again from the same
+section, and the time it has played since is rendered and thrown away (to the sample; about 0.15 s even
+six minutes into song 2), so the music is exactly where a full run's would be. libopenmpt's own "jump to a
+time" was tried first and dropped: it lands at the start of a row, and in song 1 after its "---" marks,
+where the demo restarts it for the city, its clock counts from a different place (it went to the wrong
+music). The scene is then shown as in a full run, including the music it is told on the step it first
+shows (the lens's cue is already met there).
+
+Checked: from each of the 19 scenes and 20 parts, a silent run carried on this way starts every later
+part on exactly the step of a full run (self-test); music skipped into is sample for sample the music
+played through (self-test, three places); and with the real sound output (`--demo-live`), later parts
+started within 0-3 steps (at most 0.04 s) of a full run, from the switch-off, the rotozoomer and the
+end picture.
+
 ## How the music is used
 
 - **Song 1** is `MUSIC0.S3M` (Skaven), **song 2** `MUSIC1.S3M` (Purple Motion). The loader

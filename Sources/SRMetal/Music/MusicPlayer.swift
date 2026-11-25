@@ -36,13 +36,16 @@ final class MusicPlayer {
     /// Called on the main thread when a song plays to its end.
     var onFinished: (() -> Void)?
 
-    /// Starts `song` from the beginning of section `order` (normally 0), in the given sound,
-    /// replacing whatever was playing. Song 1 plays at the demo's tempo (see `TrackerSong.init`).
-    func play(_ song: Song, look: Look, fromOrder order: Int = 0) throws {
+    /// Starts `song` from the beginning of section `order` (normally 0), `skipping` seconds into it,
+    /// in the given sound, replacing whatever was playing. Song 1 plays at the demo's tempo (see
+    /// `TrackerSong.init`).
+    func play(_ song: Song, look: Look, fromOrder order: Int = 0, skipping seconds: Double = 0) throws {
+        try startEngineIfNeeded()
         let tracker = try TrackerSong.wholeSong(song, fromOrder: order)
+        if seconds > 0 { tracker.skip(seconds: seconds, sampleRate: sampleRate) }
         tracker.setSound(look)
         let list = tracker.orderList
-        try startEngineIfNeeded()
+        let start = MusicPosition(song: song, order: tracker.currentOrder, row: tracker.currentRow)
         // Swap the new song in; the old one is released here, on the main thread, after the swap.
         let old = shared.withLock { state -> TrackerSong? in
             let old = state.song
@@ -51,7 +54,7 @@ final class MusicPlayer {
             state.lookChanged = false
             state.finished = false
             // Inside `shared`, so no block of the old song can report its position after this.
-            reached.withLock { $0 = MusicPosition(song: song, order: order, row: 0) }
+            reached.withLock { $0 = start }
             return old
         }
         _ = old
@@ -80,6 +83,12 @@ final class MusicPlayer {
     /// How far into the song the sound output has got, in seconds (0 when stopped). Main thread.
     var positionSeconds: Double {
         shared.withLockUnchecked { state in state.song?.positionSeconds ?? 0 }
+    }
+
+    /// Silences the sound output or brings it back. The song keeps playing either way, so Play Demo,
+    /// which follows the music's position, keeps its timing. Main thread.
+    var muted = false {
+        didSet { engine.mainMixerNode.outputVolume = muted ? 0 : 1 }
     }
 
     /// Switches between the clean and the gritty sound while playing (takes effect within a block).

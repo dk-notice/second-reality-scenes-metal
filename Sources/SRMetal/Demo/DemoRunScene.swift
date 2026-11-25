@@ -16,6 +16,15 @@ enum DemoPictures {
     }
 }
 
+enum DemoError: Error, CustomStringConvertible {
+    case noSuchStart(String)
+    var description: String {
+        switch self {
+        case .noSuchStart(let what): return "Play Demo never reaches \(what)"
+        }
+    }
+}
+
 /// The music player as the sequencer's music source.
 final class LiveDemoMusic: DemoMusicSource {
     let player: MusicPlayer
@@ -27,9 +36,9 @@ final class LiveDemoMusic: DemoMusicSource {
         self.look = look
     }
 
-    func play(_ song: Song, fromOrder order: Int) {
+    func play(_ song: Song, fromOrder order: Int, skipping seconds: Double) {
         do {
-            try player.play(song, look: look(), fromOrder: order)
+            try player.play(song, look: look(), fromOrder: order, skipping: seconds)
         } catch {
             NSLog("SR Metal: Play Demo could not start \(song.rawValue): \(error)")
         }
@@ -47,12 +56,13 @@ final class DemoRunScene: DemoScene {
 
     /// Play Demo as a scene the window or a command can show. Not in `SceneCatalog.all`: it is not in
     /// the sidebar or the per-scene checks. `configure` sets up each new run (the app's hooks).
-    static func entry(music: @escaping () -> DemoMusicSource,
+    static func entry(music: @escaping () -> DemoMusicSource, start: @escaping () -> DemoStart? = { nil },
                       configure: @escaping (DemoRunScene) -> Void = { _ in }) -> SceneEntry {
         SceneEntry(id: id, title: "Play Demo", credit: "Future Crew", canvasSize: SIMD2(320, 200),
                    checkpoints: [], thumbnailStep: 0,
                    make: { device, format in
-                       let scene = try DemoRunScene(device: device, pixelFormat: format, music: music())
+                       let scene = try DemoRunScene(device: device, pixelFormat: format, music: music(), from: start())
+                       scene.startProvider = start
                        configure(scene)
                        return scene
                    })
@@ -85,16 +95,39 @@ final class DemoRunScene: DemoScene {
     private var picture: (name: String, picture: ScenePicture)?
     private var cards: [String: ScenePicture] = [:]
 
-    init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource) throws {
+    /// `start`: where to begin, if not at the start. The script is run silently up to there (quickly,
+    /// drawing nothing), then carries on with `music`, started at the same place to the sample.
+    init(device: MTLDevice, pixelFormat: MTLPixelFormat, music: DemoMusicSource, from start: DemoStart? = nil) throws {
         self.device = device
         self.pixelFormat = pixelFormat
         self.music = music
         self.sequencer = DemoSequencer(music: music)
         self.loader = MTKTextureLoader(device: device)
         self.pictureLayer = try PictureLayer.shared(device: device, pixelFormat: pixelFormat)
+        self.start = start
 
         hookUp()
+        if let start { try resume(at: start) }
     }
+
+    /// Where this run began (nil: the start of the demo).
+    private(set) var start: DemoStart?
+    /// Asked again on each restart, so a restart can begin somewhere else (the app's "Play Demo from").
+    var startProvider: (() -> DemoStart?)?
+
+    private func resume(at start: DemoStart) throws {
+        guard let ahead = DemoSequencer.fastForward(to: start) else { throw DemoError.noSuchStart("\(start)") }
+        sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
+        hookUp()
+        if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
+        show(ahead.visual, musicAtShow: ahead.musicAtShow)
+        partsStarted = sequencer.partStarts.count
+        pendingPartNotice = true
+    }
+
+    /// After a resume, the part already playing is announced on the first step (the app's hooks are
+    /// set up after the scene is made).
+    private var pendingPartNotice = false
 
     private func hookUp() {
         sequencer.onShow = { [weak self] visual in self?.show(visual) }
@@ -115,7 +148,12 @@ final class DemoRunScene: DemoScene {
         sequencer = DemoSequencer(music: music)
         shown = .black
         partsStarted = 0
+        pendingPartNotice = false
         hookUp()
+        if let startProvider { start = startProvider() }
+        if let start {
+            do { try resume(at: start) } catch { NSLog("SR Metal: Play Demo could not start at \(start): \(error)") }
+        }
     }
 
     func tick() {
@@ -125,6 +163,12 @@ final class DemoRunScene: DemoScene {
             scene.tick()
         }
         sequencer.tick()
+        if pendingPartNotice, let (name, step) = sequencer.partStarts.last {
+            pendingPartNotice = false
+            if logsParts { NSLog("SR Metal: Play Demo started at part %d \"%@\" (began at step %d, %@)",
+                                 sequencer.partStarts.count, name, step, DemoTimelineCommand.time(step)) }
+            onPart?(name)
+        }
         if sequencer.partStarts.count != partsStarted {
             partsStarted = sequencer.partStarts.count
             if let (name, step) = sequencer.partStarts.last {
@@ -166,7 +210,7 @@ final class DemoRunScene: DemoScene {
 
     // MARK: - Changing what is shown
 
-    private func show(_ visual: DemoVisual) {
+    private func show(_ visual: DemoVisual, musicAtShow: DemoMusicState? = nil) {
         // The last picture's Modern-look version is let go; its small original stays (the ships'
         // horizon is shown twice in a row).
         if case .picture(let name) = visual, picture?.name == name {} else { picture?.picture.dropUpscaled() }
@@ -177,7 +221,7 @@ final class DemoRunScene: DemoScene {
                 let scene = try entry.make(device, pixelFormat)
                 // Told the music on the step it first shows (before the script checks its next cue), so a
                 // scene that waits for a cue already met starts on the same step as the script.
-                scene.demoUpdate(DemoContext(music: sequencer.musicState, justShown: true))
+                scene.demoUpdate(DemoContext(music: musicAtShow ?? sequencer.musicState, justShown: true))
                 shown = .scene(scene, entry.canvasSize)
             } catch {
                 NSLog("SR Metal: Play Demo could not start scene \(id): \(error)")

@@ -49,7 +49,9 @@ enum DemoStep {
 
 /// Where the sequencer gets the music from: the real player, or (for checks) a song rendered silently.
 protocol DemoMusicSource: AnyObject {
-    func play(_ song: Song, fromOrder order: Int)
+    /// Starts `song` from the beginning of section `order`, `skipping` that many seconds of it (to the
+    /// sample): Play Demo started part-way through.
+    func play(_ song: Song, fromOrder order: Int, skipping seconds: Double)
     var position: MusicPosition { get }
     var orderList: [Int] { get }
     /// Called once at the end of every step (silent music renders 1/70 s here; real music plays on its own).
@@ -57,6 +59,7 @@ protocol DemoMusicSource: AnyObject {
 }
 
 extension DemoMusicSource {
+    func play(_ song: Song, fromOrder order: Int) { play(song, fromOrder: order, skipping: 0) }
     func stepPassed() {}
 }
 
@@ -124,8 +127,42 @@ enum DemoScript {
         return s
     }()
 
+    /// The parts' names, in order.
+    static let partNames: [String] = steps.compactMap { if case .part(let name) = $0 { return name } else { return nil } }
+
+    /// The scenes the script shows, in order (each shows once).
+    static let sceneIDs: [String] = steps.compactMap { if case .show(.scene(let id)) = $0 { return id } else { return nil } }
+
     /// The pictures the script shows, in order.
     static let pictures: [String] = steps.compactMap { if case .show(.picture(let name)) = $0 { return name } else { return nil } }
+}
+
+/// Where Play Demo starts, when not from the beginning: where a scene first shows, or a part begins.
+enum DemoStart: Equatable {
+    case scene(String)
+    /// A part by its number in `DemoScript.partNames`, from 0.
+    case part(Int)
+
+    /// From the command line: a scene id, or a part number from 1 (as `--demo-timeline` lists them).
+    init?(argument: String) {
+        if let number = Int(argument), (1...DemoScript.partNames.count).contains(number) { self = .part(number - 1) }
+        else if DemoScript.sceneIDs.contains(argument) { self = .scene(argument) }
+        else { return nil }
+    }
+}
+
+/// The demo run silently up to a starting point, ready to be continued with the real music.
+struct DemoFastForward {
+    /// The sequencer just after the step on which the start was shown (its music is silent).
+    let sequencer: DemoSequencer
+    /// What that step showed, and the music as the script saw it then (for the scene's `justShown`).
+    let visual: DemoVisual
+    let musicAtShow: DemoMusicState
+    /// The song playing, the section the script started it from, and how long it has played, to the
+    /// sample, when the next step begins.
+    let song: Song?
+    let order: Int
+    let seconds: Double
 }
 
 /// Follows `DemoScript.steps`. Call `tick()` once per 1/70 s step.
@@ -147,6 +184,41 @@ final class DemoSequencer {
     private var noted = 0
 
     init(music: DemoMusicSource) { self.music = music }
+
+    /// Carries on where `other` is, with `music` instead of its music (which the caller starts at the
+    /// same place).
+    init(continuing other: DemoSequencer, music: DemoMusicSource) {
+        self.music = music
+        time = other.time
+        partStarts = other.partStarts
+        finished = other.finished
+        index = other.index
+        spent = other.spent
+        frameCounter = other.frameCounter
+        noted = other.noted
+    }
+
+    /// Runs the script silently (without drawing anything, so quickly: the whole demo takes about
+    /// 0.2 s) up to the step on which `start` shows. nil if the script never gets there.
+    static func fastForward(to start: DemoStart) -> DemoFastForward? {
+        let music = SilentMusic()
+        let sequencer = DemoSequencer(music: music)
+        var found: (DemoVisual, DemoMusicState)?
+        var last: (DemoVisual, DemoMusicState)?
+        sequencer.onShow = { [unowned sequencer] visual in
+            last = (visual, sequencer.musicState)
+            if case .scene(let wanted) = start, case .scene(let id) = visual, id == wanted { found = last }
+        }
+        while found == nil && !sequencer.finished && sequencer.time < 70 * 60 * 15 {
+            sequencer.tick()
+            if case .part(let number) = start, sequencer.partStarts.count == number + 1 { found = last }
+        }
+        sequencer.onShow = nil
+        guard let (visual, state) = found else { return nil }
+        let playing = music.playing
+        return DemoFastForward(sequencer: sequencer, visual: visual, musicAtShow: state,
+                               song: playing?.song, order: playing?.order ?? 0, seconds: playing?.seconds ?? 0)
+    }
 
     var currentPart: String? { partStarts.last?.name }
 

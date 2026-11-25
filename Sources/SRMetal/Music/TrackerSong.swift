@@ -97,6 +97,21 @@ final class TrackerSong {
     /// How far into the song playback has got, in seconds.
     var positionSeconds: Double { openmpt_module_get_position_seconds(module) }
 
+    /// Moves on `seconds` (to the sample, at `sampleRate`) by rendering that much and throwing it away:
+    /// exactly the state the song would be in had it played that long (about 0.15 s for six minutes of
+    /// music). libopenmpt's own jump to a time was not used: it lands on a row's start, and for song 1
+    /// after its "---" marks (where the demo restarts it for the city) its clock counts from a different
+    /// place. Call before handing the song to the audio thread (this allocates).
+    func skip(seconds: Double, sampleRate: Int) {
+        var rest = Int((seconds * Double(sampleRate)).rounded())
+        var scratch = [Float]()
+        while rest > 0 {
+            let done = render(into: &scratch, frames: min(rest, 65_536), sampleRate: sampleRate)
+            if done == 0 { break }
+            rest -= done
+        }
+    }
+
     /// Renders the next `frames` sample pairs into two separate channels, without allocating memory
     /// (safe to call from the audio thread). Returns how many were rendered: fewer at the end.
     func render(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, sampleRate: Int) -> Int {

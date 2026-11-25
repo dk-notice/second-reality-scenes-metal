@@ -20,6 +20,7 @@ enum CoreChecks {
         smoothTriangleGeometry(check)
         music(check)
         demoTimeline(check)
+        demoFromHere(check)
         rotozoomerTiming(check)
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
@@ -34,6 +35,7 @@ enum CoreChecks {
             try pictureFades(check, device: device, queue: queue)
             try rotozoomerPictures(check, device: device)
             try lens(check, device: device)
+            try demoFromHereShown(check, device: device)
         } catch {
             check("Core: drawing checks could be set up", false, "\(error)")
         }
@@ -100,6 +102,68 @@ enum CoreChecks {
             scene.tick()
         }
         check("Rotozoomer: 1993 pictures match tools/rotozoom_reference.py at steps \(steps)", sums == expected, "\(sums)")
+    }
+
+    // MARK: - Play Demo from here (added 2026-11-24)
+
+    /// Starting part-way: the script is run silently to the start, then carried on with music started
+    /// that far into the song. From every scene the demo shows and every part, every later part must
+    /// start on exactly the step a full run gives (this checks the hand-over and the music jump together).
+    private static func demoFromHere(_ check: (String, Bool, String) -> Void) {
+        let starts = DemoScript.sceneIDs.map { DemoStart.scene($0) } + (1..<DemoScript.partNames.count).map { DemoStart.part($0) }
+        var wrong: [String] = []
+        for start in starts {
+            guard let ahead = DemoSequencer.fastForward(to: start) else { wrong.append("\(start): never reached"); continue }
+            let music = SilentMusic()
+            let sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
+            if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
+            while !sequencer.finished && sequencer.time < 70 * 60 * 15 { sequencer.tick() }
+            let differences = DemoTimelineCommand.differences(sequencer.partStarts)
+            if !differences.isEmpty || music.problem != nil {
+                wrong.append("\(start): \(music.problem ?? differences.prefix(2).joined(separator: "; "))")
+            }
+        }
+        check("Play Demo from here: started at each of \(starts.count) points (\(DemoScript.sceneIDs.count) scenes, \(DemoScript.partNames.count - 1) parts), every later part starts on the same step as a full run",
+              wrong.isEmpty, wrong.prefix(3).joined(separator: " | "))
+        check("Play Demo from here: the command line takes scene ids and part numbers, and refuses others",
+              DemoStart(argument: "troll") == .scene("troll") && DemoStart(argument: "11") == .part(10)
+                && DemoStart(argument: "starfield") == nil && DemoStart(argument: "0") == nil
+                && DemoStart(argument: "\(DemoScript.partNames.count + 1)") == nil, "")
+
+        // The music jump itself: 2 seconds after skipping into a song are the same samples as those 2
+        // seconds reached by playing the song through (song 2 at the troll and late, song 1 started from
+        // section 18 as for the city).
+        var report: [String] = []
+        var good = true
+        for (song, order, seconds) in [(Song.second, 0, 207.3), (Song.second, 0, 360.0), (Song.first, 18, 43.4)] {
+            guard let straight = try? TrackerSong.wholeSong(song, fromOrder: order),
+                  let jumped = try? TrackerSong.wholeSong(song, fromOrder: order) else { good = false; continue }
+            var skip = [Float]()
+            for _ in 0..<Int((seconds * 70).rounded()) { straight.render(into: &skip, frames: 630, sampleRate: 44_100) }
+            jumped.skip(seconds: seconds, sampleRate: 44_100)
+            var a = [Float](), b = [Float]()
+            straight.render(into: &a, frames: 88_200, sampleRate: 44_100)
+            jumped.render(into: &b, frames: 88_200, sampleRate: 44_100)
+            let loud = a.contains { abs($0) > 0.01 }
+            report.append("\(song.rawValue) from section \(order) + \(seconds) s: \(a == b ? "identical" : "different")\(loud ? "" : " (silent!)")")
+            if a != b || !loud { good = false }
+        }
+        check("Play Demo from here: music skipped into is sample for sample what playing it through gives", good,
+              report.joined(separator: "; "))
+    }
+
+    /// Play Demo started at a scene shows that scene at once, and the lens (whose cue is already met when
+    /// it first shows) starts its uncovering on that first step, as in a full run.
+    private static func demoFromHereShown(_ check: (String, Bool, String) -> Void, device: MTLDevice) throws {
+        let troll = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(), from: .scene("troll"))
+        let lens = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(), from: .scene("lens"))
+        let lensPhase = (lens.sceneShowing as? LensScene)?.model.phase
+        let water = try DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(),
+                                     from: .part(DemoScript.partNames.firstIndex(of: "Water scroller") ?? 0))
+        check("Play Demo from here: starts showing the chosen scene (troll), the lens uncovering at once, and a picture part (water)",
+              troll.sceneShowing is TrollScene && troll.currentPart == "Rings, interference, techno bars, troll"
+                && lensPhase == .reveal && water.currentPart == "Water scroller" && water.sceneShowing == nil,
+              "troll: \(troll.currentPart ?? "-"), lens: \(String(describing: lensPhase)), water: \(water.currentPart ?? "-")")
     }
 
     // MARK: - The lens (added 2026-11-24)
