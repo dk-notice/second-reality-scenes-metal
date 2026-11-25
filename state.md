@@ -302,11 +302,13 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   changed pixels around steps 1850-1870 = the camera's extreme close-up (same in both looks).
 - Seen by Claude: snapshots of both looks (steps 100, 500, 1300, 1862) and Play Demo at step 20500.
   NOT seen by the user in the running app yet; not compared with the original running.
-- BUILD NOTE (2026-11-24): in this worktree `build.sh`'s last step (`codesign`) fails with "resource
-  fork, Finder information, or similar detritus not allowed": the app folder gets a
-  `com.apple.FinderInfo` / `com.apple.fileprovider` tag straight back after `xattr -cr` (the Documents
-  folder looks synced by a file provider, e.g. iCloud). Everything before it is done and the program
-  runs (the linker already signs the program itself). Not fixed; the user to decide.
+- BUILD NOTE (2026-11-24): the first builds in this new worktree failed at `build.sh`'s last step
+  (`codesign`: "resource fork, Finder information, or similar detritus not allowed"); the new app folder
+  carried `com.apple.FinderInfo` / `com.apple.fileprovider` tags that came straight back after
+  `xattr -cr`. Retried later at the user's request: `xattr -cr` + `codesign` worked, and a full
+  `./build.sh` then passed with a valid signature (only `com.apple.provenance` left). Looks like a
+  one-off while the folder was new (Documents seems synced by a file provider). If it comes back:
+  `xattr -cr build/SRMetal.app && codesign --force --sign - build/SRMetal.app`.
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,
