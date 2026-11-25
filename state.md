@@ -426,8 +426,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   first value already has the top 31 rows down, in 1993 too).
 - Docs: `docs/scenes/jelly-logo.md` with 3 pictures; README, demo-timeline, original-demo (ZOOM.INC was
   written beforehand, not at run time) updated.
-- Seen by Claude: snapshots of both looks at steps 111 and 165, Play Demo at step 33000. NOT seen by the
-  user in the app yet; not compared with the original running. Open: the white border (overscan) is left out.
+- Seen by Claude: snapshots of both looks at steps 111 and 165, Play Demo at step 33000. Seen by the user in the
+  running app (2026-11-25: "looks right" after the pause was removed); merged into main the same day. Not
+  compared with the original running. Open: the white border (overscan) is left out.
 - NEXT (agreed order): mountain scroller, credits, opening credits (font decisions first), water last.
 
 ## Code review of the Play Demo work (2026-11-24)
