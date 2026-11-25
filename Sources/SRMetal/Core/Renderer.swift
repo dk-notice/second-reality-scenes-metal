@@ -65,6 +65,9 @@ final class Renderer: NSObject, MTKViewDelegate {
         lastTime = nil
     }
 
+    /// After the view was paused (its window hidden): time starts again from now, with nothing to make up.
+    func resumeAfterPause() { lastTime = nil }
+
     // MARK: - Clock
 
     /// Runs as many 1/70 s steps as real time calls for, and returns how far we are into the next one.
@@ -73,7 +76,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         defer { lastTime = now }
         guard let last = lastTime else { return 0 }
 
-        let due = clock.advance(by: now - last)
+        let due = clock.advance(by: now - last, longest: scene.longestCatchUp)
         for _ in 0..<due.steps { scene.tick() }
         return due.alpha
     }
@@ -176,16 +179,16 @@ struct StepClock {
     /// Length of one step in seconds.
     static let step = 1.0 / Renderer.tickRate
     /// After a pause (window hidden, Mac asleep) at most this much time is caught up on, so the
-    /// scene does not race through minutes of steps.
+    /// scene does not race through minutes of steps. (A scene may ask for more: `DemoScene.longestCatchUp`.)
     static let longestCatchUp = 0.25
 
     /// Time not yet turned into steps: always at least 0 and less than one step.
     private(set) var owed = 0.0
 
-    /// Adds `elapsed` seconds of real time. Returns how many whole steps are now due, and how far
-    /// we are into the next one: 0 up to, but never reaching, 1.
-    mutating func advance(by elapsed: Double) -> (steps: Int, alpha: Float) {
-        owed += min(max(elapsed, 0), Self.longestCatchUp)
+    /// Adds `elapsed` seconds of real time, `longest` at most. Returns how many whole steps are now
+    /// due, and how far we are into the next one: 0 up to, but never reaching, 1.
+    mutating func advance(by elapsed: Double, longest: Double = longestCatchUp) -> (steps: Int, alpha: Float) {
+        owed += min(max(elapsed, 0), longest)
         var steps = 0
         while owed >= Self.step {
             owed -= Self.step

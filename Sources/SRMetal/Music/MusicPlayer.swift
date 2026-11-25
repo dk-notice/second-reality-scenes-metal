@@ -85,6 +85,20 @@ final class MusicPlayer {
         didSet { engine.mainMixerNode.outputVolume = muted ? 0 : 1 }
     }
 
+    /// Holds the music where it is (true) and lets it go on from there (false): Play Demo pauses with
+    /// its picture while the window cannot be seen, so the two stay together. Paused, the sound output is
+    /// stopped, so the song's position does not move; a song started meanwhile waits too. Main thread.
+    var paused = false {
+        didSet {
+            guard paused != oldValue else { return }
+            if paused {
+                engine.pause()
+            } else if shared.withLock({ $0.song != nil }) {
+                do { try startEngineIfNeeded() } catch { NSLog("SR Metal: the music could not carry on after a pause: \(error)") }
+            }
+        }
+    }
+
     /// Switches between the clean and the gritty sound while playing (takes effect within a block).
     func setSound(_ look: Look) {
         shared.withLock { state in
@@ -106,7 +120,7 @@ final class MusicPlayer {
             engine.connect(node, to: engine.mainMixerNode, format: format)
             source = node
         }
-        if !engine.isRunning {
+        if !engine.isRunning && !paused {
             try engine.start()
         }
     }

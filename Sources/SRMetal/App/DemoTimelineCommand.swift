@@ -107,15 +107,27 @@ enum DemoTimelineCommand {
         return wrong.isEmpty && problem == nil
     }
 
-    /// `--demo-live <scene id | part number> <seconds> [sound]`: Play Demo's script from that point with the
-    /// REAL music player (muted unless `sound` is given), stepped by the clock, nothing drawn. Prints when
-    /// each part starts against the full run's step: proof the live music, started part-way, keeps the
-    /// demo on time (the app's own window only steps while it is on screen).
+    /// `--demo-live <scene id | part number> <seconds> [sound] [pause <at> <for>]`: Play Demo's script from
+    /// that point with the REAL music player (muted unless `sound` is given), stepped by the clock, nothing
+    /// drawn. Prints when each part starts against the full run's step: proof the live music, started
+    /// part-way, keeps the demo on time (the app's own window only steps while it is on screen).
+    /// `pause <at> <for>`: after `at` seconds the music and the steps are paused together for `for` seconds,
+    /// as the app does while its window cannot be seen; the parts after it must still be on time, and the
+    /// music must not have moved meanwhile.
     static func live(arguments: [String]) -> Bool {
         guard let flag = arguments.firstIndex(of: "--demo-live"), flag + 2 < arguments.count,
               let start = DemoStart(argument: arguments[flag + 1]), let seconds = Double(arguments[flag + 2]) else {
-            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound]")
+            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound] [pause <at seconds> <for seconds>]")
             return false
+        }
+        var pause: (at: Double, length: Double)?
+        if let word = arguments.firstIndex(of: "pause") {
+            guard word + 2 < arguments.count, let at = Double(arguments[word + 1]), let length = Double(arguments[word + 2]),
+                  at >= 0, length > 0 else {
+                print("pause needs two numbers: after how many seconds, and for how long")
+                return false
+            }
+            pause = (at, length)
         }
         guard let ahead = DemoSequencer.fastForward(to: start) else { print("The demo never reaches \(start)"); return false }
         let player = MusicPlayer()
@@ -130,8 +142,21 @@ enum DemoTimelineCommand {
         let firstStep = sequencer.time
         var parts = sequencer.partStarts.count
         var worst = 0
-        let clock = Date()
+        var clock = Date()
+        var movedWhilePaused: Double?
         while Date().timeIntervalSince(clock) < seconds {
+            if let now = pause, Date().timeIntervalSince(clock) >= now.at {
+                // Music and steps stop together; afterwards the step clock carries on from where it stopped.
+                pause = nil
+                player.paused = true
+                usleep(200_000)                       // (sound already handed to the output plays out)
+                let before = player.positionSeconds
+                usleep(UInt32(now.length * 1_000_000))
+                movedWhilePaused = player.positionSeconds - before
+                player.paused = false
+                clock = clock.addingTimeInterval(now.length + 0.2)
+                print(String(format: "  paused %.1f s at %.1f s: the music moved %.3f s meanwhile", now.length, now.at, movedWhilePaused ?? -1))
+            }
             let due = firstStep + Int(Date().timeIntervalSince(clock) * 70)
             while sequencer.time < due {
                 sequencer.tick()
@@ -148,6 +173,6 @@ enum DemoTimelineCommand {
         }
         player.stop()
         print("Worst difference: \(worst) steps (\(String(format: "%.2f", Double(worst) / 70)) s)")
-        return worst <= 35
+        return worst <= 35 && (movedWhilePaused ?? 0) == 0
     }
 }

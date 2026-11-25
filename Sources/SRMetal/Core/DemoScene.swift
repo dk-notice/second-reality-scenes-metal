@@ -53,6 +53,10 @@ protocol DemoScene: AnyObject {
     /// example the techno bars' flash on the beat). Shown on its own, a scene is never called this and
     /// keeps its own clock. The default does nothing.
     func demoUpdate(_ context: DemoContext)
+    /// How much lost time (seconds) the clock makes up after a stall, by running the missed steps at once.
+    /// The default is a quarter of a second: a scene on its own has nothing to keep level with. Play Demo
+    /// asks for more, because its music does not stall with the picture.
+    var longestCatchUp: Double { get }
     /// Only while Play Demo runs: what this scene leaves on the 1993 screen for the scene shown after it,
     /// where the original's next part started from the screen and palette the last one left (U2E.C reads
     /// JPLOGO's). nil, the default: nothing offered.
@@ -64,6 +68,7 @@ extension DemoScene {
     var currentCanvasSize: SIMD2<Float>? { nil }
     func demoUpdate(_ context: DemoContext) {}
     var handover: DemoHandover? { nil }
+    var longestCatchUp: Double { StepClock.longestCatchUp }
 }
 
 /// A part's last 1993 screen, handed to the next part (see `DemoScene.handover`).

@@ -151,6 +151,29 @@ final class AppModel: ObservableObject {
 
     private var keyMonitor: Any?
 
+    /// Whether the scene's window can be seen at all (not minimised, fully covered or on another desktop),
+    /// as the scene's view reports it, and whether the Mac is going to sleep.
+    var windowVisible = true { didSet { updateHidden() } }
+    private var asleep = false { didSet { updateHidden() } }
+    /// Nobody can see the picture: it stops, and Play Demo's music with it, and both carry on from the same
+    /// place afterwards. (The music plays on its own clock; left running, it would get ahead of a picture
+    /// that is not being drawn, and Play Demo's parts would miss their cues.)
+    @Published private(set) var hidden = false {
+        didSet { music.paused = hidden }
+    }
+    private func updateHidden() {
+        let now = !windowVisible || asleep
+        if now != hidden { hidden = now }
+    }
+    private var sleepObservers: [NSObjectProtocol] = []
+    private func watchSleep() {
+        let centre = NSWorkspace.shared.notificationCenter
+        sleepObservers = [
+            centre.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in self?.asleep = true },
+            centre.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in self?.asleep = false },
+        ]
+    }
+
     /// The music, played by Play Demo. The scenes in the sidebar are silent.
     let music = MusicPlayer()
     /// Music muted (M). The song keeps playing underneath, so Play Demo keeps its timing.
@@ -180,6 +203,7 @@ final class AppModel: ObservableObject {
         if options.sidebarHidden {
             columns = .detailOnly
         }
+        watchSleep()
     }
 
     var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
@@ -339,7 +363,8 @@ struct ContentView: View {
             SceneList()
                 .navigationSplitViewColumnWidth(min: 190, ideal: 220, max: 320)
         } detail: {
-            MetalView(entry: model.entry, look: model.look, restartCount: model.restartCount)
+            MetalView(entry: model.entry, look: model.look, restartCount: model.restartCount, paused: model.hidden,
+                      onVisibility: { [weak model] visible in model?.windowVisible = visible })
                 .frame(minWidth: 480, minHeight: 360)
                 .background(Color.black)
         }
@@ -437,11 +462,38 @@ struct SceneList: View {
     }
 }
 
+/// The Metal view, which also reports whether its window can be seen at all (macOS calls a window that
+/// is minimised, fully covered or on another desktop "occluded").
+final class SceneView: MTKView {
+    var onVisibility: ((Bool) -> Void)?
+    private var observer: NSObjectProtocol?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+        observer = nil
+        guard let window else { return }
+        observer = NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
+        ) { [weak self] note in
+            guard let window = note.object as? NSWindow else { return }
+            self?.onVisibility?(window.occlusionState.contains(.visible))
+        }
+    }
+
+    deinit {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+    }
+}
+
 /// Puts a Metal drawing surface inside the SwiftUI window.
 struct MetalView: NSViewRepresentable {
     let entry: SceneEntry
     let look: Look
     let restartCount: Int
+    /// The picture stands still (its window cannot be seen, or the Mac sleeps).
+    let paused: Bool
+    let onVisibility: (Bool) -> Void
 
     final class Coordinator {
         var renderer: Renderer?
@@ -451,7 +503,8 @@ struct MetalView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> MTKView {
-        let view = MTKView()
+        let view = SceneView()
+        view.onVisibility = onVisibility
         guard let device = MTLCreateSystemDefaultDevice() else {
             NSLog("SR Metal: this Mac has no Metal graphics device")
             return view
@@ -477,6 +530,10 @@ struct MetalView: NSViewRepresentable {
     func updateNSView(_ view: MTKView, context: Context) {
         guard let renderer = context.coordinator.renderer else { return }
         renderer.look = look
+        if view.isPaused != paused {
+            view.isPaused = paused
+            if !paused { renderer.resumeAfterPause() }
+        }
         do {
             try renderer.show(entry)
         } catch {

@@ -150,6 +150,13 @@ final class DemoRunScene: DemoScene {
 
     // MARK: - DemoScene
 
+    /// The music plays on while the picture stalls (a scene being made at a part change, a hitch), so the
+    /// missed steps are made up, not dropped: dropped, every later step would lag the music by that much
+    /// until the next cue. Five seconds covers any stall while the window shows; when it does not show,
+    /// the app pauses Play Demo and its music (`AppModel`), so there is nothing to make up.
+    static let longestCatchUp = 5.0
+    var longestCatchUp: Double { Self.longestCatchUp }
+
     func reset() {
         sequencer = DemoSequencer(music: music)
         shown = .black
