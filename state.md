@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (opening credits built, waiting for the user's look; the full earlier notes are in `docs/dev-notes.md`)
+Last updated: 2026-11-25 (opening credits built, seen by the user and merged: every part is now a scene; the full earlier notes are in `docs/dev-notes.md`)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -17,7 +17,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   Landscape, Jelly Logo, 3D City, End Picture, Credits, End Scroller, and the Hidden Starfield (last; not in the demo).
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
-  part is a real scene (the opening credits since 2026-11-25, on its branch until merged).
+  part is a real scene (the opening credits, the last, since 2026-11-25).
   Since 2026-11-25 every scene follows its original part's own timing inside it (the older scenes: each
   scene's page, "Inside Play Demo"; the 3D City starts from the jelly logo's last screen via
   `DemoHandover`). Seen by the user and merged 2026-11-25. Their standalone lengths differ from the
@@ -27,7 +27,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   second from its "speed adjust"), so inside Play Demo the interference now runs 989 steps (was 669) with
   full wobble and the original's flash to white; the techno lead-in (four columns wiped on four beats,
   `TechnoLeadIn`) is built; the techno bars show their third section (1,955 steps, was 1,260).
-- Self-test: 600 checks on main, all pass (626 on the opening-credits branch). `--demo-timeline`: every part starts on the step the research
+- Self-test: 626 checks, all pass. `--demo-timeline`: every part starts on the step the research
   simulation gives. main is pushed to GitHub (private repository) as of 2026-11-25, with the techno fixes.
 - The recent scenes (rotozoomer, lens, jelly logo, mountain scroller, water scroller) were each seen by
   the user in the running app and approved; for older ones see their notes. Nothing has been compared with
@@ -48,13 +48,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    width relate (the credits' text showed every other row; ALKU has its own TWEAK.ASM); the horizon and font
    are exported (`artwork/original/01-opening-*`). When built, capture it for the credits' picture 1
    (`CreditsModel.captures[0]`, find the step with `--credits-match 1 <scene id>`).
-   BUILT 2026-11-25 on branch `claude/alku-credits-research-2aa19e` (see `docs/scenes/opening-credits.md`),
-   NOT YET SEEN BY THE USER OR MERGED: released data (`Data/OpeningCredits/`, `tools/alku_reference.py`; ALKU.EXE
+   DONE 2026-11-25, seen by the user and merged into main (see `docs/scenes/opening-credits.md`): released data (`Data/OpeningCredits/`, `tools/alku_reference.py`; ALKU.EXE
    is PKLITE over LZEXE), 1993 look, Modern look in Superclarendon stretched to the 1993 line widths (user's
    choice; the Dolby logo through Super-xBR), Play Demo shows it. The part's real end is 1:20.1 (was
    approximated 1:12.9); timeline script, Python and `DemoTimelineCommand.expected` changed together, only
    the ships' start moved. Credits' picture 1 now captured from it (step 3664, the Code page).
-   NEXT: the user looks at it in the app; then merge into main, rebuild main's app, push when approved.
+   main's app rebuilt; NOT pushed yet (ask first).
 3. Then polish, only when the user asks: the open questions below.
 
 ## Open questions (not to be started unasked)
