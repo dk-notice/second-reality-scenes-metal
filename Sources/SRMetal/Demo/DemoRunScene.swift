@@ -41,6 +41,7 @@ final class LiveDemoMusic: DemoMusicSource {
             try player.play(song, look: look(), fromOrder: order, skipping: seconds)
         } catch {
             NSLog("SR Metal: Play Demo could not start \(song.rawValue): \(error)")
+            player.failed(error)
         }
     }
 

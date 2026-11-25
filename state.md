@@ -101,7 +101,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
   - `--demo-timeline`: runs Play Demo's script against silently rendered music (0.2 s) and compares every
-    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound]`: the same with the
+    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [pause <at> <for>] [rebuild <at>]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
   - `--scaler-compare <picture|file.png> <folder> [x y width] [--methods ...]`: labelled comparison sheets.
   - `--credits-match <picture 1-21> <scene id> [first last [stride]]`: the steps at which a scene's 1993

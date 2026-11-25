@@ -32,6 +32,45 @@ final class MusicPlayer {
     /// The order list of the song now playing (empty when stopped). Main thread only.
     private(set) var orderList: [Int] = []
 
+    /// Why there is no sound, in words, or nil when the output works. Play Demo follows the music's
+    /// position, so with no output it waits; the app shows this in the window's title. Main thread.
+    private(set) var problem: String? {
+        didSet { if problem != oldValue { onProblem?(problem) } }
+    }
+    var onProblem: ((String?) -> Void)?
+    private var outputWatch: NSObjectProtocol?
+
+    init() {
+        // macOS stops the engine when the sound output changes (headphones connected, another device
+        // chosen, a different sample rate) and leaves restarting it to the app.
+        outputWatch = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
+        ) { [weak self] _ in self?.rebuildOutput() }
+    }
+
+    deinit {
+        if let outputWatch { NotificationCenter.default.removeObserver(outputWatch) }
+    }
+
+    /// Makes the sound output again, at the rate the Mac's output now runs at, and carries on with the
+    /// song from exactly where it is (the tracker renders at any rate from its place). Main thread.
+    func rebuildOutput() {
+        engine.stop()
+        if let source {
+            engine.detach(source)
+            self.source = nil
+        }
+        guard shared.withLock({ $0.song != nil }) else { return }
+        do {
+            try startEngineIfNeeded()
+        } catch {
+            NSLog("SR Metal: the sound output could not be restarted: \(error)")
+        }
+    }
+
+    /// Records that a song could not be started (shown by the app as `problem`).
+    func failed(_ error: Error) { problem = "\(error)" }
+
     /// Starts `song` from the beginning of section `order` (normally 0), `skipping` seconds into it,
     /// in the given sound, replacing whatever was playing. Song 1 plays at the demo's tempo (see
     /// `TrackerSong.init`).
@@ -66,6 +105,7 @@ final class MusicPlayer {
         }
         _ = old
         orderList = []
+        problem = nil
         engine.pause()
     }
 
@@ -121,8 +161,14 @@ final class MusicPlayer {
             source = node
         }
         if !engine.isRunning && !paused {
-            try engine.start()
+            do {
+                try engine.start()
+            } catch {
+                problem = "the sound output would not start (\(error.localizedDescription))"
+                throw error
+            }
         }
+        problem = nil
     }
 
     /// The code the audio thread runs for every block of sound (a few milliseconds' worth).

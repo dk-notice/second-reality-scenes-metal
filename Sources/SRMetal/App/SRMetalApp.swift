@@ -180,6 +180,8 @@ final class AppModel: ObservableObject {
     @Published var musicMuted = false {
         didSet { music.muted = musicMuted }
     }
+    /// Why Play Demo has no sound (and so waits), or nil.
+    @Published private(set) var musicProblem: String?
     /// Where Play Demo started (nil: the beginning). Read again on each restart.
     @Published private(set) var demoStart: DemoStart?
 
@@ -204,6 +206,7 @@ final class AppModel: ObservableObject {
             columns = .detailOnly
         }
         watchSleep()
+        music.onProblem = { [weak self] problem in self?.musicProblem = problem }
     }
 
     var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
@@ -370,6 +373,7 @@ struct ContentView: View {
         }
         .navigationTitle(model.playingDemo
                          ? "Play Demo: \(model.demoPart ?? "starting") — \(model.look.title) look"
+                            + (model.musicProblem.map { " — NO SOUND: \($0)" } ?? "")
                          : "\(model.entry.title) — \(model.look.title) look")
         .toolbar {
             ToolbarItem(placement: .principal) {

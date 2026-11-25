@@ -114,11 +114,21 @@ enum DemoTimelineCommand {
     /// `pause <at> <for>`: after `at` seconds the music and the steps are paused together for `for` seconds,
     /// as the app does while its window cannot be seen; the parts after it must still be on time, and the
     /// music must not have moved meanwhile.
+    /// `rebuild <at>`: after `at` seconds the sound output is made again, as when macOS reports that the
+    /// output device changed; the music must carry on from its place and the parts after it be on time.
     static func live(arguments: [String]) -> Bool {
         guard let flag = arguments.firstIndex(of: "--demo-live"), flag + 2 < arguments.count,
               let start = DemoStart(argument: arguments[flag + 1]), let seconds = Double(arguments[flag + 2]) else {
-            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound] [pause <at seconds> <for seconds>]")
+            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound] [pause <at seconds> <for seconds>] [rebuild <at seconds>]")
             return false
+        }
+        var rebuildAt: Double?
+        if let word = arguments.firstIndex(of: "rebuild") {
+            guard word + 1 < arguments.count, let at = Double(arguments[word + 1]), at >= 0 else {
+                print("rebuild needs a number: after how many seconds")
+                return false
+            }
+            rebuildAt = at
         }
         var pause: (at: Double, length: Double)?
         if let word = arguments.firstIndex(of: "pause") {
@@ -144,7 +154,21 @@ enum DemoTimelineCommand {
         var worst = 0
         var clock = Date()
         var movedWhilePaused: Double?
+        var carriedOn = true
         while Date().timeIntervalSince(clock) < seconds {
+            if let at = rebuildAt, Date().timeIntervalSince(clock) >= at {
+                rebuildAt = nil
+                let before = player.positionSeconds
+                let began = Date()
+                player.rebuildOutput()
+                let took = Date().timeIntervalSince(began)
+                usleep(500_000)
+                let moved = player.positionSeconds - before
+                // Half a second later the song is about half a second on: it neither stopped nor jumped.
+                carriedOn = moved > 0.3 && moved < 0.8 && player.problem == nil
+                print(String(format: "  sound output made again at %.1f s (%.0f ms): 0.5 s later the music is %.3f s on%@",
+                             at, took * 1000, moved, player.problem.map { ", problem: \($0)" } ?? ""))
+            }
             if let now = pause, Date().timeIntervalSince(clock) >= now.at {
                 // Music and steps stop together; afterwards the step clock carries on from where it stopped.
                 pause = nil
@@ -173,6 +197,6 @@ enum DemoTimelineCommand {
         }
         player.stop()
         print("Worst difference: \(worst) steps (\(String(format: "%.2f", Double(worst) / 70)) s)")
-        return worst <= 35 && (movedWhilePaused ?? 0) == 0
+        return worst <= 35 && (movedWhilePaused ?? 0) == 0 && carriedOn
     }
 }
