@@ -306,7 +306,11 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   NEXT (suggested order): the bigger ones (lens, jelly logo, mountain scroller, credits, opening
   credits; water last). LENS DONE (2026-11-24, plan approved by the user): see "Lens notes". Part 10 is
   now complete in Play Demo.
-  NEXT (suggested order): jelly logo, mountain scroller, credits, opening credits; water last.
+  NEXT (agreed with the user, 2026-11-24, in a NEW session): (1) a targeted /code-review of the work since the
+  last full review (commit 07b6346): Demo/, Music/, Scenes/Lens, Scenes/Rotozoomer, the new CoreChecks, the
+  DemoContext.justShown change; findings to the user before fixing. /simplify waits until more scenes exist.
+  (2) the jelly logo (JPLOGO/JP.C + ASM.ASM): plan first. Then mountain scroller, credits, opening credits
+  (font decisions first), water last. Open question: skip the black waits when starting "from here"?
 
 ## Lens notes (2026-11-24)
 - Original: `LENS/MAIN.C` part1 (uncovering sweeps), part2 + `drawlens`, `ASM.ASM` `dorow`/`dorow2`/`dorow3`
@@ -370,7 +374,9 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   `xattr -cr build/SRMetal.app && codesign --force --sign - build/SRMetal.app`.
   It DID come back once more (2026-11-24, Play Demo from here work) with SRMetal NOT running (checked with
   pgrep) and the FinderInfo tag present; the two commands above fixed it and the next build passed. The
-  user suspected a running app; this case says it is the file sync tagging the folder. Not fixed in build.sh.
+  user suspected a running app; this case says it is the file sync tagging the folder. FIXED in build.sh
+  (2026-11-24): before signing it clears the tags (`xattr -cr`) and tries up to 5 times, a second apart;
+  proven by tagging the app on purpose (old step: the error; new step: signs).
 
 ## Code review of the Play Demo work (2026-11-24)
 - Reviewed everything after `9b358e6`: `Music/` (position read-out, `MusicPosition`), `Demo/`, `PictureScaler`,

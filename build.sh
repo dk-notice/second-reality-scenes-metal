@@ -77,6 +77,18 @@ mkdir -p "$APP/Contents/Resources/Lens"
 cp Data/Lens/LENS.EX4 "$APP/Contents/Resources/Lens/"
 
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
-codesign --force --sign - "$APP" >/dev/null
+# codesign refuses a folder carrying Finder information. When the project sits in a synced folder
+# (Documents with iCloud, say), the sync can tag the app folder, sometimes again right after the tags
+# are cleared; so clear them and try a few times before giving up.
+signed=no
+for attempt in 1 2 3 4 5; do
+  xattr -cr "$APP"
+  if codesign --force --sign - "$APP" >/dev/null 2>&1; then signed=yes; break; fi
+  sleep 1
+done
+if [ "$signed" != yes ]; then
+  echo "Could not sign $APP (Finder information keeps coming back: is the folder being synced?)" >&2
+  codesign --force --sign - "$APP"
+fi
 
 echo "Built $APP"
