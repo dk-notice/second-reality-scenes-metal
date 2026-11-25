@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (Play Demo's pause and the sound output's restart merged into main; not pushed yet)
+Last updated: 2026-11-25 (code review finished: every finding marked for fixing is merged and pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -23,9 +23,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
 - Self-test: 635 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
-  9 cues equal the Swift's). GitHub (private repository) has main up to be948e1 (the code review's
-  merge included); the pause and sound-output merge (a67eade) and what follows are NOT pushed yet: ask
-  the user first.
+  9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
+  sound-output merge included (2026-11-25).
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
 
