@@ -43,12 +43,9 @@ final class ScenePicture: @unchecked Sendable {
         return made
     }
 
-    /// Makes the Modern look's version now, so that showing it later costs nothing.
-    func prepareUpscaled() { _ = upscaled }
-
     /// Makes the Modern look's version on a background thread (for a picture shown soon).
     func prepareUpscaledInBackground() {
-        DispatchQueue.global(qos: .userInitiated).async { [self] in prepareUpscaled() }
+        DispatchQueue.global(qos: .userInitiated).async { [self] in _ = upscaled }
     }
 
     /// Lets go of the Modern look's version (it is made again if needed).
@@ -77,12 +74,6 @@ final class ScenePicture: @unchecked Sendable {
         rgb.reserveCapacity(width * height * 3)
         for i in 0..<(width * height) { rgb += [rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2]] }
         return rgb
-    }
-
-    var isUpscaled: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return upscaledCopy != nil
     }
 }
 

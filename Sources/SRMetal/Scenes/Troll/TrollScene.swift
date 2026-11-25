@@ -32,6 +32,9 @@ struct TrollModel {
 
     mutating func reset() { self = TrollModel() }
 
+    /// The music cue the troll waited for (KOE.C): past section 35, row 48.
+    static func isCue(_ music: DemoMusicState) -> Bool { music.order > 35 || (music.order == 35 && music.row > 48) }
+
     /// One refresh: as one pass of the original's loops, so what is set here is what shows.
     mutating func tick() {
         phaseStep += 1
@@ -90,7 +93,7 @@ final class TrollScene: DemoScene {
     func reset() { model.reset() }
     func tick() { model.tick() }
     func demoUpdate(_ context: DemoContext) {
-        model.musicCue = context.music.order > 35 || (context.music.order == 35 && context.music.row > 48)
+        model.musicCue = TrollModel.isCue(context.music)
     }
 
     /// The view at `xpos` shows the troll moved left by xpos - 320 (it starts a whole screen to the right).
@@ -114,7 +117,7 @@ final class TrollScene: DemoScene {
             for x in 0..<320 {
                 let sx = x + shift
                 for k in 0..<3 {
-                    let level = (sx >= 0 && sx < 320) ? Int((Double(rgb[(y * 320 + sx) * 3 + k]) * 63 / 255).rounded()) : 0
+                    let level = (sx >= 0 && sx < 320) ? vgaFromByte(rgb[(y * 320 + sx) * 3 + k]) : 0
                     out.append(byteFromVGA(fade.classicLevel(level)))
                 }
             }

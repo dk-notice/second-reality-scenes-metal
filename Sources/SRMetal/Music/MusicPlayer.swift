@@ -39,9 +39,7 @@ final class MusicPlayer {
     /// Starts `song` from the beginning of section `order` (normally 0), in the given sound,
     /// replacing whatever was playing. Song 1 plays at the demo's tempo (see `TrackerSong.init`).
     func play(_ song: Song, look: Look, fromOrder order: Int = 0) throws {
-        let tracker = try TrackerSong(song)
-        tracker.playWholeSong()
-        if order > 0 { tracker.start(atOrder: order) }
+        let tracker = try TrackerSong.wholeSong(song, fromOrder: order)
         tracker.setSound(look)
         let list = tracker.orderList
         try startEngineIfNeeded()

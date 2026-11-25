@@ -59,6 +59,6 @@ final class ExplosionScene: DemoScene {
     func classicReferenceFrame() -> [UInt8] {
         let fade = PictureFade.white(Float(ExplosionModel.fade(at: model.step)))
         guard let rgb = ScenePicture.pixels(ExplosionModel.pictureName(ExplosionModel.frame(at: model.step))) else { return [] }
-        return rgb.map { byteFromVGA(fade.classicLevel(Int((Double($0) * 63 / 255).rounded()))) }
+        return rgb.map { byteFromVGA(fade.classicLevel(vgaFromByte($0))) }
     }
 }

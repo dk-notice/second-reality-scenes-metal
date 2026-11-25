@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 import Metal
-import MetalKit
 import simd
 
 /// Self-test checks for the code every scene shares (`Core/`) and for the app's command line.
@@ -146,18 +145,14 @@ enum CoreChecks {
 
         // On a real picture (the troll: dithering, gradients, hard edges) every new pixel stays within
         // the colours of the original pixels around it: no invented colours, no halos.
-        guard let url = DemoPictures.url("07-troll") else {
+        guard let rgb = ScenePicture.pixels("07-troll") else {
             check("Picture scaler: the troll picture is there to test with", false, "")
             return
         }
-        let troll = try MTKTextureLoader(device: device).newTexture(URL: url, options: [.SRGB: false, .generateMipmaps: false])
+        let troll = try ScenePicture(named: "07-troll", device: device).original
         let w = troll.width, h = troll.height
-        var bgra = [UInt8](repeating: 0, count: w * h * 4)
-        troll.getBytes(&bgra, bytesPerRow: w * 4, from: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0)
-        let isBGRA = troll.pixelFormat == .bgra8Unorm
         func original(_ x: Int, _ y: Int, _ k: Int) -> Float {
-            let i = (min(max(y, 0), h - 1) * w + min(max(x, 0), w - 1)) * 4
-            return Float(bgra[i + (isBGRA ? 2 - k : k)]) / 255
+            Float(rgb[(min(max(y, 0), h - 1) * w + min(max(x, 0), w - 1)) * 3 + k]) / 255
         }
         let big = try PictureScaler.upscaled(troll, device: device)
         let values = readBack(big)

@@ -115,6 +115,6 @@ final class FadingPictureScene: DemoScene {
     func classicReferenceFrame() -> [UInt8] {
         let fade = model.fade()
         guard let rgb = ScenePicture.pixels(pictureName) else { return [] }
-        return rgb.map { byteFromVGA(fade.classicLevel(Int((Double($0) * 63 / 255).rounded()))) }
+        return rgb.map { byteFromVGA(fade.classicLevel(vgaFromByte($0))) }
     }
 }

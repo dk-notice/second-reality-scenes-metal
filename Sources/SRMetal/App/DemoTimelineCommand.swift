@@ -10,9 +10,7 @@ final class SilentMusic: DemoMusicSource {
 
     func play(_ which: Song, fromOrder order: Int) {
         do {
-            let tracker = try TrackerSong(which)
-            tracker.playWholeSong()
-            if order > 0 { tracker.start(atOrder: order) }
+            let tracker = try TrackerSong.wholeSong(which, fromOrder: order)
             song = tracker
             orderList = tracker.orderList
         } catch {

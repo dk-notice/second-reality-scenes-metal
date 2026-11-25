@@ -65,15 +65,16 @@ extension DemoScene {
 struct DemoContext {
     /// The music as the original parts saw it: section, row, "music plus", sync value.
     var music: DemoMusicState
-    /// Steps since the current part of the demo started.
-    var partSteps: Int
-    /// Steps since this scene appeared (a part may show several things in turn).
-    var sceneSteps: Int
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.
 func byteFromVGA(_ value: Int) -> UInt8 {
     UInt8((Double(value) * 255 / 63).rounded())
+}
+
+/// The other way: the VGA level (0...63) a 0...255 byte of an exported picture stands for.
+func vgaFromByte(_ byte: UInt8) -> Int {
+    Int((Double(byte) * 63 / 255).rounded())
 }
 
 /// One row in the list of scenes.

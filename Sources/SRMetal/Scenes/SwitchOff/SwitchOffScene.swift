@@ -190,7 +190,7 @@ final class SwitchOffScene: DemoScene {
                     levels = [shown.dot, shown.dot, shown.dot]
                 } else if row >= 0 && !wiped {
                     let i = (row * 320 + x) * 3
-                    let source = (0..<3).map { Int((Double(rgb[i + $0]) * 63 / 255).rounded()) }
+                    let source = (0..<3).map { vgaFromByte(rgb[i + $0]) }
                     // Colour 0 (the only pure black in the troll's palette) is never washed out.
                     if source != [0, 0, 0] { levels = source.map { fade.classicLevel($0) } }
                 }

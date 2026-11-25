@@ -69,8 +69,6 @@ final class DemoRunScene: DemoScene {
     }
     private var shown = Shown.black
     private var partsStarted = 0
-    /// The step at which the thing showing appeared.
-    private var shownSince = 0
 
     private let pipeline: MTLRenderPipelineState
     private let smooth: MTLSamplerState
@@ -140,9 +138,7 @@ final class DemoRunScene: DemoScene {
     func tick() {
         // The scene showing moves on first, so a scene the script starts now is seen at its first step.
         if case .scene(let scene, _) = shown {
-            scene.demoUpdate(DemoContext(music: sequencer.musicState,
-                                         partSteps: sequencer.time - (sequencer.partStarts.last?.step ?? 0),
-                                         sceneSteps: sequencer.time - shownSince))
+            scene.demoUpdate(DemoContext(music: sequencer.musicState))
             scene.tick()
         }
         sequencer.tick()
@@ -197,7 +193,6 @@ final class DemoRunScene: DemoScene {
     // MARK: - Changing what is shown
 
     private func show(_ visual: DemoVisual) {
-        shownSince = sequencer.time
         switch visual {
         case .scene(let id):
             guard let entry = SceneCatalog.all.first(where: { $0.id == id }) else { shown = .black; return }

@@ -86,6 +86,14 @@ final class TrackerSong {
         openmpt_module_select_subsong(module, -1)
     }
 
+    /// The whole song (as the demo loaded it), ready to play from the beginning of section `order`.
+    static func wholeSong(_ song: Song, fromOrder order: Int) throws -> TrackerSong {
+        let tracker = try TrackerSong(song)
+        tracker.playWholeSong()
+        if order > 0 { tracker.start(atOrder: order) }
+        return tracker
+    }
+
     /// How far into the song playback has got, in seconds.
     var positionSeconds: Double { openmpt_module_get_position_seconds(module) }
 

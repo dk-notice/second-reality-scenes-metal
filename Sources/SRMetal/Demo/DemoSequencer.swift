@@ -126,8 +126,6 @@ enum DemoScript {
 
     /// The pictures the script shows, in order.
     static let pictures: [String] = steps.compactMap { if case .show(.picture(let name)) = $0 { return name } else { return nil } }
-
-    static var partCount: Int { steps.filter { if case .part = $0 { return true } else { return false } }.count }
 }
 
 /// Follows `DemoScript.steps`. Call `tick()` once per 1/70 s step.
@@ -140,7 +138,6 @@ final class DemoSequencer {
     private(set) var time = 0
     /// Each part's name and the step it started at.
     private(set) var partStarts: [(name: String, step: Int)] = []
-    private(set) var visual: DemoVisual = .black
     private(set) var finished = false
 
     private var index = 0
@@ -172,7 +169,6 @@ final class DemoSequencer {
             case .part(let name):
                 partStarts.append((name, time))
             case .show(let what):
-                visual = what
                 onShow?(what)
             case .playSong(let song, let order):
                 music.play(song, fromOrder: order)
