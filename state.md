@@ -34,7 +34,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   the original program running.
 
 ## Next steps
-1. CREDITS: BUILT 2026-11-25 on the branch, waiting for the user's look (see `docs/scenes/credits.md`):
+1. CREDITS: DONE 2026-11-25, seen by the user and merged (see `docs/scenes/credits.md`):
    released pictures, texts and font (`Data/Credits/`, `tools/credits_reference.py`); 1993 look with the
    text's every-other-row and the start-address lag; Modern look in DIN Condensed Bold with pictures
    captured from the scenes by `build.sh` (`--credits-captures`; moments in `CreditsModel.captures`, chosen
