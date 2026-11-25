@@ -72,6 +72,10 @@ cp -R artwork/original/rgb/explosion "$APP/Contents/Resources/Artwork/"
 mkdir -p "$APP/Contents/Resources/EndScroller"
 cp Data/EndScroller/ENDSCROL.TXT Data/EndScroller/ENDFONT.BIN "$APP/Contents/Resources/EndScroller/"
 
+# The lens's wiping ring, the one lens table that cannot be calculated (see Data/Lens/README.md).
+mkdir -p "$APP/Contents/Resources/Lens"
+cp Data/Lens/LENS.EX4 "$APP/Contents/Resources/Lens/"
+
 # Sign for this Mac only ("ad-hoc"), so macOS will run it without complaint.
 codesign --force --sign - "$APP" >/dev/null
 

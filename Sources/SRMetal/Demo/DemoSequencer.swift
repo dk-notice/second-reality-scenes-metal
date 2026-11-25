@@ -98,7 +98,7 @@ enum DemoScript {
         s += [.part("Loader waits for the music"), .show(.black), until { $0.plus < 0 }, until { $0.plus > 0 }]
         s += [.part("Mountain scroller"), .show(.picture("09-mountain-background")), .frames(64),
               until { $0.plus >= 0 }, .frames(127), until { $0.plus == -11 }, .frames(65)]
-        s += [.part("Lens, then rotozoomer"), .show(.picture("10-lens-picture")), until { $0.plus >= -6 },
+        s += [.part("Lens, then rotozoomer"), .show(.scene("lens")), until { $0.plus >= -6 },
               .resetFrameCounter, .frames(300), until { $0.plus >= -20 }, .frames(720),
               .show(.scene("rotozoomer")), until(cap: 2000) { $0.plus > -4 }]
         s += [.part("Plasma"), .show(.scene("plasma")), until { $0.plus >= 0 }, .resetFrameCounter,

@@ -97,6 +97,25 @@ final class ScenePicture: @unchecked Sendable {
         for i in 0..<(width * height) { rgb += [rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2]] }
         return rgb
     }
+
+    /// A picture's colour numbers rebuilt from its exported colours, for scenes that replay the original's
+    /// palette tricks: the distinct colours (VGA levels, in the order first met) and each pixel's number
+    /// into that list. nil if the picture is missing or has more than `limit` colours.
+    static func colourNumbers(_ name: String, limit: Int = 256) -> (colours: [SIMD3<Int>], numbers: [UInt8])? {
+        guard let rgb = pixels(name) else { return nil }
+        var colours: [SIMD3<Int>] = []
+        var lookup: [SIMD3<Int>: UInt8] = [:]
+        var numbers = [UInt8](repeating: 0, count: rgb.count / 3)
+        for i in 0..<numbers.count {
+            let c = SIMD3(vgaFromByte(rgb[3 * i]), vgaFromByte(rgb[3 * i + 1]), vgaFromByte(rgb[3 * i + 2]))
+            if let n = lookup[c] { numbers[i] = n; continue }
+            guard colours.count < limit else { return nil }
+            lookup[c] = UInt8(colours.count)
+            numbers[i] = UInt8(colours.count)
+            colours.append(c)
+        }
+        return (colours, numbers)
+    }
 }
 
 enum PictureError: Error, CustomStringConvertible {

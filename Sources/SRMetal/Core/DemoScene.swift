@@ -48,8 +48,8 @@ protocol DemoScene: AnyObject {
     /// The canvas size right now, for a scene whose size changes as it runs (Play Demo, which
     /// shows other scenes and pictures). nil, the default, means the entry's `canvasSize`.
     var currentCanvasSize: SIMD2<Float>? { get }
-    /// Only while Play Demo runs: called just before each `tick` with where the music is and how long
-    /// the part has been running, for a scene that reacts to the music as the original part did (for
+    /// Only while Play Demo runs: called just before each `tick` (and once when the scene is first shown,
+    /// with `justShown`) with where the music is, for a scene that reacts to the music as the original part did (for
     /// example the techno bars' flash on the beat). Shown on its own, a scene is never called this and
     /// keeps its own clock. The default does nothing.
     func demoUpdate(_ context: DemoContext)
@@ -65,6 +65,9 @@ extension DemoScene {
 struct DemoContext {
     /// The music as the original parts saw it: section, row, "music plus", sync value.
     var music: DemoMusicState
+    /// True for the one extra call on the step the scene is first shown (before any `tick`); the other
+    /// calls come just before each `tick`.
+    var justShown = false
 }
 
 /// VGA colours were 0...63 per channel. This is how such a value lands in a 0...255 byte.
@@ -156,6 +159,16 @@ enum SceneCatalog {
             checkpoints: [0, 60, 129, 200, 500, 700, 1100, 1900, 2300, 2500, 2579],
             thumbnailStep: 1300,
             make: { device, format in try BouncingDotsScene(device: device, pixelFormat: format) }
+        ),
+        SceneEntry(
+            id: "lens",
+            title: "Lens",
+            credit: "Psi",
+            canvasSize: SIMD2(320, 200),
+            checkpoints: [0, 34, 35, 36, 40, 60, 100, 114, 115, 200, 334, 335, 340, 366, 367, 400, 430, 500, 600, 700,
+                          800, 900, 975, 1000, 1049, 1054, 1055, 1089],
+            thumbnailStep: 600,
+            make: { device, format in try LensScene(device: device, pixelFormat: format) }
         ),
         SceneEntry(
             id: "rotozoomer",

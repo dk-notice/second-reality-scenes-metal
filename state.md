@@ -47,7 +47,7 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app`.
 - `open build/SRMetal.app` runs it. Start-up options go after `--args`: `--look classic|modern`,
-  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|rotozoomer|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
+  `--scene dot-tunnel|rings|interference|techno-bars|troll|switch-off|lens|rotozoomer|bouncing-dots|plasma|starfield|sine-landscape|plasma-cube|glenz-vectors|ships-flyby|explosion|title-picture|city-3d|end-picture|end-scroller`, `--sidebar hidden`.
 - `build/SRMetal.app/Contents/MacOS/SRMetal --selftest` runs the checks without opening a window.
 - `--scene play-demo` starts the app in Play Demo. `--demo-timeline` runs Play Demo's script against
   silently rendered music (0.2 s) and compares every part's start with `tools/demo_timeline.py`.
@@ -277,8 +277,37 @@ and 1993 (original pixels, usually 320x200; 70 steps per second). The original s
   ROTOZOOMER DONE (2026-11-24, user: "build it" after the plan): see "Rotozoomer notes". The user looked
   at it in the app: "looks fine"; merged into main and pushed the same day.
   NEXT (suggested order): the bigger ones (lens, jelly logo, mountain scroller, credits, opening
-  credits; water last). Suggested and accepted in principle: the LENS next (finishes part 10, same
-  program, picture and LENS.EXP); read LENS/MAIN.C part1/part2, CALC.C, and plan before coding.
+  credits; water last). LENS DONE (2026-11-24, plan approved by the user): see "Lens notes". Part 10 is
+  now complete in Play Demo.
+  NEXT (suggested order): jelly logo, mountain scroller, credits, opening credits; water last.
+
+## Lens notes (2026-11-24)
+- Original: `LENS/MAIN.C` part1 (uncovering sweeps), part2 + `drawlens`, `ASM.ASM` `dorow`/`dorow2`/`dorow3`
+  (Psi); tables made by `LENS/CALC.C` from `LENS/LENS.U` (= `artwork/original/10-lens-shape`).
+  `Scenes/Lens/`: `LensTables` (shape from the exported picture's 5 colours; CALC.C rerun with Microsoft C's
+  rand, seed 1; table 4 loaded), `LensModel` (timeline, the 64 KB 1993 screen kept between steps, sweeps in
+  Int16, the row routines with 16-bit addresses, palette fades; Modern parameters), `LensScene` (1993:
+  IndexedCanvas 320x200; Modern: own shader). Sidebar: before the Rotozoomer.
+- FOUND: tables 1-3 = CALC.C output byte for byte; the path = SAVEPATH formulas (715/715). Table 4 is NOT
+  reproducible: `LENS.EX4` was made from an older shape (ring on row 0, wider at top and bottom; middle rows
+  equal). DECIDED (plan): ship it, `Data/Lens/LENS.EX4` (6 KB, README with SHA-256), copied by build.sh.
+- Standalone timeline: 35 black, 300 part 1 (sweeps on the first 80), 720 part 2 (path 715, palette fade
+  k < 96), 35 hold, loop (1090). Play Demo: black until plus >= -6, part 1, wait plus >= -20, part 2; script
+  now `.show(.scene("lens"))` from the part's start. NEW: `DemoContext.justShown`: DemoRunScene calls
+  `demoUpdate` once when it shows a scene (before the script checks its cue); `LensModel.startIfCued()`.
+  Needed because at the lens's first step the cue (-6) is ALREADY met (step 18213): the scene had started
+  one step after the script (caught by the new check, fixed, check now passes).
+- Modern: picture 8x Super-xBR; sweeps per pixel from the formulas (continuous start, banded speeds,
+  carry into the next row), soft edges; lens per pixel by the bend formula, path in 1/64 px blended, zones
+  from the shape mask made 8x by Super-xBR, smooth glass fade. STRAYED (Modern only): no random wobble; rim
+  samples the picture's edge (clamped), no address wrap; lens off screen is cut off.
+- `tools/lens_reference.py`: CALC.C rerun vs the files, path check, replay from the ORIGINAL table files;
+  prints CRCs at 28 steps. Finds all 64,000 pixels uncovered after part 1, no lens colour left after the
+  lens leaves. Self-test: 6 new checks (441 in all, all pass): tables 1-3 CRC, table 4 CRC, path CRC, 1993
+  pictures = tool at 28 steps, loop after 1090, Play Demo phase sync; plus 28 GPU-vs-processor checkpoints.
+  `--motion-check lens modern`: one jump, the loop back to black. `--demo-timeline` unchanged.
+- Seen by Claude: snapshots of both looks at steps 45, 60, 380, 600 (they agree closely), reference PNGs.
+  NOT seen by the user in the running app yet; not compared with the original running.
 
 ## Rotozoomer notes (2026-11-24)
 - Original: `LENS/MAIN.C` part3 + `LENS/ASM.ASM` `_rotate` (Psi). `Scenes/Rotozoomer/`: `RotozoomerModel`

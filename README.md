@@ -52,6 +52,7 @@ naming it. See [docs/demo-timeline.md](docs/demo-timeline.md).
 | Rings, Interference | Psi | [docs/scenes/rings-and-interference.md](docs/scenes/rings-and-interference.md) |
 | Techno Bars | Psi | [docs/scenes/techno-bars.md](docs/scenes/techno-bars.md) |
 | Troll, Screen Switches Off | Psi; Wildfire | [docs/scenes/troll-and-switch-off.md](docs/scenes/troll-and-switch-off.md) |
+| Lens | Psi | [docs/scenes/lens.md](docs/scenes/lens.md) |
 | Rotozoomer | Psi | [docs/scenes/rotozoomer.md](docs/scenes/rotozoomer.md) |
 | Bouncing Dots | Psi | [docs/scenes/bouncing-dots.md](docs/scenes/bouncing-dots.md) |
 | Plasma | Wildfire | [docs/scenes/plasma.md](docs/scenes/plasma.md) |
@@ -70,7 +71,7 @@ Fly-by and the 3D City, share the original's 3D engine, which was built and chec
 code first: see [docs/visu-engine.md](docs/visu-engine.md). Picture-based scenes, scrollers and stills were
 out of scope at first. Since Play Demo exists (2026-11-24) the remaining parts are being added one at a
 time, starting with the Explosion (the original's hand-drawn animation), the title and end pictures, the troll and the screen
-switch-off, the end scroller and the rotozoomer. The ideas are in
+switch-off, the end scroller, the lens and the rotozoomer. The ideas are in
 [docs/future-ideas.md](docs/future-ideas.md).
 
 Everything on screen is calculated, with three exceptions (all public domain, like the rest of the
@@ -79,8 +80,9 @@ without it. And Ships Fly-by is made of original material: the ships are the ori
 recorded camera moves, read from [Data/Visu/](Data/Visu/README.md) (models and animation cannot be
 calculated), and they fly over the original's hand-painted horizon picture, kept at the user's request. The 3D City
 is likewise the original's models and recorded flight, with no picture. The Explosion is the original's
-hand-drawn animation frames, the Title and End Pictures are the original pictures, and the Rotozoomer
-turns the original lens picture.
+hand-drawn animation frames, the Title and End Pictures are the original pictures, and the Lens and the
+Rotozoomer use the original lens picture (the Lens also one original table, see
+[Data/Lens/](Data/Lens/README.md)).
 
 ## Build and run
 
@@ -132,7 +134,7 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
-| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `rotozoomer`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `explosion`, `title-picture`, `city-3d`, `end-picture`, `end-scroller`; or `play-demo` to start the whole demo |
+| `--scene <id>` | Start on a scene: `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `lens`, `rotozoomer`, `bouncing-dots`, `plasma`, `starfield`, `sine-landscape`, `plasma-cube`, `glenz-vectors`, `ships-flyby`, `explosion`, `title-picture`, `city-3d`, `end-picture`, `end-scroller`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` | Start with the scene list hidden |
 
@@ -262,7 +264,8 @@ anniversary. Everything here was worked out from that release:
 - Fabien Sanglard's code review of the original: <https://fabiensanglard.net/second_reality/>
 
 No code from the original or from those ports is included here. The scenes were re-implemented from the
-original's logic, and tables the original shipped as data files are calculated instead.
+original's logic, and tables the original shipped as data files are calculated instead (one exception: the
+lens's table 4, which cannot be, see [Data/Lens/](Data/Lens/README.md)).
 
 The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright the OpenMPT Project
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see

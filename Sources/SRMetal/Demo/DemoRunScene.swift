@@ -106,6 +106,8 @@ final class DemoRunScene: DemoScene {
     var sceneShowing: DemoScene? { if case .scene(let scene, _) = shown { return scene } else { return nil } }
     /// The music's row as the parts see it now (for checks).
     var musicRow: Int { sequencer.musicState.row }
+    /// The music's "music plus" as the parts see it now (for checks).
+    var musicPlus: Int { sequencer.musicState.plus }
 
     // MARK: - DemoScene
 
@@ -172,7 +174,11 @@ final class DemoRunScene: DemoScene {
         case .scene(let id):
             guard let entry = SceneCatalog.all.first(where: { $0.id == id }) else { shown = .black; return }
             do {
-                shown = .scene(try entry.make(device, pixelFormat), entry.canvasSize)
+                let scene = try entry.make(device, pixelFormat)
+                // Told the music on the step it first shows (before the script checks its next cue), so a
+                // scene that waits for a cue already met starts on the same step as the script.
+                scene.demoUpdate(DemoContext(music: sequencer.musicState, justShown: true))
+                shown = .scene(scene, entry.canvasSize)
             } catch {
                 NSLog("SR Metal: Play Demo could not start scene \(id): \(error)")
                 shown = .card(entry.title)

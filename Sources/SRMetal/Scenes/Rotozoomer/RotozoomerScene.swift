@@ -31,24 +31,11 @@ final class RotozoomerScene: DemoScene {
     init(device: MTLDevice, pixelFormat: MTLPixelFormat) throws {
         canvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat, width: 160, height: 100)
         picture = try ScenePicture.shared(named: Self.pictureName, device: device)
-        guard let rgb = ScenePicture.pixels(Self.pictureName), rgb.count == 320 * 200 * 3 else {
+        guard let indexed = ScenePicture.colourNumbers(Self.pictureName), indexed.numbers.count == 320 * 200 else {
             throw PictureError.missing(Self.pictureName)
         }
-        // Colour numbers back from the exported colours (the picture uses 64; two numbers with the same
-        // colour would look the same anyway).
-        var list: [SIMD3<Int>] = []
-        var numbers: [SIMD3<Int>: UInt8] = [:]
-        var back = [UInt8](repeating: 0, count: 320 * 200)
-        for i in 0..<(320 * 200) {
-            let c = SIMD3(vgaFromByte(rgb[3 * i]), vgaFromByte(rgb[3 * i + 1]), vgaFromByte(rgb[3 * i + 2]))
-            if numbers[c] == nil {
-                guard list.count < 256 else { throw PictureError.missing(Self.pictureName) }
-                numbers[c] = UInt8(list.count)
-                list.append(c)
-            }
-            back[i] = numbers[c]!
-        }
-        colours = list
+        colours = indexed.colours
+        let back = indexed.numbers
         tile = RotozoomerModel.tile(fromPicture: back)
         turnedTile = RotozoomerModel.turned(tile)
 

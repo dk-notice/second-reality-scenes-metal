@@ -224,9 +224,11 @@ far things) and four samples per pixel for smooth edges, and the app's main draw
 Most scenes leave it out.
 
 A scene may also implement `demoUpdate(_:)`, which only Play Demo calls, just before each step: it
-gives the music's position (section, row, "music plus", sync) and how long the part has been running,
-so a scene can react to the music as the original part did. Shown on its own, a scene is never called
-this and keeps its own clock. Techno Bars uses it for its flash on the beat (2026-11-24).
+gives the music's position (section, row, "music plus", sync), so a scene can react to the music as the
+original part did. Shown on its own, a scene is never called this and keeps its own clock. Techno Bars
+uses it for its flash on the beat (2026-11-24). It is also called once on the step a scene is first shown
+(`justShown`), before the demo script checks its next cue: the Lens uses that to start on the same step as
+the script when its music cue is already met (2026-11-24).
 
 A scene may also give a `currentCanvasSize` when its canvas changes as it runs; the window and
 `--snapshot` then use that instead of the entry's fixed size. Only Play Demo needs it (2026-11-24): to the
