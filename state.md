@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background ray-traced again for the Modern look: built on its branch, waits for the user's look)
+Last updated: 2026-11-25 (water background ray-traced again for the Modern look: merged, not yet pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -24,7 +24,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - Self-test: 637 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
-  sound-output merge included (2026-11-25).
+  sound-output merge included (2026-11-25); the water background merge is not pushed yet.
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
 
@@ -57,9 +57,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
-3. THE WATER BACKGROUND FROM POV-RAY: BUILT 2026-11-25 on branch `claude/water-background-research-6ae63a`
-   (worktree of the same name), NOT YET MERGED: the user looks at it in that worktree's app first. After
-   the merge: `./build.sh` in the main folder, the full self-test there, and ask before pushing.
+3. THE WATER BACKGROUND FROM POV-RAY: DONE and merged 2026-11-25 (merge 4a706e4; the user saw it in the
+   app; main's app rebuilt, 637 checks pass there). NOT YET PUSHED: ask the user first.
    - The Modern look's background is `Data/Water/BACKGROUND-POVRAY.png` (2560x1600, 0.9 MB), made by
      `tools/water_background.py --render` from `WATER/KK.POV` with POV-Ray 3.7 (the same file every
      run). POV-Ray is a development tool only: the app and `build.sh` never run it.
@@ -71,9 +70,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Left over, not looked into further: the ripple highlights differ slightly (cause not found; reading
      POV-Ray 1.0's source might tell: a download, not done). `R1.POV`...`R5.POV` and `RGB.TGA` are not
      the versions that made the position tables, so the tables still cannot be made again.
-   - By eye, for the user: does the clean background suit the soft sword; the ripple highlights; does
-     the picture jump between the 1993 and Modern looks; the fades. If the balls' rims look soft on a
-     bigger screen, render at 16x (`SCALE` in the tool; the check's numbers and checksum change).
+   - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
+     check's numbers and checksum change).
 4. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
