@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background ray-traced again for the Modern look: merged and pushed)
+Last updated: 2026-11-25 (water background merged and pushed; next: the Glenz and plasma timing research)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -72,7 +72,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      the versions that made the position tables, so the tables still cannot be made again.
    - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
      check's numbers and checksum change).
-4. Nothing else is planned. The other open questions start only when the user asks.
+4. NEXT SESSION (agreed 2026-11-25): the GLENZ AND PLASMA TIMING RESEARCH (first item under "Open
+   questions"). Research only: read the released `GLENZ.EXE` and `PLZPART.EXE` (unpacked) against their
+   sources, find what the two parts really did with the music counter, then show the user findings and
+   a plan before any code. The user will watch videos of the original (one is a 486 DX2-66 filmed with
+   a camcorder) to compare by eye.
+5. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
@@ -172,6 +177,11 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 - Licence: the Unlicense, matching the original. The GitHub repository is private for now.
 - Scenes are re-implemented from the original source's logic, not copied from the port. The port has
   quiet differences (the water's fade length and red-first slip): never take a number from it unchecked.
+- WHAT COUNTS AS RIGHT (user, 2026-11-25): Play Demo lines up with the MUSIC, and the 1993 look is
+  faithful to the ORIGINAL CODE. It will never be perfect and need not be: real machines differed (a
+  486 DX2-66 visibly struggles to load some parts), so a video shows what one machine did, not what
+  the code says. Do not chase a video's load pauses or frame rate; do use it for waits that follow the
+  music, which are the same on every machine.
 - Every scene is stepped at 70 per second; the Modern look blends between steps. Every canvas is shown 4:3.
 - 1993 look = exact, including the original's slips. Modern look may stray where it is better; record each
   straying on the scene's page.
