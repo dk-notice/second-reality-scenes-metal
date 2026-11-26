@@ -132,7 +132,15 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      and sound right and on the beat). YouTube takes .mov and ProRes as they are (its help pages,
      read 2026-11-26); the sound stays at 44,100 Hz (YouTube asks for 48,000 but converts anyway; the
      user was told); a video over 15 minutes needs a phone-verified account.
-   - The user looks at the exported video before the merge.
+   - LEFT AT THE WRAP-UP (2026-11-26, night): NOT MERGED. The branch `claude/play-demo-video-export-8abdde`
+     (9 commits ahead of main, clean, 649 checks pass) and its worktree are KEPT on purpose: the user
+     has not yet watched the CORRECTED export, and looks at the result before a merge. Next: the user
+     watches `~/Movies/SecondReality-Modern.mov` (the `[8` gaps about 15 minutes in; the end at 16:21);
+     on their word: merge into main, `./build.sh` in the main folder, the full self-test and
+     `--demo-timeline` there, ask before pushing (main equals GitHub now), then remove the branch and
+     worktree. A YouTube title, description with chapters and tags were drafted in that session's
+     chat (not kept in the repository); the composers' real names and the original source's address
+     in the draft were from memory and need checking.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
    and choosing a scene is secondary. DONE and merged 2026-11-25 (the user tried it in the app and
