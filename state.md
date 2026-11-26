@@ -119,7 +119,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      Now: `EndScrollerModel.gapHeight`, `reachedEnd`, `demoLength` (23,002 steps); the script ends with
      `.frames(demoLength), .show(.black), .hold`; PLAY DEMO ENDS at step 68,673 (16:21.0): the
      picture stays black, Play Demo stays chosen and THE SCENE LIST OPENS (`DemoRunScene.onEnd`,
-     `AppModel.demoEnded`; the user's choice, 2026-11-26). It must NOT go to the End Scroller scene: that
+     `AppModel.demoEnded`; the user's choice, 2026-11-26; SEEN by the user in the app with the trial
+     option, and the `[8` fix seen in a full run). It must NOT go to the End Scroller scene: that
      starts the text again and looks like a loop (the first try did, and the user saw it). To try the
      end quickly: `--scene play-demo --from end-scroller --end-scroller-steps 350`. Alone the scene
      still starts again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
