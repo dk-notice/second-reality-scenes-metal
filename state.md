@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (everything left gone through with the user; most of it dropped for good)
+Last updated: 2026-11-25 (left-overs gone through and mostly dropped; next: the water background from POV-Ray)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -57,7 +57,10 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
-3. Nothing else is planned. The open questions below start only when the user asks.
+3. NEXT SESSION (agreed 2026-11-25): the POV-Ray render of the water background ONLY (see the water
+   item under "Open questions"). Redo the trial render, look into the one-row offset and the colour
+   match, then show the user findings and a plan before any code.
+4. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
