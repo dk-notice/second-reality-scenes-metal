@@ -94,7 +94,7 @@ The first twelve scenes (2026-11-14) were the purely calculated ones and the 3D 
 first. Since Play Demo exists (2026-11-24) they have been added one at a time: the Explosion, the title and
 end pictures, the troll and the screen switch-off, the end scroller, the rotozoomer, the lens, the jelly
 logo, the mountain scroller, the water scroller, the credits and, last, the opening credits.
-Undecided ideas are in [docs/future-ideas.md](docs/future-ideas.md).
+What may come next is in [docs/future-ideas.md](docs/future-ideas.md).
 
 ### What is calculated and what is original material
 
@@ -270,7 +270,7 @@ shaders (MIT licence).
   these).
 - [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
   out from its source and simulated against the real music, and how Play Demo follows it.
-- [docs/future-ideas.md](docs/future-ideas.md): ideas discussed but not decided.
+- [docs/future-ideas.md](docs/future-ideas.md): what may come next (a video export, the interface, a signed release).
 - `Data/*/README.md`: what each folder of original data holds, and why it has to ship.
 - [state.md](state.md): working notes: current status, rules, and what is next.
 - [docs/dev-notes.md](docs/dev-notes.md): the detailed working notes up to 2026-11-25, kept as an archive.

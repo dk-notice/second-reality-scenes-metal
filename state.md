@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the output-delay toggle is merged and pushed)
+Last updated: 2026-11-25 (the demo is finished; next: the video export and a look at the interface, both to be planned with the user)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -23,7 +23,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
 - Self-test: 639 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
-  9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
+  9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
@@ -56,7 +56,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    in git); `build.sh` gets an optional release mode (sign with the hardened runtime, zip, `notarytool
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
-   the GitHub repository goes public is a separate decision.
+   the GitHub repository goes public was a separate decision (it is public: 2026-11-25).
 3. THE WATER BACKGROUND FROM POV-RAY: DONE and merged 2026-11-25 (merge 4a706e4; the user saw it in the
    app; main's app rebuilt, 637 checks pass there). Pushed to GitHub the same day.
    - The Modern look's background is `Data/Water/BACKGROUND-POVRAY.png` (2560x1600, 0.9 MB), made by
@@ -86,48 +86,35 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Plasma on its own: three palettes, falls at steps 976, 2,009 and 2,526, loop 2,588. Glenz on its
      own: unchanged on purpose (35-step pause).
    - The script's refresh counter (`DemoMusicState.frame`) and the tool's `frames|ticks` option are gone.
-5. LATER, when the demo is finished: export Play Demo (Modern look) to a video file (see "Open
-   questions"). The other open questions start only when the user asks.
-
+5. NEXT (user, 2026-11-25): EXPORT PLAY DEMO TO A VIDEO FILE. To be talked through with the user
+   first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
+6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
+   and see what could be better. Not yet discussed: ask the user what bothers them before proposing.
+7. The signed release (item 2) stays for later. Nothing else is planned.
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- PLAY DEMO OVER BLUETOOTH HEADPHONES (user, 2026-11-25: the techno part's flash and four-column break
-  looked off the beat over AirPods; on the MacBook's speakers they are perfect, in every version
-  compared). DONE and merged 2026-11-25 (the user tried it with AirPods and said to merge; main's
-  app rebuilt, 639 checks pass there; pushed the same day). The player keeps each position with the moment its sound leaves for the device
-  (`Music/PositionHistory.swift`) and, with Music > Allow for Output Delay on (the default; remembered
-  in the preferences), reports the one from the device's reported delay ago
-  (`MusicPlayer.deviceOutputDelay`: the device's latency plus its stream's; the menu shows it once
-  music has played). Measured here: the speakers report 15.6 ms, the AirPods 160 ms. Off, it is as
-  before. `--demo-live ... delay` tests with it on.
-  - If AirPods still look slightly off, the reported figure is not exact: a manual trim could be added.
-  - The video export must NOT use it (exported sound has no device delay).
-  - Seen while testing, not new: when the output device changes in mid-demo over Bluetooth, making the
-    output again takes about 0.5 s (60 ms on the speakers), and the cues after it come that much late.
-  Side findings from looking into it, NOT a fault and nothing to change: `TECHNO/KOE.C` flashes on row
-  7 of every 8; the player (`MAIN/STMIK.300`) reports row, section and "plus" through a delay ring
-  (51C5h, set up at 2AC1h): none for output modes 2 and 7, ten polls for the mixing cards.
-- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; after the demo
-  is finished). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
+- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; NEXT,
+  to be talked through first). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
   YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
   with silently rendered music (as `--demo-timeline` does), draws each frame off-screen (as
   `--snapshot` does) at 60 a second with the Modern look's blend at each frame's exact moment, at
   2880x2160 (4:3; YouTube's "4K" quality), and pipes the frames and the rendered music to ffmpeg
   (installed; a development tool only, like POV-Ray: never needed by the app or `build.sh`). Needs a
   check that sound and picture stay in step in the exported file.
-- Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
-  two songs are covered by the same public-domain release as the code (this matters for sharing the app
-  too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
-  old commits. They are NOT in the ordinary history, which is 22 MB.
-- `docs/future-ideas.md` is out of date (its second half calls Play Demo unfinished; its first half is
-  the dropped "Reimagined" look). Tidy it or remove it: recommended, not yet agreed.
-- Waiting on the user by eye (main's `build/SRMetal.app`):
-  - 3D City, Modern look against 1993: do the fades (up from black over the first second, to black over
-    the last 1.5 s) look right and come at the same moment in both looks (the review suspected Modern a
-    frame or two early: one shared palette buffer)? Is the evened-out camera roll an improvement?
-  - Ships Fly-by on its own: is the one-second empty horizon wanted, and the right length
-    (`ShipsFlybyModel.pauseSteps`)?
+  It must NOT use the output-delay allowance (an exported file has no device delay).
+- REVISIT THE INTERFACE (user, 2026-11-25; wanted, not discussed yet). See "Next steps", item 6.
+- CLOSED on 2026-11-25 by the user (do not raise again unless one starts to show):
+  - By eye, everything looks good at present, the 3D City's fades and camera roll and the Ships Fly-by's
+    empty horizon included. The user may make another pass later.
+  - No manual trim for AirPods: the delay macOS reports (160 ms) is good enough.
+  - Switching the sound output in mid-demo over Bluetooth costs about half a second: not an issue.
+  - The water scroller's ripple highlights: working fine as it is.
+  - The repository is public; the songs' licence was not raised again.
+  - `docs/future-ideas.md` was rewritten as a short list of what may come next (the old ideas are in
+    the history).
+  - The plasma page's two pictures were checked: byte for byte what the scene draws now at step 1,251
+    (they were taken at step 1,000 before the sections grew longer).
 
 ## How to build and run
 - `./build.sh` builds `build/SRMetal.app` (first builds libopenmpt, about 15 s the first time; run it once
@@ -202,7 +189,7 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 - Swift + Metal + SwiftUI, built with Swift Package Manager from the command line; Command-Line-Tools-only
   (do NOT use `@State`, `@Observable` or other macro-based features: the macro plug-in ships only with
   Xcode). Keep view state in `AppModel`.
-- Licence: the Unlicense, matching the original. The GitHub repository is private for now.
+- Licence: the Unlicense, matching the original. The GitHub repository is public (2026-11-25).
 - Scenes are re-implemented from the original source's logic, not copied from the port. The port has
   quiet differences (the water's fade length and red-first slip): never take a number from it unchecked.
 - WHAT COUNTS AS RIGHT (user, 2026-11-25): Play Demo lines up with the MUSIC, and the 1993 look is
@@ -228,6 +215,11 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 - Music: the ORIGINAL tracker songs played live with libopenmpt (their pattern data is scrambled;
   unscrambled at load). Song 1 always at tempo 120. Music plays only with Play Demo; sidebar scenes are
   silent and loop; the Music menu has only Mute (the song keeps running underneath). Sound follows the look.
+- PLAY DEMO FOLLOWS THE MUSIC AS HEARD (2026-11-25): with Music > Allow for Output Delay on (the
+  default; remembered in the preferences) the player reports the position whose sound left for the
+  output device that device's reported delay ago (`Music/PositionHistory.swift`,
+  `MusicPlayer.deviceOutputDelay`: the device's latency plus its stream's; the speakers report 15.6 ms,
+  AirPods 160 ms). Off, it reports the newest rendered position. `--demo-live ... delay` tests with it on.
 - Fewer dependencies is better: libopenmpt is the only one (static, built from source by `build.sh`).
 - DROPPED FOR GOOD (user, 2026-11-25; do not raise again unless one starts to show in the app). None
   was visible. Code review findings 3, 5 and 6; work repeated on every drawn frame instead of once per
@@ -266,6 +258,10 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 
 ## Traps (facts that caused mistakes)
 - The music frame counter (`dis_getmframe`) counts MUSIC TICKS, not refreshes (`MAIN/STMIK.300`).
+- A beat that looks off: ask FIRST whether the user is on Bluetooth headphones (2026-11-25: a day's
+  "desync" was AirPods). For the record, and nothing to change: `TECHNO/KOE.C` flashes on row 7 of
+  every 8, and the player reports row, section and "plus" through a delay ring (51C5h, set up at
+  2AC1h): none for output modes 2 and 7, ten polls for the mixing cards.
 - The compiled files in a source folder need not be the released build: `PLZPART/PLZ.OBJ` tests
   `curpal==5` as `PLZ.C` does, the released `PLZPART.EXE` tests 4. Read the unpacked program itself.
 - The plasma's fourth palette and section exist only in `PLZ.C`; the released part has three. Do not
