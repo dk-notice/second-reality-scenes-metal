@@ -83,6 +83,11 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   Bars' third section was added later the same day (the counter it waits on counts music ticks, see
   below). The end scroller runs,
   with the music playing, until the demo is stopped (Escape).
+- **The output's delay** (2026-11-25): sound is heard a little after it is rendered, and over Bluetooth
+  headphones a good deal after (AirPods report 160 ms; the MacBook's speakers 15.6 ms). With **Music ▸
+  Allow for Output Delay** on (the default) the script reads the position whose sound is being heard
+  now, by the delay macOS reports for the output device, so the picture stays on the beat. The menu
+  item shows the delay in use. Off, the newest rendered position is read, as before.
 - **Known limits:** the visuals step by the screen clock and the music by the sound card's, as in 1993;
   parts that wait for the music fall back into step. If the window cannot draw for a while (hidden,
   Mac asleep), the visuals fall behind for up to the end of the part. Making a scene (the city loads

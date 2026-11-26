@@ -119,7 +119,7 @@ enum DemoTimelineCommand {
     static func live(arguments: [String]) -> Bool {
         guard let flag = arguments.firstIndex(of: "--demo-live"), flag + 2 < arguments.count,
               let start = DemoStart(argument: arguments[flag + 1]), let seconds = Double(arguments[flag + 2]) else {
-            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound] [pause <at seconds> <for seconds>] [rebuild <at seconds>]")
+            print("Usage: SRMetal --demo-live <scene id | part number 1-\(DemoScript.partNames.count)> <seconds> [sound] [delay] [pause <at seconds> <for seconds>] [rebuild <at seconds>]")
             return false
         }
         var rebuildAt: Double?
@@ -142,6 +142,9 @@ enum DemoTimelineCommand {
         guard let ahead = DemoSequencer.fastForward(to: start) else { print("The demo never reaches \(start)"); return false }
         let player = MusicPlayer()
         player.muted = !arguments.contains("sound")
+        // `delay`: follow the music as heard (the output device's delay allowed for, as the app does by
+        // default); every music cue then comes that much later than in the silent full run.
+        player.allowsForOutputDelay = arguments.contains("delay")
         let music = LiveDemoMusic(player: player, look: { .modern })
         let sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
         let began = Date()
@@ -197,6 +200,8 @@ enum DemoTimelineCommand {
         }
         player.stop()
         print("Worst difference: \(worst) steps (\(String(format: "%.2f", Double(worst) / 70)) s)")
+        print(String(format: "Output delay reported by macOS: %.1f ms (%@)", player.outputDelay * 1000,
+                     player.allowsForOutputDelay ? "allowed for: cues come that much later" : "not allowed for; add `delay` to follow the music as heard"))
         return worst <= 35 && (movedWhilePaused ?? 0) == 0 && carriedOn
     }
 }

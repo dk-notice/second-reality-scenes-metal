@@ -74,6 +74,30 @@ extension CoreChecks {
 
     /// The song position Play Demo waits on (added 2026-11-24 with Play Demo).
     static func musicPosition(_ check: (String, Bool, String) -> Void) {
+        // The output delay (2026-11-25): Play Demo follows the music as heard, so the player reports the
+        // position whose sound left for the device a delay ago (`PositionHistory`). Rows 1...5 leave at
+        // 0.1 s, 0.2 s ... 0.5 s here.
+        do {
+            func at(_ row: Int) -> MusicPosition { MusicPosition(song: .second, order: 3, row: row) }
+            var history = PositionHistory(start: at(0))
+            for row in 1...5 { history.record(at(row), at: Double(row) / 10) }
+            // The same row again and again (every block of sound reports it): not new entries, or the
+            // ring would fill with them and forget row 1.
+            for block in 0..<100 { history.record(at(5), at: 0.5 + Double(block) / 2000) }
+            let firstRow = history.position(at: 0.15).row
+            let now = 0.57
+            let heard = history.position(at: now - 0.2).row, undelayed = history.position(at: now).row
+            let beforeStart = history.position(at: -5).row, between = history.position(at: 0.5).row
+            // More rows than the ring holds: the oldest kept answers for everything before it.
+            for row in 6...105 { history.record(at(row), at: Double(row) / 10) }
+            let oldestKept = history.position(at: 0).row
+            history.restart(at(60))
+            check("The music position allows for the output delay: asked about 0.2 s ago it is the row whose sound left then (row 3 of 5), not the newest; before the start it is the start; a row reported by many blocks is one entry; it keeps the newest 64 rows; a restart forgets them",
+                  heard == 3 && undelayed == 5 && firstRow == 1 && history.newest.row == 60 && beforeStart == 0 && between == 5
+                    && oldestKept == 105 - PositionHistory.capacity + 1 && history.position(at: 100).row == 60
+                    && history.position(at: -100).row == 60,
+                  "heard \(heard), undelayed \(undelayed), before the start \(beforeStart), at 0.5 s \(between), oldest kept \(oldestKept)")
+        }
         // Song 1 plays at tempo 120, as in the demo: its first section lasts 8 s = 560 steps of 1/70 s.
         func stepsInFirstSection(_ song: TrackerSong) -> Int {
             var buffer = [Float](), steps = 0

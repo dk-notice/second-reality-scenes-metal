@@ -130,6 +130,7 @@ enum MusicPlayCommand {
         player.stop()
         print("Position read from the audio thread: section \(position.order), row \(position.row), music plus \(plus).")
         print("The sound output reached \(String(format: "%.2f", reached)) s into the song.")
+        print(String(format: "Output delay reported by macOS for this device: %.0f ms (Play Demo can allow for it: Music menu).", player.outputDelay * 1000))
         // The output renders a little ahead of what is heard, so allow some slack either way.
         return reached > seconds * 0.8
     }
