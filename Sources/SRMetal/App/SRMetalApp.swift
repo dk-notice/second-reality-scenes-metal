@@ -9,6 +9,12 @@ import SwiftUI
 @main
 enum Main {
     static func main() {
+        // A trial of the demo's end: the end scroller cut to this many steps (read first of all: the
+        // demo's script takes the number when it is first used).
+        if let flag = CommandLine.arguments.firstIndex(of: "--end-scroller-steps"), flag + 1 < CommandLine.arguments.count,
+           let steps = Int(CommandLine.arguments[flag + 1]), steps > 0 {
+            EndScrollerModel.trialLength = steps
+        }
         if let flag = CommandLine.arguments.firstIndex(of: "--selftest") {
             // An optional word after it runs only the matching groups of checks (see `SelfTest.only`).
             let next = CommandLine.arguments.dropFirst(flag + 1).first
@@ -92,6 +98,7 @@ struct StartupOptions {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown  --music on|off
                  --scene play-demo --from <scene id, or part number 1-\(DemoScript.partNames.count)>
+                 --end-scroller-steps <n>  (a trial: Play Demo ends n steps into the end scroller)
         Commands: --selftest [word], --demo-timeline, --music-info (these three just run); --snapshot, --motion-check, --visu-test, --music-render, --music-play, --demo-live, --scaler-compare, --credits-match, --credits-captures, --export-video (run one of these without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or \(DemoRunScene.id) for the whole demo
         """
@@ -106,7 +113,7 @@ struct StartupOptions {
             // Only options starting with two dashes are ours. macOS adds single-dash ones of its
             // own (with values) when it starts an app in some ways; those are left alone.
             guard option.hasPrefix("--") else { continue }
-            guard ["--look", "--scene", "--sidebar", "--from", "--music"].contains(option) else {
+            guard ["--look", "--scene", "--sidebar", "--from", "--music", "--end-scroller-steps"].contains(option) else {
                 problems.append("Unknown option \(option)")
                 continue
             }
@@ -126,6 +133,10 @@ struct StartupOptions {
             case "--music":
                 if value == "off" { muted = true }
                 else if value != "on" { problems.append("Unknown music setting \"\(value)\" (use on or off)") }
+            case "--end-scroller-steps":
+                // For trying the demo's end without waiting five and a half minutes for it (`Main` has
+                // already read the number: it must be known before the demo's script is first used).
+                if (Int(value) ?? 0) <= 0 { problems.append("--end-scroller-steps needs a number of steps, 1 or more") }
             case "--scene":
                 if value == DemoRunScene.id { playDemo = true }
                 else if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
@@ -245,9 +256,9 @@ final class AppModel: ObservableObject {
         start: { [unowned self] in self.demoStart },
         configure: { [weak self] scene in
             scene.onPart = { [weak self] name in self?.demoPart = name }
-            // The demo over: on to choosing, as Escape does. (Not from inside the step that ended it:
-            // that step is run by the window's drawing.)
-            scene.onEnd = { DispatchQueue.main.async { [weak self] in self?.stopDemoAndBrowse() } }
+            // The demo over: the list opens. (Not from inside the step that ended it: that step is run
+            // by the window's drawing.)
+            scene.onEnd = { DispatchQueue.main.async { [weak self] in self?.demoEnded() } }
             scene.logsParts = true
             self?.demoRun = scene
         })
@@ -278,6 +289,17 @@ final class AppModel: ObservableObject {
         demoPart = nil
         music.stop()
     }
+    /// The demo has run to its end (the end scroller's last line; the released program quit there): the
+    /// scene list opens for choosing. The picture stays as the demo left it, black, with Play Demo still
+    /// the row chosen: going to the End Scroller scene instead would start its text again from the top,
+    /// which looks as if the demo had looped (the user saw exactly that, 2026-11-26). P, Restart or the
+    /// menu plays the demo again; choosing a scene leaves it.
+    func demoEnded() {
+        guard playingDemo else { return }
+        columns = .all
+        if columnsBeforeFullscreen != nil { columnsBeforeFullscreen = .all }   // and still open after full screen
+    }
+
     /// Stops Play Demo and goes over to choosing: the scene list opens on the scene the demo was
     /// showing (Escape, and Stop Demo in the menu).
     func stopDemoAndBrowse() {

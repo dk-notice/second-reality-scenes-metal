@@ -141,9 +141,14 @@ struct EndScrollerModel {
         return max(1, value(1) * 10 + value(2))
     }
 
+    /// `--end-scroller-steps`: a shorter run, for trying the demo's end in the window. Set (by `Main`)
+    /// before `demoLength` is first read, or not at all.
+    static var trialLength: Int?
+
     /// How many steps the scroller runs in Play Demo: up to and with the step that draws the first row
     /// of the `%` line, where the released program quit (0 if the text is missing or has no such line).
     static let demoLength: Int = {
+        if let trialLength { return trialLength }
         guard var model = try? load() else { return 0 }
         var steps = 0
         while !model.reachedEnd && steps < 70 * 60 * 30 { model.tick(); steps += 1 }

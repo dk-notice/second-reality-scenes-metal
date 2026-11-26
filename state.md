@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 648 checks, all pass (641 on main until the video export is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 649 checks, all pass (641 on main until the video export is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -117,10 +117,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      `[8` lines are 45 blank rows (we drew `[8` as text); (2) on the first row of the `%` line the
      program calls `exit(0)` (169Ah): the demo ENDS there (our looping came from the port).
      Now: `EndScrollerModel.gapHeight`, `reachedEnd`, `demoLength` (23,002 steps); the script ends with
-     `.frames(demoLength), .show(.black), .hold`; PLAY DEMO ENDS at step 68,673 (16:21.0) and the app
-     then goes to the scene list as Escape does (`DemoRunScene.onEnd`; my recommendation, the user said
-     "fix it": CONFIRM with the user, who has not seen it in the app yet). Alone the scene still starts
-     again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
+     `.frames(demoLength), .show(.black), .hold`; PLAY DEMO ENDS at step 68,673 (16:21.0): the
+     picture stays black, Play Demo stays chosen and THE SCENE LIST OPENS (`DemoRunScene.onEnd`,
+     `AppModel.demoEnded`; the user's choice, 2026-11-26). It must NOT go to the End Scroller scene: that
+     starts the text again and looks like a loop (the first try did, and the user saw it). To try the
+     end quickly: `--scene play-demo --from end-scroller --end-scroller-steps 350`. Alone the scene
+     still starts again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
    - The export now ends with the demo: 58,866 pictures (16:21.1). THE FADE IS GONE (the screen is
      black for 8 s before the end; supersedes "and fade" above). `stills` no longer takes a length.
    - The first export (33.98 GB, in `~/Movies/`) has both scroller faults; the user watched it and found
@@ -171,7 +173,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   dot-tunnel rings interference techno-bars troll switch-off mountain-scroller lens rotozoomer plasma
   plasma-cube bouncing-dots water-scroller sine-landscape jelly-logo city-3d end-picture credits
   end-scroller starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
-  (with `play-demo`), `--music on|off`.
+  (with `play-demo`), `--music on|off`, `--end-scroller-steps <n>` (a trial of the demo's end).
 - Commands (run `build/SRMetal.app/Contents/MacOS/SRMetal` directly; none opens a window):
   - `--selftest`: all checks (~40 s). `--selftest <word>`: only the groups whose label contains the word
     (a scene id, or `demo`, `music`, `core`), in a second or two.

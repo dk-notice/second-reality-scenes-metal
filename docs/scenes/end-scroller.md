@@ -13,7 +13,8 @@ group, greetings to other groups. When the text is through, the demo is over: th
 - **Data:** the released text and font, in `Data/EndScroller/` (see "The released text" below).
 - **Length:** the text is 542 lines; its end mark (a line starting `%`) is line 538, 11,500 rows down; at 35
   rows a second that takes 5 minutes 28.6 seconds (23,002 steps). In Play Demo the demo ends there, at
-  16:21.0, and the app goes over to the scene list. On its own the scene then starts the text again.
+  16:21.0: the screen stays black and the scene list opens, with Play Demo still chosen (P plays it again). On
+  its own the scene then starts the text again.
 
 ## How the original did it
 

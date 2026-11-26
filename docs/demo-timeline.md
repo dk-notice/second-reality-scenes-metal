@@ -82,8 +82,9 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   Tunnel (1,060 steps) and Bouncing Dots (2,580) fit their parts exactly and needed nothing; Techno
   Bars' third section was added later the same day (the counter it waits on counts music ticks, see
   below). The end scroller runs
-  to its text's `%` line (16:21.0; the music runs out at 15:57.7), where the demo ends and the app goes
-  over to the scene list, as Escape does.
+  to its text's `%` line (16:21.0; the music runs out at 15:57.7), where the demo ends: the screen stays
+  black and the scene list opens. (`--end-scroller-steps 350` with `--scene play-demo --from end-scroller`
+  tries that ending after 5 seconds instead of five and a half minutes.)
 - **The output's delay** (2026-11-25): sound is heard a little after it is rendered, and over Bluetooth
   headphones a good deal after (AirPods report 160 ms; the MacBook's speakers 15.6 ms). With **Music ▸
   Allow for Output Delay** on (the default) the script reads the position whose sound is being heard
