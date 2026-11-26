@@ -44,7 +44,7 @@ enum DemoStep {
     case until(cap: Int?, (DemoMusicState) -> Bool)
     case resetFrameCounter
     case noteSection
-    /// The end: waits for ever (the end scroller ran until a key was pressed).
+    /// The end of the demo: waits for ever (`DemoSequencer.finished`).
     case hold
 }
 
@@ -128,7 +128,9 @@ enum DemoScript {
               until(cap: 5000) { $0.plus > -16 }, .frames(64)]
         // CREDITS/MAIN.C: 21 screens of 362 refreshes (see CreditsModel), shown by the Credits scene.
         s += [.part("Credits"), .show(.scene("credits")), .frames(creditsPictures.count * 362)]
-        s += [.part("End scroller"), .show(.scene("end-scroller")), .hold]   // until the demo is stopped (a key, in 1993)
+        // ENDSCRL as released: the text scrolls to its "%" line, where the program quit: the demo's end.
+        s += [.part("End scroller"), .show(.scene("end-scroller")), .frames(EndScrollerModel.demoLength),
+              .show(.black), .hold]
         return s
     }()
 
@@ -232,7 +234,7 @@ final class DemoSequencer {
             last = (visual, sequencer.musicState)
             if case .scene(let wanted) = start, case .scene(let id) = visual, id == wanted { found = last }
         }
-        while found == nil && !sequencer.finished && sequencer.time < 70 * 60 * 15 {
+        while found == nil && !sequencer.finished && sequencer.time < 70 * 60 * 20 {
             sequencer.tick()
             if case .part(let number) = start, sequencer.partStarts.count >= number + 1 { found = last }
         }

@@ -69,8 +69,16 @@ struct EndScrollerFont {
 /// A 640x400 screen in 4 greys. Every second screen refresh the original drew ONE new row of pixels of
 /// the current text line at the bottom and moved the screen up by one row (by telling the card to start
 /// reading one row later, in a ring of 401 rows). So the text creeps up 35 rows a second. Text lines are
-/// 25 rows (the font's height) and centred. A line starting `[nn` is nn blank rows; a line starting `%`
-/// sends it back to the first line. It runs until a key is pressed.
+/// 25 rows (the font's height) and centred.
+///
+/// Two kinds of line are marks, not text; both were read from the RELEASED program (`MAIN/DATA/ENDSCRL.EXE`,
+/// unpacked with deark's pklite and then lzexe; the source release's `MAIN.C` is an earlier version):
+/// - A line starting `[` draws nothing and takes (2nd character - 48) x 10 + (3rd character - 48) rows
+///   (164Fh-1681h). The program does not test that they are digits: `[15` is 15 rows, and `[8`, whose
+///   third character is the carriage return (13), is 80 - 35 = 45 rows, not 8.
+/// - On the first row of a line starting `%` the program calls `exit(0)` (169Ah): the demo ENDS there.
+///   (It does not start again; the C++ port does, and until 2026-11-26 so did this.) On its own, as a
+///   scene that must loop, this version then starts the text again; Play Demo ends (`demoLength`).
 struct EndScrollerModel {
     static let width = 640
     static let height = 400
@@ -91,6 +99,11 @@ struct EndScrollerModel {
     private(set) var stepsSinceRow = 0
     /// For the Modern look: each text line drawn recently, and the number of its first row.
     private(set) var placed: [(line: Int, firstRow: Int)] = []
+
+    /// Whether the first row of the `%` line has been drawn: where the released program quit.
+    private(set) var reachedEnd = false
+    /// The number of the last row drawn that had any text in it (-1: none yet).
+    private(set) var lastTextRow = -1
 
     private var nextLine = 0
     private var row = 0
@@ -121,7 +134,28 @@ struct EndScrollerModel {
         }
     }
 
-    /// A line starting `%` shows nothing and starts the text again (one rule for both looks).
+    /// The rows a line starting `[` takes, by the released program's sum (no test for digits; a
+    /// character missing counts as 0). At least 1: the program divided by this number.
+    static func gapHeight(_ line: [UInt8]) -> Int {
+        func value(_ index: Int) -> Int { Int(index < line.count ? line[index] : 0) - 48 }
+        return max(1, value(1) * 10 + value(2))
+    }
+
+    /// `--end-scroller-steps`: a shorter run, for trying the demo's end in the window. Set (by `Main`)
+    /// before `demoLength` is first read, or not at all.
+    static var trialLength: Int?
+
+    /// How many steps the scroller runs in Play Demo: up to and with the step that draws the first row
+    /// of the `%` line, where the released program quit (0 if the text is missing or has no such line).
+    static let demoLength: Int = {
+        if let trialLength { return trialLength }
+        guard var model = try? load() else { return 0 }
+        var steps = 0
+        while !model.reachedEnd && steps < 70 * 60 * 30 { model.tick(); steps += 1 }
+        return model.reachedEnd ? steps : 0
+    }()
+
+    /// A line starting `%` shows nothing and ends the demo (one rule for both looks).
     static func isLoopLine(_ line: [UInt8]) -> Bool { line.first == UInt8(ascii: "%") }
 
     /// One pass of the original's `do_scroll`.
@@ -131,10 +165,7 @@ struct EndScrollerModel {
             start = font.lineStart(line)
             gapRows = 0
             loops = Self.isLoopLine(line)
-            if line.first == UInt8(ascii: "["), line.count >= 3,
-               let tens = Int(String(UnicodeScalar(line[1]))), let ones = Int(String(UnicodeScalar(line[2]))) {
-                gapRows = tens * 10 + ones
-            }
+            if line.first == UInt8(ascii: "[") { gapRows = Self.gapHeight(line) }
             current = gapRows > 0 ? [] : line
             if gapRows == 0 { placed.append((nextLine, rowsDrawn)) }
             nextLine = (nextLine + 1) % lines.count
@@ -149,11 +180,12 @@ struct EndScrollerModel {
             }
             x += 2
         }
+        if pixels.contains(where: { $0 != 0 }) { lastTextRow = rowsDrawn }
         ring.replaceSubrange(yscrl * Self.width..<(yscrl + 1) * Self.width, with: pixels)
         yscrl = (yscrl + 1) % Self.ringRows
         rowsDrawn += 1
         row = (row + 1) % (gapRows > 0 ? gapRows : EndScrollerFont.rows)
-        if loops { nextLine = 0 }
+        if loops { nextLine = 0; reachedEnd = true }
         // Lines that have scrolled off the top are no longer needed.
         placed.removeAll { $0.firstRow + EndScrollerFont.rows < rowsDrawn - Self.height - 1 }
     }

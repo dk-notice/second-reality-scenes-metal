@@ -9,16 +9,16 @@ Play Demo. Its text is in the repository's history.)
 ## Export Play Demo to a video file
 
 Wanted for YouTube, in the Modern look only (the 1993 look's 70 pictures a second do not fit YouTube's
-60). The idea as discussed so far:
+60). Decided with the user on 2026-11-25 and built (`tools/export_video.py`; see the README):
 
+- The whole demo, 2880x2160 (4:3; YouTube's "4K") at 60 pictures a second, as ProRes 422 with PCM sound
+  in a .mov file in `~/Movies/`. It ends where the demo does: the end scroller's last line (16:21).
 - A command steps Play Demo against silently rendered music, as `--demo-timeline` does, so nothing
-  depends on the speed of the Mac or on a window.
-- Each frame is drawn off screen, as `--snapshot` does, at 60 a second, with the Modern look's blend
-  between steps taken at each frame's exact moment, at 2880x2160 (4:3; YouTube's "4K").
-- The frames and the rendered music go to ffmpeg, a development tool only: the app and `build.sh` never
-  need it.
-- The sound output's delay (Music ▸ Allow for Output Delay) must not be used: an exported file has none.
-- It needs a check that sound and picture stay in step in the finished file.
+  depends on the speed of the Mac or on a window, and draws each frame off screen with the Modern
+  look's blend taken at that frame's exact moment. The sound output's delay is not involved.
+- The program writes raw frames and the sound; a script in `tools/` hands them to ffmpeg, a
+  development tool only: the app and `build.sh` never need it.
+- Checks prove sound and picture are in step, in the self-test and on the finished file.
 
 ## The app's window and menus
 

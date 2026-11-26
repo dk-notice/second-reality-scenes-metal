@@ -30,6 +30,7 @@ enum CoreChecks {
         if SelfTest.wants("rotozoomer") { rotozoomerTiming(check) }
         if SelfTest.wants("opening-credits opening") { openingCredits(check) }
         if SelfTest.wants("credits") { credits(check) }
+        if SelfTest.wants("video export demo") { videoExport(check) }
 
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
             check("Core: Metal device available", false)
@@ -197,6 +198,26 @@ enum CoreChecks {
             let again = model.playingDemo && model.entry.id == DemoRunScene.id
             model.sceneIndex = 0             // a scene chosen in the list
             let chosen = !model.playingDemo && model.entry.id == SceneCatalog.all[0].id
+            // The demo over: the list opens and nothing else changes (no scene starts).
+            model.playDemo()
+            model.columns = .detailOnly
+            model.demoEnded()
+            let ended = model.playingDemo && model.entry.id == DemoRunScene.id && model.columns == .all
+            model.columns = .detailOnly
+            model.columnsBeforeFullscreen = .detailOnly   // (as in full screen)
+            model.demoEnded()
+            let afterFullScreen = model.columnsBeforeFullscreen == .all
+            model.columnsBeforeFullscreen = nil
+            model.sceneIndex = 3
+            model.columns = .detailOnly
+            model.demoEnded()                              // not in the demo: nothing happens
+            let untouched = model.columns == .detailOnly
+            let trial = StartupOptions(arguments: ["SRMetal", "--end-scroller-steps", "350"]).problems.isEmpty
+                && !StartupOptions(arguments: ["SRMetal", "--end-scroller-steps", "soon"]).problems.isEmpty
+                && EndScrollerModel.trialLength == nil
+            check("App: when the demo ends the scene list opens (after full screen too) and Play Demo stays chosen, black: no scene starts",
+                  ended && afterFullScreen && untouched && trial,
+                  "ended \(ended), after full screen \(afterFullScreen), untouched outside the demo \(untouched), trial option \(trial)")
             check("App: stopping Play Demo opens the scene list on the scene the demo was showing (or the one last chosen, before its first); choosing a scene leaves the demo; Play Demo starts it again",
                   startedInDemo && onTroll && stays && again && chosen,
                   "started in the demo \(startedInDemo), on the troll \(onTroll), stays \(stays), again \(again), chosen \(chosen)")

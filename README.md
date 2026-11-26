@@ -244,6 +244,31 @@ runs Play Demo's whole running order against the music, silently, in well under 
 part starts. It checks every start against the research simulation (`tools/demo_timeline.py`); the self-test
 does the same.
 
+### Exporting the demo as a video
+
+```bash
+python3 tools/export_video.py
+```
+
+makes `~/Movies/SecondReality-Modern.mov`: the whole of Play Demo in the Modern look, 2880x2160 at 60
+pictures a second, as ProRes 422 with the music as uncompressed stereo sound (tens of gigabytes; it
+shows its progress and the time left). It runs to the demo's own end, the last line of the end
+scroller's text. This needs [ffmpeg](https://ffmpeg.org) installed, which nothing else here does: the app only
+writes the raw pictures and the sound (`--export-video`), and the script hands them to ffmpeg.
+
+Nothing in the export follows a clock. The demo is stepped 70 times a second of its own time against
+silently rendered music (630 sound samples a step), and picture k is drawn after 7k/6 steps: a whole
+number of steps and a blend of so many sixths towards the next. So sound and picture cannot drift,
+however fast or slow the Mac is.
+
+```bash
+python3 tools/check_video.py
+```
+
+then proves it on the finished file: the picture and sound counts, the sound byte for byte, song 2
+starting on exactly the sample the script starts it on, and some forty pictures taken out of the file
+against the app's own. (`--seconds N` on both makes and checks a short trial.)
+
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --demo-live troll 30
 ```

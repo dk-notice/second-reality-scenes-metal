@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the demo-first start-up is merged and pushed; next: the video export, to be talked through first)
+Last updated: 2026-11-26 (the video export and the end scroller's fix are on their own branch, the corrected export made; the user looks at it, then the merge)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 641 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 649 checks, all pass (641 on main until the video export is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -86,8 +86,61 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Plasma on its own: three palettes, falls at steps 976, 2,009 and 2,526, loop 2,588. Glenz on its
      own: unchanged on purpose (35-step pause).
    - The script's refresh counter (`DemoMusicState.frame`) and the tool's `frames|ticks` option are gone.
-5. NEXT (user, 2026-11-25): EXPORT PLAY DEMO TO A VIDEO FILE. To be talked through with the user
-   first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
+5. IN HAND (branch `claude/play-demo-video-export-8abdde`): EXPORT PLAY DEMO TO A VIDEO FILE.
+   Talked through and DECIDED with the user on 2026-11-25:
+   - 2880x2160, 60 pictures a second, Modern look only; ProRes 422 (standard profile) with 2-channel
+     PCM sound at 44,100 Hz (630 samples a step exactly) in a .mov; written to `~/Movies/` (the
+     Documents folder is synced and the file is tens of GB; the user's upload speed makes that fine).
+   - The WHOLE demo only: no start-from-a-part, no other sizes or rates. One test-only limit ("stop
+     after N seconds") for trial exports and for proving the checks.
+   - The ending: ONE FULL PASS of the end scroller's text, then a 2-second fade to black (choice "A
+     and fade"; the music runs out before the text does and the rest is silent, as in the app).
+   - Command line only, no menu item (a menu item could not use ffmpeg; it would need Apple's own
+     encoder, and can come later on the same frame-making code). The program never starts ffmpeg: it
+     writes raw frames and a WAV, and a script in `tools/` runs ffmpeg. The app and `build.sh` never
+     need ffmpeg.
+   - Progress while exporting: frames done and total, percent, speed, time left, the part.
+   - Frame k is drawn at step 7k div 6 with blend (7k mod 6)/6; the output-delay allowance is not used.
+   - Checks: in the self-test (the arithmetic; 630 samples every step; a frame equals `--snapshot`'s),
+     and on the finished file with ffprobe/ffmpeg (735 samples a picture; the sound byte for byte the
+     WAV; song 2 starting at sample 7,624 x 630; the pictures either side of part starts).
+   - BUILT on the branch (2026-11-25): `--export-video` (`App/VideoExport.swift`), `tools/export_video.py`,
+     `tools/check_video.py` (fails on copies with the picture one frame late, the sound one sample pair
+     late and one picture late), seven self-test checks (each seen to fail). First full export: 58,704
+     pictures (16:18.4) in 8 min 27 s, 33.98 GB, `~/Movies/SecondReality-Modern.mov`; the file check
+     passes on it. The fade is done by the export command (so the file's sound can be compared byte for
+     byte), not by ffmpeg. ffmpeg's DEFAULT conversion back to red-green-blue is 2-3 levels dark: the
+     check decodes with `accurate_rnd` (the file itself is right).
+   - THE END SCROLLER'S TWO MARKS, found from the user's questions and FIXED on the branch (2026-11-26),
+     read from the released `MAIN/DATA/ENDSCRL.EXE` (pklite, then lzexe): (1) a `[` line draws nothing
+     and takes (2nd char - 48) x 10 + (3rd char - 48) rows with no digit test (164Fh-1681h), so the six
+     `[8` lines are 45 blank rows (we drew `[8` as text); (2) on the first row of the `%` line the
+     program calls `exit(0)` (169Ah): the demo ENDS there (our looping came from the port).
+     Now: `EndScrollerModel.gapHeight`, `reachedEnd`, `demoLength` (23,002 steps); the script ends with
+     `.frames(demoLength), .show(.black), .hold`; PLAY DEMO ENDS at step 68,673 (16:21.0): the
+     picture stays black, Play Demo stays chosen and THE SCENE LIST OPENS (`DemoRunScene.onEnd`,
+     `AppModel.demoEnded`; the user's choice, 2026-11-26; SEEN by the user in the app with the trial
+     option, and the `[8` fix seen in a full run). It must NOT go to the End Scroller scene: that
+     starts the text again and looks like a loop (the first try did, and the user saw it). To try the
+     end quickly: `--scene play-demo --from end-scroller --end-scroller-steps 350`. Alone the scene
+     still starts again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
+   - The export now ends with the demo: 58,866 pictures (16:21.1). THE FADE IS GONE (the screen is
+     black for 8 s before the end; supersedes "and fade" above). `stills` no longer takes a length.
+   - THE CORRECTED EXPORT (2026-11-26): `~/Movies/SecondReality-Modern.mov`, 58,866 pictures (16:21.1),
+     33.97 GB, made in 8 min 15 s; `tools/check_video.py` passes on it (all ten points). It replaced
+     the first export (which had both scroller faults; the user had watched that one and found picture
+     and sound right and on the beat). YouTube takes .mov and ProRes as they are (its help pages,
+     read 2026-11-26); the sound stays at 44,100 Hz (YouTube asks for 48,000 but converts anyway; the
+     user was told); a video over 15 minutes needs a phone-verified account.
+   - LEFT AT THE WRAP-UP (2026-11-26, night): NOT MERGED. The branch `claude/play-demo-video-export-8abdde`
+     (9 commits ahead of main, clean, 649 checks pass) and its worktree are KEPT on purpose: the user
+     has not yet watched the CORRECTED export, and looks at the result before a merge. Next: the user
+     watches `~/Movies/SecondReality-Modern.mov` (the `[8` gaps about 15 minutes in; the end at 16:21);
+     on their word: merge into main, `./build.sh` in the main folder, the full self-test and
+     `--demo-timeline` there, ask before pushing (main equals GitHub now), then remove the branch and
+     worktree. A YouTube title, description with chapters and tags were drafted in that session's
+     chat (not kept in the repository); the composers' real names and the original source's address
+     in the draft were from memory and need checking.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
    and choosing a scene is secondary. DONE and merged 2026-11-25 (the user tried it in the app and
@@ -106,15 +159,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; NEXT,
-  to be talked through first). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
-  YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
-  with silently rendered music (as `--demo-timeline` does), draws each frame off-screen (as
-  `--snapshot` does) at 60 a second with the Modern look's blend at each frame's exact moment, at
-  2880x2160 (4:3; YouTube's "4K" quality), and pipes the frames and the rendered music to ffmpeg
-  (installed; a development tool only, like POV-Ray: never needed by the app or `build.sh`). Needs a
-  check that sound and picture stay in step in the exported file.
-  It must NOT use the output-delay allowance (an exported file has no device delay).
+- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube: decided 2026-11-25 and in hand; see "Next steps", item 5.
 - REVISIT THE INTERFACE (user, 2026-11-25; wanted, not discussed yet). See "Next steps", item 6.
 - CLOSED on 2026-11-25 by the user (do not raise again unless one starts to show):
   - By eye, everything looks good at present, the 3D City's fades and camera roll and the Ships Fly-by's
@@ -141,13 +186,17 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   dot-tunnel rings interference techno-bars troll switch-off mountain-scroller lens rotozoomer plasma
   plasma-cube bouncing-dots water-scroller sine-landscape jelly-logo city-3d end-picture credits
   end-scroller starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
-  (with `play-demo`), `--music on|off`.
+  (with `play-demo`), `--music on|off`, `--end-scroller-steps <n>` (a trial of the demo's end).
 - Commands (run `build/SRMetal.app/Contents/MacOS/SRMetal` directly; none opens a window):
   - `--selftest`: all checks (~40 s). `--selftest <word>`: only the groups whose label contains the word
     (a scene id, or `demo`, `music`, `core`), in a second or two.
   - `--snapshot <scene-id|play-demo> <modern|classic> <step> <file.png> [blend]`: a 960x720 picture.
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
+  - `--export-video plan | sound <file.wav> [seconds] | pictures [seconds] | stills <folder> <seconds|all> <n>...`:
+    the raw material of the video export (see "Next steps", item 5). Run through
+    `python3 tools/export_video.py [--seconds N] [file.mov]` (needs ffmpeg), checked by
+    `python3 tools/check_video.py [--seconds N] [file.mov]`.
   - `--demo-timeline`: runs Play Demo's script against silently rendered music (0.2 s) and compares every
     part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [delay] [pause <at> <for>] [rebuild <at>]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
@@ -184,7 +233,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
 - `artwork/original/`: every picture the demo shows, exported to PNG by `tools/art_export.py` (do not edit
   by hand); `rgb/` copies are what the app loads. Inventory: `artwork/README.md`.
 - `tools/`: development-only Python (standard library only): one `<scene>_reference.py` per replayed
-  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `water_background.py` (needs POV-Ray), `x86interp.py` (cannot run self-modifying code).
+  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `water_background.py` (needs POV-Ray), `export_video.py` and `check_video.py` (need ffmpeg), `x86interp.py` (cannot run self-modifying code).
 - `ThirdParty/libopenmpt` (unmodified source, the only dependency), `docs/` (see the end of this file).
 
 ## Changing or rebuilding a scene

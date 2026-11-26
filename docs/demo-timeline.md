@@ -33,7 +33,7 @@ has for the part: a scene of its own, or only the original artwork so far.
 | 16 | 3D city (`U2E`) | 1, from section 18 | 7:59.6 | 8:55.3 | 55.7 s | **Scene** |
 | 17 | End picture (`ENDLOGO`) | 1 | 8:55.3 | 9:03.8 | 8.6 s | **Scene** (2026-11-24) |
 | 18 | Credits (`CRED`) | 1 | 9:03.8 | 10:52.4 | 108.6 s | **Scene** (2026-11-25) |
-| 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | until a key | — | **Scene** (2026-11-24; released text and font) |
+| 19 | End scroller (`ENDSCRL`) | 1 | 10:52.4 | 16:21.0 (the demo's end) | 328.6 s | **Scene** (2026-11-24; released text and font) |
 
 The hidden starfield (`DDSTARS`) is not in the normal run: the loader plays it only when chosen
 specially, over song 1 from section 70.
@@ -58,7 +58,7 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   |---|---|
   | Opening credits | Its own scene (2026-11-25): the titles and pages on their music cues, the horizon scrolling to the picture the ships start on |
   | Lens, rotozoomer | Their own scenes (2026-11-24): the lens follows both music cues, the rotozoomer turns white on its cue |
-  | End scroller | Its own scene (2026-11-24), until the demo is stopped |
+  | End scroller | Its own scene (2026-11-24), to the text's `%` line, where the released program quit: the demo's end (2026-11-26) |
   | Troll, screen switch-off | Their own scenes (2026-11-24): the troll scrolls in on its music cue, shakes and flashes; the screen collapses to a line and a dot |
   | Explosion | The Ships horizon while the original waited for its cue, then the Explosion scene (built 2026-11-24, the first new part) |
   | Ships fly-by | The ships horizon picture while the original waited, then the Ships Fly-by scene: the whole flight, a frame a step, with no pause (2026-11-25) |
@@ -81,8 +81,10 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   each keeps its standalone timing, which loops and differs from the original on purpose. The Dot
   Tunnel (1,060 steps) and Bouncing Dots (2,580) fit their parts exactly and needed nothing; Techno
   Bars' third section was added later the same day (the counter it waits on counts music ticks, see
-  below). The end scroller runs,
-  with the music playing, until the demo is stopped (Escape).
+  below). The end scroller runs
+  to its text's `%` line (16:21.0; the music runs out at 15:57.7), where the demo ends: the screen stays
+  black and the scene list opens. (`--end-scroller-steps 350` with `--scene play-demo --from end-scroller`
+  tries that ending after 5 seconds instead of five and a half minutes.)
 - **The output's delay** (2026-11-25): sound is heard a little after it is rendered, and over Bluetooth
   headphones a good deal after (AirPods report 160 ms; the MacBook's speakers 15.6 ms). With **Music ▸
   Allow for Output Delay** on (the default) the script reads the position whose sound is being heard
