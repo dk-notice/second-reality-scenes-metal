@@ -43,13 +43,17 @@ extension CoreChecks {
               scriptCue > 0 && whiteWhileWaiting && cuedAt == scriptCue && falls == expectedFalls && falls.last == scriptLast + 1
                 && PlasmaModel.timetable == [723, 1491, 1875] && falls.map { $0 - scriptCue } == [975, 2008, 2525] && sections == [0, 1, 2] && endedAt == scriptLast + 64 && emptyAtEnd && nextAt == scriptLast + 65,
               "cue \(scriptCue), started \(cuedAt), falls \(falls) (expected \(expectedFalls)), sections \(sections), ended \(endedAt), next \(nextAt)")
-        // The first fade: 127 refreshes down from white, shown a refresh late, ending on the exact palette.
-        let exact = PlasmaModel.palettes[0].flatMap { [UInt8($0.x), UInt8($0.y), UInt8($0.z)] }
+        // The first fade: 127 refreshes down from white, shown a refresh late. The released program's
+        // fade memory starts as zeros, so it ends ONE LEVEL ABOVE the palette (none of whose levels is 63).
+        let palette0 = PlasmaModel.palettes[0].flatMap { [UInt8($0.x), UInt8($0.y), UInt8($0.z)] }
+        let exact = palette0.map { $0 + 1 }
+        let firstStep = palettes[scriptCue + 2] ?? []
         // (The levels are whole numbers, so they reach their last values a few refreshes before the fade's end.)
         let half = palettes[scriptCue + 64] ?? [], before = palettes[scriptCue + 100] ?? [], after = palettes[scriptCue + 128] ?? []
-        check("Play Demo: the plasma's first palette fades down from white in 127 refreshes (the borders with it) and ends on the exact palette",
+        check("Play Demo: the plasma's first palette fades down from white in 127 refreshes (the borders with it), white on its first step, and ends one level above the palette, as the released program's zeroed fade memory makes it",
               half.count == 768 && half[0] > 20 && half[0] < 45 && before != exact && after == exact
+                && (palette0.max() ?? 63) <= 62 && firstStep.count == 768 && !firstStep.contains { $0 < 62 }
                 && scriptCue + 128 < counters.count && counters[scriptCue + 127] == 255 && counters[scriptCue + 128] == 0,
-              "colour 0 half-way \(half.first ?? 0), exact at +128: \(after == exact), at +100: \(before == exact)")
+              "colour 0 half-way \(half.first ?? 0), one above the palette at +128: \(after == exact), at +100: \(before == exact), lowest level on the first step \(firstStep.min() ?? 0), colour 0 ends at \(after.first ?? 99)")
     }
 }

@@ -160,7 +160,8 @@ struct PlasmaModel {
     private var fallsBegun = 0
     private var fallDue = false
     static let startCue = 0
-    /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white.
+    /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white,
+    /// to one level above it (see `update`).
     static let firstFade = 128
 
     mutating func reset() { self = PlasmaModel() }
@@ -171,7 +172,10 @@ struct PlasmaModel {
             self = PlasmaModel()
             // Every colour white: the rotozoomer's last palette, and `init_plz`'s first.
             shownPalette = [UInt8](repeating: 63, count: 768)
-            fadePalette = [UInt16](repeating: 63 << 8, count: 768)
+            // The fade's own memory (`fadepal`) starts as ZEROS in the released PLZPART.EXE, not at white:
+            // the first step takes every level below zero, the card keeps only the low six bits (white
+            // again), and the fade ends one level above the palette (0 shows as 1, 62 as 63).
+            fadePalette = [UInt16](repeating: 0, count: 768)
             dropCounter = Self.firstFade
             // The script tests the cue on the very step it shows the scene.
             cued = music.plus >= Self.startCue
@@ -196,7 +200,7 @@ struct PlasmaModel {
         }
 
         if paletteWaiting {
-            shownPalette = fadePalette.map { UInt8($0 >> 8) }
+            shownPalette = fadePalette.map { Self.cardLevel($0) }
             paletteWaiting = false
         }
 
@@ -264,6 +268,9 @@ struct PlasmaModel {
             }
         }
     }
+
+    /// What the video card shows for a fade value: its top byte, of which the card keeps six bits.
+    static func cardLevel(_ value: UInt16) -> UInt8 { UInt8(value >> 8) & 63 }
 
     /// How much one fade step adds, in 1/256ths of a VGA level.
     ///
@@ -360,7 +367,7 @@ struct PlasmaModel {
     /// The state for the modern look, `alpha` (0..<1) of the way towards the next step.
     func modernParameters(alpha: Float) -> ModernParameters {
         // The palette the next step will show, so the fade can glide.
-        let next: [UInt8] = paletteWaiting ? fadePalette.map { UInt8($0 >> 8) } : shownPalette
+        let next: [UInt8] = paletteWaiting ? fadePalette.map { Self.cardLevel($0) } : shownPalette
         var palette = [SIMD4<Float>]()
         palette.reserveCapacity(256)
         for i in 0..<256 {
