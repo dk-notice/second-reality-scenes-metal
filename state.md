@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-26 (the video export is built on its own branch; the end scroller fixed there; a new export waits for the user's word)
+Last updated: 2026-11-26 (the video export and the end scroller's fix are on their own branch, the corrected export made; the user looks at it, then the merge)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -126,8 +126,12 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      still starts again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
    - The export now ends with the demo: 58,866 pictures (16:21.1). THE FADE IS GONE (the screen is
      black for 8 s before the end; supersedes "and fade" above). `stills` no longer takes a length.
-   - The first export (33.98 GB, in `~/Movies/`) has both scroller faults; the user watched it and found
-     picture and sound right and on the beat. NOT YET RE-EXPORTED: the user said to wait for their word.
+   - THE CORRECTED EXPORT (2026-11-26): `~/Movies/SecondReality-Modern.mov`, 58,866 pictures (16:21.1),
+     33.97 GB, made in 8 min 15 s; `tools/check_video.py` passes on it (all ten points). It replaced
+     the first export (which had both scroller faults; the user had watched that one and found picture
+     and sound right and on the beat). YouTube takes .mov and ProRes as they are (its help pages,
+     read 2026-11-26); the sound stays at 44,100 Hz (YouTube asks for 48,000 but converts anyway; the
+     user was told); a video over 15 minutes needs a phone-verified account.
    - The user looks at the exported video before the merge.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
