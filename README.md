@@ -51,7 +51,10 @@ The interesting part is the comparison. The original is full of tricks for makin
 A modern graphics chip needs none of them, so each scene's documentation explains what the trick was and
 what replaced it.
 
-**Play Demo** (in the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
+The app opens straight into **Play Demo**, as a demo should: the whole of it from the beginning, with its
+music. Press Escape to stop it and choose a scene from the list instead.
+
+**Play Demo** (the first row of the list, the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
 the original music (the real tracker songs, played live by libopenmpt, which is built into the program: see
 [ThirdParty/README.md](ThirdParty/README.md)), changing parts on the same music cues the 1993 demo waited for.
 **Play Demo from Here** (Shift-P) starts it where the scene chosen in the sidebar first appears, and **Play
@@ -137,7 +140,8 @@ open build/SRMetal.app
 
 ![The app's window: scene list on the left, the scene on the right](docs/images/window.png)
 
-The window has a list of scenes down the left (the sidebar) and a toolbar along the top.
+The window has a toolbar along the top and a list down the left (the sidebar): Play Demo first, then the
+scenes. The list is hidden while the demo plays from start-up; Escape, or the sidebar button, shows it.
 
 | To do this | Use |
 |---|---|
@@ -146,11 +150,12 @@ The window has a list of scenes down the left (the sidebar) and a toolbar along 
 | Play the current scene again from its start | The circular-arrow button at the right of the toolbar, or press R |
 | Hide or show the sidebar | The sidebar button at the left of the toolbar, or Control-Command-S |
 | Fullscreen | The green window button, or Control-Command-F (in newer macOS versions also the Globe key with F) |
-| Play the whole demo with its music | **Scene** menu, "Play Demo", or press P (again: from the start) |
+| Play the whole demo with its music | It plays when the app opens. Later: "Play Demo" at the top of the sidebar, the **Scene** menu, or press P (again: from the start) |
 | Play the demo from the chosen scene on | **Scene** menu, "Play Demo from Here", or Shift-P |
 | Play the demo from one of its parts | **Scene** menu, "Play Demo from Part" |
 | Mute or unmute the music | **Music** menu, "Mute Music", or press M (the demo keeps its timing) |
-| Stop the demo | Escape, **Scene** menu "Stop Demo", or choose any scene |
+| Keep the picture on the beat over Bluetooth headphones | **Music** menu, "Allow for Output Delay" (on unless you turn it off; it shows the delay macOS reports) |
+| Stop the demo and choose a scene | Escape or **Scene** menu "Stop Demo": the sidebar opens on the scene the demo was showing. Or choose any scene |
 
 While the window cannot be seen (minimised, fully covered, on another desktop) the picture and the music
 pause together and carry on from the same place when it shows again.
@@ -174,9 +179,10 @@ Put these after `--args` when starting the app, for example
 
 | Option | Meaning |
 |---|---|
+| (no `--scene`) | Start in Play Demo, from the beginning, with the scene list hidden |
 | `--scene <id>` | Start on a scene: `opening-credits`, `ships-flyby`, `explosion`, `title-picture`, `glenz-vectors`, `dot-tunnel`, `rings`, `interference`, `techno-bars`, `troll`, `switch-off`, `mountain-scroller`, `lens`, `rotozoomer`, `plasma`, `plasma-cube`, `bouncing-dots`, `water-scroller`, `sine-landscape`, `jelly-logo`, `city-3d`, `end-picture`, `credits`, `end-scroller`, `starfield`; or `play-demo` to start the whole demo |
 | `--look modern` or `--look classic` | Start in that look |
-| `--sidebar hidden` | Start with the scene list hidden |
+| `--sidebar hidden` or `--sidebar shown` | Start with the scene list hidden or showing (without it: hidden when the app starts in the demo, showing when it starts on a scene) |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |
 | `--music off` | Start with the music muted |
 

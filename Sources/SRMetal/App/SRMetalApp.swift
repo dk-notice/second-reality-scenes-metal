@@ -63,6 +63,9 @@ enum Main {
 /// The start-up choices given on the command line: `--look classic|modern`, `--scene <id>`
 /// (e.g. `--scene interference`), `--from <scene id | part number>` (with `--scene play-demo`: start the
 /// demo there), `--music on|off` (off: muted) and `--sidebar hidden|shown`.
+///
+/// With no `--scene` the app starts as a demo does: Play Demo from the beginning, with its music and
+/// the scene list hidden (user, 2026-11-25). `--scene <id>` starts on that scene with the list showing.
 struct StartupOptions {
     var look: Look?
     var sceneIndex: Int?
@@ -73,6 +76,12 @@ struct StartupOptions {
     /// `--music off`: start with the music muted.
     var muted = false
     var sidebarHidden = false
+    /// Whether `--sidebar` was given at all.
+    var sidebarChosen = false
+    /// The app starts in Play Demo: asked for, or no scene was.
+    var startsWithDemo: Bool { playDemo || sceneIndex == nil }
+    /// The scene list starts hidden: as `--sidebar` says, or else while the demo plays.
+    var startsWithSidebarHidden: Bool { sidebarChosen ? sidebarHidden : startsWithDemo }
     /// What is wrong with the options, in words. Empty when all is well.
     var problems: [String] = []
 
@@ -119,6 +128,7 @@ struct StartupOptions {
                 else if let found = SceneCatalog.all.firstIndex(where: { $0.id == value }) { sceneIndex = found }
                 else { problems.append("Unknown scene \"\(value)\"") }
             default:
+                sidebarChosen = true
                 if value == "hidden" { sidebarHidden = true }
                 else if value == "shown" { sidebarHidden = false }
                 else { problems.append("Unknown sidebar setting \"\(value)\" (use hidden or shown)") }
@@ -205,7 +215,7 @@ final class AppModel: ObservableObject {
         if let index = options.sceneIndex {
             sceneIndex = index
         }
-        if options.playDemo {
+        if options.startsWithDemo {
             demoStart = options.demoStart
             playingDemo = true
         }
@@ -213,7 +223,7 @@ final class AppModel: ObservableObject {
             musicMuted = true
             music.muted = true   // didSet does not run inside init
         }
-        if options.sidebarHidden {
+        if options.startsWithSidebarHidden {
             columns = .detailOnly
         }
         watchSleep()
@@ -233,7 +243,10 @@ final class AppModel: ObservableObject {
         configure: { [weak self] scene in
             scene.onPart = { [weak self] name in self?.demoPart = name }
             scene.logsParts = true
+            self?.demoRun = scene
         })
+    /// The demo now running (to ask which scene it is showing when it is stopped).
+    private weak var demoRun: DemoRunScene?
 
     /// Starts the demo with its music: from the beginning, or (`start`) where a scene first shows or a
     /// part begins, with the music jumped to that moment.
@@ -258,6 +271,20 @@ final class AppModel: ObservableObject {
         playingDemo = false
         demoPart = nil
         music.stop()
+    }
+    /// Stops Play Demo and goes over to choosing: the scene list opens on the scene the demo was
+    /// showing (Escape, and Stop Demo in the menu).
+    func stopDemoAndBrowse() {
+        guard playingDemo else { return }
+        browse(from: demoRun?.lastSceneID)
+    }
+
+    /// Leaves the demo for the scene with this id (or stays on the scene last chosen, if the demo had
+    /// not shown one yet), with the list showing.
+    func browse(from sceneID: String?) {
+        endDemo()
+        if let sceneID, let index = SceneCatalog.all.firstIndex(where: { $0.id == sceneID }) { sceneIndex = index }
+        columns = .all
     }
     var hasSeveralScenes: Bool { SceneCatalog.all.count > 1 }
 
@@ -290,7 +317,7 @@ final class AppModel: ObservableObject {
             switch event.keyCode {
             case 124, 125: self.stepScene(by: 1)     // right arrow, down arrow
             case 123, 126: self.stepScene(by: -1)    // left arrow, up arrow
-            case 53 where self.playingDemo: self.endDemo()   // Escape stops the demo
+            case 53 where self.playingDemo: self.stopDemoAndBrowse()   // Escape: from watching to choosing
             default:
                 switch event.charactersIgnoringModifiers?.lowercased() {
                 // Not while the key is held down: the look would flip at the keyboard's repeat rate.
@@ -348,7 +375,7 @@ struct SRMetalApp: App {
                         Button("\(number + 1). \(name)") { model.playDemo(from: number == 0 ? nil : .part(number)) }
                     }
                 }
-                Button("Stop Demo") { model.endDemo() }
+                Button("Stop Demo") { model.stopDemoAndBrowse() }
                     .disabled(!model.playingDemo)
 
                 Divider()
@@ -433,37 +460,66 @@ struct ContentView: View {
     }
 }
 
-/// The sidebar: one row per scene in `SceneCatalog.all`. The current scene is the selected row.
+/// The sidebar: Play Demo first, then one row per scene in `SceneCatalog.all`. What the window shows is
+/// the selected row.
 struct SceneList: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var thumbnails: Thumbnails
 
     var body: some View {
-        // The list's selection IS the current scene: reading it gives the current scene's id, and
-        // clicking a row sets the scene. (Clicking empty space would clear a selection; that is ignored.)
+        // The list's selection IS what the window shows: reading it gives the demo's or the current
+        // scene's id, and clicking a row starts the demo or sets the scene. (Clicking empty space would
+        // clear a selection; that is ignored.)
         let selection = Binding<String?>(
             get: { model.entry.id },
             set: { id in
-                if let id, let index = SceneCatalog.all.firstIndex(where: { $0.id == id }) {
+                if id == DemoRunScene.id {
+                    if !model.playingDemo { model.playDemo() }
+                } else if let id, let index = SceneCatalog.all.firstIndex(where: { $0.id == id }) {
                     model.sceneIndex = index
                 }
             })
 
-        List(SceneCatalog.all, selection: selection) { entry in
-            HStack(spacing: 10) {
-                thumbnail(for: entry)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.title)
-                        .font(.body)
-                    Text(entry.credit)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        List(selection: selection) {
+            row(title: "Play Demo", caption: "The whole demo, with its music") { demoThumbnail }
+                .tag(DemoRunScene.id)
+                .help("Second Reality from the beginning, with the original music (P)")
+            Section("Scenes") {
+                ForEach(SceneCatalog.all) { entry in
+                    row(title: entry.title, caption: entry.credit) { thumbnail(for: entry) }
+                        .tag(entry.id)
+                        .help("\(entry.title), originally by \(entry.credit)")
                 }
             }
-            .padding(.vertical, 3)
-            .help("\(entry.title), originally by \(entry.credit)")
         }
         .listStyle(.sidebar)
+    }
+
+    private func row<Picture: View>(title: String, caption: String, @ViewBuilder picture: () -> Picture) -> some View {
+        HStack(spacing: 10) {
+            picture()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body)
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 3)
+    }
+
+    /// Play Demo's row has no picture of its own: a play sign on black, the shape of the others.
+    private var demoThumbnail: some View {
+        let shape = RoundedRectangle(cornerRadius: 5)
+        return ZStack {
+            Color.black
+            Image(systemName: "play.fill")
+                .foregroundStyle(.white)
+        }
+        .frame(width: 64, height: 48)
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(.primary.opacity(0.15)))
     }
 
     @ViewBuilder

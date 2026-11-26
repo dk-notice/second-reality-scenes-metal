@@ -171,6 +171,37 @@ enum CoreChecks {
                   && options("--scene play-demo --from troll").problems.isEmpty
                   && options("--from 11 --scene play-demo").demoStart == .part(10),
               (good.problems + system.problems).joined(separator: "; "))
+        // Demo first (user, 2026-11-25): with no scene asked for the app starts as a demo does.
+        let plain = options(""), scene = options("--scene plasma"), demo = options("--scene play-demo --from troll")
+        check("App: with no scene asked for it starts in Play Demo with the scene list hidden; asked for a scene it starts on it with the list showing; --sidebar decides either way",
+              plain.startsWithDemo && plain.startsWithSidebarHidden && plain.demoStart == nil
+                && !scene.startsWithDemo && !scene.startsWithSidebarHidden
+                && demo.startsWithDemo && demo.startsWithSidebarHidden && demo.demoStart == .scene("troll")
+                && !options("--sidebar shown").startsWithSidebarHidden && options("--sidebar shown").startsWithDemo
+                && options("--scene plasma --sidebar hidden").startsWithSidebarHidden
+                && !options("--look classic --music off").problems.contains { !$0.isEmpty }
+                && options("--look classic --music off").startsWithDemo,
+              "plain: demo \(plain.startsWithDemo), list hidden \(plain.startsWithSidebarHidden); scene: demo \(scene.startsWithDemo), list hidden \(scene.startsWithSidebarHidden)")
+        // Stopping the demo goes over to choosing: the list opens on the scene the demo was showing.
+        do {
+            let model = AppModel()   // (the self-test's own command line names no scene: it starts in the demo)
+            let startedInDemo = model.playingDemo && model.entry.id == DemoRunScene.id
+            model.columns = .detailOnly
+            model.browse(from: "troll")
+            let onTroll = !model.playingDemo && model.entry.id == "troll" && model.columns == .all
+            model.playDemo()
+            model.columns = .detailOnly
+            model.browse(from: nil)          // stopped before the demo had shown a scene
+            let stays = !model.playingDemo && model.entry.id == "troll" && model.columns == .all
+            model.playDemo()
+            let again = model.playingDemo && model.entry.id == DemoRunScene.id
+            model.sceneIndex = 0             // a scene chosen in the list
+            let chosen = !model.playingDemo && model.entry.id == SceneCatalog.all[0].id
+            check("App: stopping Play Demo opens the scene list on the scene the demo was showing (or the one last chosen, before its first); choosing a scene leaves the demo; Play Demo starts it again",
+                  startedInDemo && onTroll && stays && again && chosen,
+                  "started in the demo \(startedInDemo), on the troll \(onTroll), stays \(stays), again \(again), chosen \(chosen)")
+        }
+
         // Found by the review: all of these used to be ignored without a word.
         let bad = ["--scene plasmacube", "--look 1993", "--scene", "--look --scene plasma", "--sidebar gone", "--selftests",
                    "--from troll", "--scene plasma --from 3"]
