@@ -24,7 +24,7 @@ enum SelfTest {
     /// How many checks the full self-test runs. A check that silently stops running (its set-up failed, a
     /// name it looked up is gone) makes the count wrong, and the run fails. Change it with each check
     /// added or removed.
-    static let expectedChecks = 637
+    static let expectedChecks = 638
 
     static func run() -> Bool {
         var ok = true
@@ -301,6 +301,22 @@ enum SelfTest {
             for _ in 0..<400 { plasma.tick() }
             check("Plasma repeats exactly after \(PlasmaModel.lengthInTicks) steps",
                   plasma.classicReferenceFrame() == plasmaBefore && plasmaBefore.contains { $0 != 0 })
+
+            // On its own the scene follows the RELEASED part: three sections and palettes (PLZ.C's fourth
+            // is never reached), each as long as the timetable's music ticks last at song 2's rate.
+            do {
+                var alone = PlasmaModel()
+                var falls: [Int] = [], sections = [alone.section]
+                for step in 1..<PlasmaModel.lengthInTicks {
+                    alone.tick()
+                    if alone.dropCounter == 2 { falls.append(step) }
+                    if sections.last != alone.section { sections.append(alone.section) }
+                }
+                check("Plasma on its own shows the released part's three palettes: its band falls at steps 976, 2009 and 2526 (723, 1491 and 1875 music ticks) and it repeats after 2588",
+                      falls == [976, 2009, 2526] && sections == [0, 1, 2, 0] && PlasmaModel.lengthInTicks == 2588
+                        && PlasmaModel.palettes.count == 3 && PlasmaModel.startParameters.count == 3,
+                      "falls \(falls), sections \(sections), length \(PlasmaModel.lengthInTicks), \(PlasmaModel.palettes.count) palettes")
+            }
 
             // Plasma, 1993 look: which sideways shift goes with which line (code review, 2026-11-14). The
             // original chose line and shift together but the shift reached the video card one frame late
