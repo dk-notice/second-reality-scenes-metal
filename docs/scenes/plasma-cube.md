@@ -298,6 +298,8 @@ Since 2026-11-25 the scene follows the part's two music cues there (`VECT.C` 114
 - **An empty screen for 312 steps.** The part cleared the screen (`tw_opengraph`) and waited for "music
   plus" >= 13, with the plasma's band already fallen away. The step that meets the cue is still empty:
   the loop first shows its empty page for one refresh and counts it.
+  (Found 2026-11-25, not yet built: in the original this wait was 48 steps. The plasma before it ran
+  longer and ended on the row after the "+++"; see [plasma.md](plasma.md), "Inside Play Demo".)
 - **Then the original's frames, one a step:** the n-th step after the cue shows frame n, from a fresh
   start. This version's 16-step lead-in (which starts the cube below the screen, for the loop) is not
   used, so the cube appears with the tip of a corner already in view, as it did.

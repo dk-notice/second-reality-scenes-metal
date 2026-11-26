@@ -151,7 +151,30 @@ The music player (STMIK) is not in the source release, so two details had to be 
    part start moves: both of its waits are followed by waits for song positions. Glenz and the plasma
    still read it as refreshes: in ticks the Glenz pause would be about 1.6 s longer, and the plasma as
    its source stands would then run past the plasma cube's cue, as described above, so the released
-   plasma may differ from its source. Not yet looked into (an open question).
+   plasma may differ from its source.
+
+   **Found in the released programs** (2026-11-25; research only, the app still reads refreshes in
+   these two parts until the user decides). Both programs were unpacked and read at the places that
+   call the counter.
+   - *Glenz* (`GLENZ.EXE`, byte for byte the `V.EXE` in the source folder): the same as `MAIN.C`: the
+     cue at "music plus" -19, the counter set to 0, waits for 300 and 333, the end between -16 and 0.
+     Worked out with the simulation: 333 ticks are 448 refreshes, so the glenz appears 6.4 s after the
+     cue, not 4.8 s, and the plate rests for 226 refreshes, not 111. The end is a song position, so
+     the tunnel does not move: 2,152 glenz frames show instead of 2,267, and the glenz's own fade to
+     black (done by frame 2,133) ends a quarter of a second before the tunnel instead of 1.9 s.
+   - *Plasma* (`PLZPART.EXE`): **the released program is not `PLZ.C` as it stands.** Its loop ends when
+     `curpal` is 4 (the source says 5), so the third fall ends the part and the fourth palette is never
+     shown. The timetable is unchanged (723, 1491, 1875, 2259, 2778: "64 rows x 6 ticks x 2, 4, 5, 6
+     patterns, less 45"), and so is the palette code. Song 2 has exactly five patterns between the
+     plasma's "+++" and the next one, and in ticks the three falls fit them: they start 974, 2,007 and
+     2,524 refreshes after the cue (row 56 of sections 63, 65 and 66), the band is gone 64 refreshes
+     later, on the first row after the "+++", and the cube's cue (row 13) comes 48 refreshes after
+     that, not 312. The source's fourth fall would have come a whole pattern into the cube's music.
+   - *What moves:* nothing outside the two parts. The cube's first frame, its end and every later part
+     keep their steps; only the step this table calls the plasma cube's start (the end of the plasma)
+     goes from 23,792 to 24,056 (5:39.9 to 5:43.7).
+   - This also removes the reason given above for thinking the counter counted refreshes: with the
+     released ending the later parts find their cues with ticks too.
 2. **Is the player's section number the section playing, or the next one?** Most likely the one
    playing: against the same recording the landscape comes out at 439-468 s this way, and
    431-460 s the other way.

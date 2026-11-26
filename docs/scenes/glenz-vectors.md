@@ -311,6 +311,11 @@ after the one the scene is shown on; what a pass draws before its wait shows on 
 | ... cue + 334 | The plate at rest: the glenz waits for music frame 333 (MAIN.C 400). With the wipe's 47 steps counted, the pause is 111 steps, not the 156 once estimated (that estimate started the counter after the wipe) |
 | cue + 335 ... | Glenz frame 1 onwards, as on its own; black from frame 2133; no second run. The tunnel follows on the script's end cue (frame 2265 is the last shown) |
 
+**Found 2026-11-25 in the released program, not yet built** (see [demo-timeline.md](../demo-timeline.md),
+"Found in the released programs"): the released `GLENZ.EXE` is this source, and the counter it waits on
+counts music ticks. 333 ticks are 448 refreshes, so the original's glenz came at cue + 450, not cue +
+335: the plate rested 226 steps, not 111, and 2,152 glenz frames showed before the tunnel.
+
 **Modern look:** the title picture is the title part's own Modern picture (Super-xBR), faded towards
 the same grey smoothly; the bars glide between steps and have smooth edges. Started "from here" at
 Glenz, the title picture is loaded by the scene itself, so it looks the same.

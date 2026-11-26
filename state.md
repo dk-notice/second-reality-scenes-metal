@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background merged and pushed; next: the Glenz and plasma timing research)
+Last updated: 2026-11-25 (the Glenz and plasma timing research is done; its plan waits for the user's OK)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -72,22 +72,30 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      the versions that made the position tables, so the tables still cannot be made again.
    - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
      check's numbers and checksum change).
-4. NEXT SESSION (agreed 2026-11-25): the GLENZ AND PLASMA TIMING RESEARCH (first item under "Open
-   questions"). Research only: read the released `GLENZ.EXE` and `PLZPART.EXE` (unpacked) against their
-   sources, find what the two parts really did with the music counter, then show the user findings and
-   a plan before any code. The user will watch videos of the original (one is a 486 DX2-66 filmed with
-   a camcorder) to compare by eye.
+4. THE GLENZ AND PLASMA TIMING RESEARCH: DONE 2026-11-25 (research only; findings under "Open
+   questions" and in `docs/demo-timeline.md`, "Found in the released programs"). NO CODE YET: the plan
+   was shown to the user, who is comparing with videos of the original (one a 486 DX2-66 filmed with a
+   camcorder) and has not yet said what to build.
 5. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
-  would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue, so
-  the released `PLZPART.EXE` may differ from the source. It CAN now be read: it was packed twice, and
-  `deark -m pklite` then `deark -m lzexe` gives a clean 224,608-byte program (2026-11-25; only unpacked,
-  not read). Research first, no code; if the original really paused longer, the user decides whether the
-  timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
-  Recommended; the user has not yet said to start.
+- GLENZ AND THE PLASMA STILL READ THE MUSIC COUNTER AS REFRESHES; researched 2026-11-25, waiting for
+  the user's decision (no code yet). Read from the released programs:
+  - `GLENZ.EXE` unpacks to exactly `GLENZ/V.EXE`, and its music reads are `MAIN.C`'s (cue -19, counter
+    set to 0, waits for 300 and 333, end between -16 and 0). In ticks the glenz appears 448 refreshes
+    after the cue instead of 333: the plate rests 226 steps, not 111. The tunnel does not move (it waits
+    on a song position); 2,152 glenz frames show instead of 2,267, still past the fade's end (2,133).
+  - `PLZPART.EXE` DIFFERS FROM `PLZ.C`: it ends when `curpal` is 4, not 5, so the THIRD fall is the end
+    and the fourth palette ("RB-white") is never shown. The timetable is the source's (723, 1491, 1875,
+    2259, 2778). In ticks the falls come 974, 2,007 and 2,524 refreshes after the cue (row 56 of
+    sections 63, 65 and 66), the plasma ends 65 later on row 1 after the "+++", and the cube's empty
+    wait is 48 steps, not 312. The cube's first frame and every later part stay where they are; only
+    the step called "Plasma cube starts" moves, 23,792 to 24,056.
+  - Also read there: the plasma's fade memory (`fadepal`) starts as ZEROS, not 63, so the first palette
+    ends one level brighter in each colour (this settles the question on `docs/scenes/plasma.md`).
+  Proposed, not agreed: Play Demo reads ticks in both parts and ends the plasma on the third fall; the
+  user decides whether the scenes on their own change (plasma: three palettes or four; Glenz: its pause).
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
@@ -238,6 +246,10 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 
 ## Traps (facts that caused mistakes)
 - The music frame counter (`dis_getmframe`) counts MUSIC TICKS, not refreshes (`MAIN/STMIK.300`).
+- The compiled files in a source folder need not be the released build: `PLZPART/PLZ.OBJ` tests
+  `curpal==5` as `PLZ.C` does, the released `PLZPART.EXE` tests 4. Read the unpacked program itself.
+- `GLENZ.EXE` after `deark -m pklite` is still packed by the linker (`link /E`): `deark -m exepack`
+  gives the 399,792-byte program whose addresses match `GLENZ/V.MAP`.
 - Jump the music by rendering and throwing away (`TrackerSong.skip`), never by libopenmpt's seek-by-seconds
   (it lands on a row start and counts song 1's later sections from the wrong place).
 

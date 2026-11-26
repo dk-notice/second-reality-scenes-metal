@@ -245,6 +245,13 @@ end and the cube's start with the script's own numbers (0, 2259, 65) and `timeta
 fade with the palette it must end on; proven to fail with the cue moved by one and with the fade's
 length changed.
 
+**Found 2026-11-25 in the released program, not yet built** (see [demo-timeline.md](../demo-timeline.md),
+"Found in the released programs"): the counter counts music ticks, and the released `PLZPART.EXE` ends
+on the THIRD fall (`curpal==4`; `PLZ.C` says 5), so the original showed three palettes, with falls 974,
+2,007 and 2,524 refreshes after the cue and the fourth palette never seen. And `fadepal` starts as zeros
+in the released program, which answers the next paragraph: the first palette ended one level brighter in
+each colour (a level of 62 shows as 63, 0 as 1; none of its levels is 63).
+
 Not settled from the source: `fadepal`, the memory the fade works in, is declared without a starting
 value (`db 768*2 dup(?)`). The increments only make sense if it starts at 63 (white), which is what this
 version does, and then the fade ends on the exact palette. If the released program's memory held zeros
