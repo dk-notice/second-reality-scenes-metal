@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the output-delay toggle is merged; main rebuilt and tested; not yet pushed)
+Last updated: 2026-11-25 (the output-delay toggle is merged and pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -95,7 +95,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
 - PLAY DEMO OVER BLUETOOTH HEADPHONES (user, 2026-11-25: the techno part's flash and four-column break
   looked off the beat over AirPods; on the MacBook's speakers they are perfect, in every version
   compared). DONE and merged 2026-11-25 (the user tried it with AirPods and said to merge; main's
-  app rebuilt, 639 checks pass there; NOT YET PUSHED, ask first). The player keeps each position with the moment its sound leaves for the device
+  app rebuilt, 639 checks pass there; pushed the same day). The player keeps each position with the moment its sound leaves for the device
   (`Music/PositionHistory.swift`) and, with Music > Allow for Output Delay on (the default; remembered
   in the preferences), reports the one from the device's reported delay ago
   (`MusicPlayer.deviceOutputDelay`: the device's latency plus its stream's; the menu shows it once
