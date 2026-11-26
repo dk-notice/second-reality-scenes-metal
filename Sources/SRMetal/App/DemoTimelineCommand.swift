@@ -38,11 +38,23 @@ final class SilentMusic: DemoMusicSource {
         song.map { ($0.song, startOrder, Double(framesSinceStart) / Double(Self.sampleRate)) }
     }
 
+    /// Given every step's sound: exactly 630 sample pairs (left, right, ...), silence where no song
+    /// plays or the song has run out. The video export keeps them; nobody else listens.
+    var onSound: ((UnsafeBufferPointer<Float>) -> Void)?
+    /// How many sample pairs the song really gave in the last step: fewer than 630 once it has run out.
+    private(set) var lastRendered = 0
+
     /// Lets 1/70 s of music pass.
     func stepPassed() {
-        guard let song else { return }
-        song.render(into: &buffer, frames: Self.framesPerStep, sampleRate: Self.sampleRate)
-        framesSinceStart += Self.framesPerStep
+        lastRendered = 0
+        if let song {
+            lastRendered = song.render(into: &buffer, frames: Self.framesPerStep, sampleRate: Self.sampleRate)
+            framesSinceStart += Self.framesPerStep
+        }
+        guard let onSound else { return }
+        if buffer.count < Self.framesPerStep * 2 { buffer = [Float](repeating: 0, count: Self.framesPerStep * 2) }
+        for index in lastRendered * 2..<Self.framesPerStep * 2 { buffer[index] = 0 }
+        buffer.withUnsafeBufferPointer { onSound(UnsafeBufferPointer(rebasing: $0[0..<Self.framesPerStep * 2])) }
     }
 }
 

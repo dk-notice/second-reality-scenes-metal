@@ -39,6 +39,9 @@ enum Main {
         if CommandLine.arguments.contains("--scaler-compare") {
             exit(ScalerCompareCommand.run(arguments: CommandLine.arguments) ? 0 : 1)
         }
+        if CommandLine.arguments.contains("--export-video") {
+            exit(VideoExport.run(arguments: CommandLine.arguments) ? 0 : 1)
+        }
         if CommandLine.arguments.contains("--demo-live") {
             exit(DemoTimelineCommand.live(arguments: CommandLine.arguments) ? 0 : 1)
         }
@@ -89,7 +92,7 @@ struct StartupOptions {
         """
         Options: --scene <id>  --look modern|classic  --sidebar hidden|shown  --music on|off
                  --scene play-demo --from <scene id, or part number 1-\(DemoScript.partNames.count)>
-        Commands: --selftest [word], --demo-timeline, --music-info (these three just run); --snapshot, --motion-check, --visu-test, --music-render, --music-play, --demo-live, --scaler-compare, --credits-match, --credits-captures (run one of these without arguments for its usage)
+        Commands: --selftest [word], --demo-timeline, --music-info (these three just run); --snapshot, --motion-check, --visu-test, --music-render, --music-play, --demo-live, --scaler-compare, --credits-match, --credits-captures, --export-video (run one of these without arguments for its usage)
         Scenes: \(SceneCatalog.all.map(\.id).joined(separator: ", ")), or \(DemoRunScene.id) for the whole demo
         """
     }

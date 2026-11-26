@@ -92,6 +92,11 @@ struct EndScrollerModel {
     /// For the Modern look: each text line drawn recently, and the number of its first row.
     private(set) var placed: [(line: Int, firstRow: Int)] = []
 
+    /// How many times the text has been gone through to its end (it then starts again from the top).
+    private(set) var passes = 0
+    /// The number of the last row drawn that had any text in it (-1: none yet).
+    private(set) var lastTextRow = -1
+
     private var nextLine = 0
     private var row = 0
     private var current: [UInt8] = []
@@ -127,6 +132,7 @@ struct EndScrollerModel {
     /// One pass of the original's `do_scroll`.
     private mutating func drawRow() {
         if row == 0 {
+            if nextLine == 0 && rowsDrawn > 0 { passes += 1 }
             let line = lines[nextLine]
             start = font.lineStart(line)
             gapRows = 0
@@ -149,6 +155,7 @@ struct EndScrollerModel {
             }
             x += 2
         }
+        if pixels.contains(where: { $0 != 0 }) { lastTextRow = rowsDrawn }
         ring.replaceSubrange(yscrl * Self.width..<(yscrl + 1) * Self.width, with: pixels)
         yscrl = (yscrl + 1) % Self.ringRows
         rowsDrawn += 1
