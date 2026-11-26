@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background ray-traced again for the Modern look: merged, not yet pushed)
+Last updated: 2026-11-25 (water background ray-traced again for the Modern look: merged and pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -24,7 +24,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - Self-test: 637 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
-  sound-output merge included (2026-11-25); the water background merge is not pushed yet.
+  sound-output merge and the water background included (2026-11-25).
 - Every scene was seen by the user in the running app. Nothing has been compared with the original
   program running.
 
@@ -58,7 +58,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
 3. THE WATER BACKGROUND FROM POV-RAY: DONE and merged 2026-11-25 (merge 4a706e4; the user saw it in the
-   app; main's app rebuilt, 637 checks pass there). NOT YET PUSHED: ask the user first.
+   app; main's app rebuilt, 637 checks pass there). Pushed to GitHub the same day.
    - The Modern look's background is `Data/Water/BACKGROUND-POVRAY.png` (2560x1600, 0.9 MB), made by
      `tools/water_background.py --render` from `WATER/KK.POV` with POV-Ray 3.7 (the same file every
      run). POV-Ray is a development tool only: the app and `build.sh` never run it.
