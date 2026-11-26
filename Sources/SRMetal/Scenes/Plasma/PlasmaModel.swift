@@ -18,12 +18,14 @@ import simd
 ///  - Colours come from a 256-colour palette. Four times in the scene the plasma band falls off the
 ///    bottom of the screen, then reappears at once with a new palette fading up from black.
 ///
-/// Inside Play Demo it follows the part (PLZ.C 68-95, COPPER.ASM `do_drop`): the whole screen is white
-/// (left by the rotozoomer, and set again by `init_plz`) until "music plus" >= 0; the music's frame
-/// counter starts there, and the n-th step after the cue is the part's n-th refresh. The first palette
-/// fades DOWN from white over 127 refreshes (`cop_drop` starts at 128), colour 0 and so the borders with
-/// it; the band falls when the frame counter passes 723, 1491, 1875 and 2259; the fourth fall is the
-/// end, and the screen stays empty until the script moves on. No second run.
+/// Inside Play Demo it follows the part as RELEASED (PLZ.C 68-95, COPPER.ASM `do_drop`, and the unpacked
+/// PLZPART.EXE where it differs): the whole screen is white (left by the rotozoomer, and set again by
+/// `init_plz`) until "music plus" >= 0; the music's frame counter starts there, and the n-th step after
+/// the cue is the part's n-th refresh. The first palette fades DOWN from white over 127 refreshes
+/// (`cop_drop` starts at 128), colour 0 and so the borders with it. The band falls when the frame
+/// counter, which counts MUSIC TICKS (52 a second), passes 723, 1491 and 1875 (`timetable`). The released
+/// program leaves its loop when `curpal` is 4 (PLZ.C as published says 5), so the THIRD fall is the end:
+/// three palettes show, and the screen stays empty until the script moves on. No second run.
 struct PlasmaModel {
     // MARK: - Tables
 
@@ -112,6 +114,9 @@ struct PlasmaModel {
     /// `timetable` (723, 1491, 1875, 2259 frames, plus 2 because this scene starts two steps earlier in
     /// the fall-and-return cycle). The last entry is the original's ending; here it leads back to section 0.
     static let drops: [(step: Int, nextSection: Int)] = [(725, 1), (1493, 2), (1877, 3), (2261, 0)]
+    /// Inside Play Demo: the music frame counter values (ticks) after which the band falls (PLZ.C
+    /// `timetable`: 64 rows x 6 ticks x 2, 4 and 5 patterns, less 45). The last is the released part's end.
+    static let timetable = [723, 1491, 1875]
     /// The scene repeats after this many steps (about 33 seconds).
     static let lengthInTicks = 2323
 
@@ -150,6 +155,10 @@ struct PlasmaModel {
     private(set) var cued = false
     private(set) var ended = false
     private var ending = false
+    /// Inside Play Demo: falls begun so far, and whether the counter had passed the next `timetable`
+    /// entry on the step before this one (the program sees it on one refresh; the band has moved on the next).
+    private var fallsBegun = 0
+    private var fallDue = false
     static let startCue = 0
     /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white.
     static let firstFade = 128
@@ -194,12 +203,24 @@ struct PlasmaModel {
         k = (k &+ Self.kSpeed) & 4095
         l = (l &+ Self.lSpeed) & 4095
 
-        if let drop = Self.drops.first(where: { $0.step == ticks }) {
-            // The main program notices it is time: clear the fade and start the fall.
+        // The main program notices it is time: on its own at fixed steps, inside Play Demo by the music.
+        var fall: (nextSection: Int, last: Bool)?
+        if let music {
+            if fallDue {
+                fallsBegun += 1
+                fall = (fallsBegun, fallsBegun == Self.timetable.count)   // the last fall is the end
+            }
+            // (From the second step after the cue: the script sets the counter to 0 on the cue step,
+            // after the scene has read it.)
+            fallDue = ticks >= 2 && fallsBegun < Self.timetable.count && music.ticks > Self.timetable[fallsBegun]
+        } else if let drop = Self.drops.first(where: { $0.step == ticks }) {
+            fall = (drop.nextSection, false)
+        }
+        if let fall {
+            // Clear the fade and start the fall.
             for i in 0..<768 { fadePalette[i] &= 0x00FF }
             dropCounter = 1
-            // Inside Play Demo the fourth fall is the end, as in the original.
-            if music != nil && drop.step == Self.drops.last?.step { ending = true } else { section = drop.nextSection }
+            if fall.last { ending = true } else { section = fall.nextSection }
         }
 
         guard dropCounter != 0 else { return }
@@ -354,7 +375,7 @@ struct PlasmaModel {
         if (1..<64).contains(dropCounter) {
             let t = Float(dropCounter) + alpha
             top += t * t * 43 / 512
-        } else if dropCounter == 0, Self.drops.contains(where: { $0.step == ticks + 1 }) {
+        } else if dropCounter == 0, music != nil ? fallDue : Self.drops.contains(where: { $0.step == ticks + 1 }) {
             // The fall begins on the next step, where the counter goes straight from 0 to 2 (the
             // main program sets 1 and the refresh routine adds 1 in the same frame). Glide towards
             // that, or the band would sit still and then hop a third of a line.

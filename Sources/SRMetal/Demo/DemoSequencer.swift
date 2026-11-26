@@ -113,7 +113,7 @@ enum DemoScript {
               .resetFrameCounter, .frames(300), until { $0.plus >= -20 }, .frames(720),
               .show(.scene("rotozoomer")), until(cap: 2000) { $0.plus > -4 }]
         s += [.part("Plasma"), .show(.scene("plasma")), until { $0.plus >= 0 }, .resetFrameCounter,
-              until { $0.frame > 2259 }, .frames(65)]
+              until { $0.ticks > 1875 }, .frames(65)]
         s += [.part("Plasma cube"), .show(.scene("plasma-cube")), until { $0.plus >= 13 },
               until { -4 <= $0.plus && $0.plus < 0 }]
         s += [.part("Bouncing dots"), .show(.scene("bouncing-dots")), .frames(130),

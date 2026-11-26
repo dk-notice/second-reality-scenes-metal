@@ -56,7 +56,7 @@ enum DemoTimelineCommand {
         ("Opening credits", 0), ("Ships fly-by", 5605), ("Explosion", 7087), ("Title picture", 7463),
         ("Glenz vectors", 7624), ("Dot tunnel", 10681), ("Rings, interference, techno bars, troll", 11741),
         ("Screen switches off", 15727), ("Loader waits for the music", 15918), ("Mountain scroller", 16177),
-        ("Lens, then rotozoomer", 18213), ("Plasma", 21393), ("Plasma cube", 23792), ("Bouncing dots", 26103),
+        ("Lens, then rotozoomer", 18213), ("Plasma", 21393), ("Plasma cube", 24056), ("Bouncing dots", 26103),
         ("Water scroller", 28683), ("3D sine landscape", 30747), ("Jelly logo", 32782), ("3D city", 33571),
         ("End picture", 37469), ("Credits", 38068), ("End scroller", 45670)
     ]

@@ -108,7 +108,8 @@ def lens():
     until(lambda: M.plus() >= -6); M.mf = 0; frames(300); until(lambda: M.plus() >= -20); frames(720)
     s = T.t; until(lambda: M.plus() > -4 or T.t - s >= 2000)
 part('LNS&ZOOM lens + rotozoomer', lens)
-def plz(): until(lambda: M.plus() >= 0); M.mf = 0; until(lambda: M.mf > 2259); frames(65)
+def plz():    # PLZ.C 68-91 as RELEASED: the loop ends when curpal is 4 (the third fall), not 5 as PLZ.C says
+    until(lambda: M.plus() >= 0); M.mf = 0; M.tk = 0; until(lambda: M.tk > 1875); frames(65)
 part('PLZ plasma', plz)
 def vect(): until(lambda: M.plus() >= 13); until(lambda: -4 <= M.plus() < 0)
 part('VECT plasma cube', vect)
