@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-26 (the video export and the end scroller's fix are on their own branch, the corrected export made; the user looks at it, then the merge)
+Last updated: 2026-11-26 (the video export and the end scroller's fix are merged; the video is on YouTube)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -16,12 +16,13 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   Switches Off, Mountain Scroller, Lens, Rotozoomer, Plasma, Plasma Cube, Bouncing Dots, Water Scroller,
   3D Sine Landscape, Jelly Logo, 3D City, End Picture, Credits, End Scroller, and the Hidden Starfield
   (last; not in the demo). Each scene's page (`docs/scenes/`) says what was built and checked.
-- PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
+- PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops; it ENDS by itself at 16:21.0,
+  the end scroller's last line, and the scene list opens) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 649 checks, all pass (641 on main until the video export is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 649 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -86,7 +87,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Plasma on its own: three palettes, falls at steps 976, 2,009 and 2,526, loop 2,588. Glenz on its
      own: unchanged on purpose (35-step pause).
    - The script's refresh counter (`DemoMusicState.frame`) and the tool's `frames|ticks` option are gone.
-5. IN HAND (branch `claude/play-demo-video-export-8abdde`): EXPORT PLAY DEMO TO A VIDEO FILE.
+5. DONE and merged 2026-11-26 (merge 95fe745; the user watched the exported video, found it right and
+   on the beat, and UPLOADED IT TO YOUTUBE; main's app rebuilt, 649 checks pass there): EXPORT PLAY
+   DEMO TO A VIDEO FILE, and with it the end scroller's fix (the demo now ENDS).
    Talked through and DECIDED with the user on 2026-11-25:
    - 2880x2160, 60 pictures a second, Modern look only; ProRes 422 (standard profile) with 2-channel
      PCM sound at 44,100 Hz (630 samples a step exactly) in a .mov; written to `~/Movies/` (the
@@ -132,15 +135,6 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      and sound right and on the beat). YouTube takes .mov and ProRes as they are (its help pages,
      read 2026-11-26); the sound stays at 44,100 Hz (YouTube asks for 48,000 but converts anyway; the
      user was told); a video over 15 minutes needs a phone-verified account.
-   - LEFT AT THE WRAP-UP (2026-11-26, night): NOT MERGED. The branch `claude/play-demo-video-export-8abdde`
-     (9 commits ahead of main, clean, 649 checks pass) and its worktree are KEPT on purpose: the user
-     has not yet watched the CORRECTED export, and looks at the result before a merge. Next: the user
-     watches `~/Movies/SecondReality-Modern.mov` (the `[8` gaps about 15 minutes in; the end at 16:21);
-     on their word: merge into main, `./build.sh` in the main folder, the full self-test and
-     `--demo-timeline` there, ask before pushing (main equals GitHub now), then remove the branch and
-     worktree. A YouTube title, description with chapters and tags were drafted in that session's
-     chat (not kept in the repository); the composers' real names and the original source's address
-     in the draft were from memory and need checking.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
    and choosing a scene is secondary. DONE and merged 2026-11-25 (the user tried it in the app and
@@ -159,7 +153,6 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube: decided 2026-11-25 and in hand; see "Next steps", item 5.
 - REVISIT THE INTERFACE (user, 2026-11-25; wanted, not discussed yet). See "Next steps", item 6.
 - CLOSED on 2026-11-25 by the user (do not raise again unless one starts to show):
   - By eye, everything looks good at present, the 3D City's fades and camera roll and the Ships Fly-by's
