@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the demo-first start-up is merged and pushed; next: the video export, to be talked through first)
+Last updated: 2026-11-25 (the video export is decided and in hand on its own branch)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -86,8 +86,25 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Plasma on its own: three palettes, falls at steps 976, 2,009 and 2,526, loop 2,588. Glenz on its
      own: unchanged on purpose (35-step pause).
    - The script's refresh counter (`DemoMusicState.frame`) and the tool's `frames|ticks` option are gone.
-5. NEXT (user, 2026-11-25): EXPORT PLAY DEMO TO A VIDEO FILE. To be talked through with the user
-   first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
+5. IN HAND (branch `claude/play-demo-video-export-8abdde`): EXPORT PLAY DEMO TO A VIDEO FILE.
+   Talked through and DECIDED with the user on 2026-11-25:
+   - 2880x2160, 60 pictures a second, Modern look only; ProRes 422 (standard profile) with 2-channel
+     PCM sound at 44,100 Hz (630 samples a step exactly) in a .mov; written to `~/Movies/` (the
+     Documents folder is synced and the file is tens of GB; the user's upload speed makes that fine).
+   - The WHOLE demo only: no start-from-a-part, no other sizes or rates. One test-only limit ("stop
+     after N seconds") for trial exports and for proving the checks.
+   - The ending: ONE FULL PASS of the end scroller's text, then a 2-second fade to black (choice "A
+     and fade"; the music runs out before the text does and the rest is silent, as in the app).
+   - Command line only, no menu item (a menu item could not use ffmpeg; it would need Apple's own
+     encoder, and can come later on the same frame-making code). The program never starts ffmpeg: it
+     writes raw frames and a WAV, and a script in `tools/` runs ffmpeg. The app and `build.sh` never
+     need ffmpeg.
+   - Progress while exporting: frames done and total, percent, speed, time left, the part.
+   - Frame k is drawn at step 7k div 6 with blend (7k mod 6)/6; the output-delay allowance is not used.
+   - Checks: in the self-test (the arithmetic; 630 samples every step; a frame equals `--snapshot`'s),
+     and on the finished file with ffprobe/ffmpeg (735 samples a picture; the sound byte for byte the
+     WAV; song 2 starting at sample 7,624 x 630; the pictures either side of part starts).
+   - The user looks at the exported video before the merge.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
    and choosing a scene is secondary. DONE and merged 2026-11-25 (the user tried it in the app and
@@ -106,15 +123,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; NEXT,
-  to be talked through first). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
-  YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
-  with silently rendered music (as `--demo-timeline` does), draws each frame off-screen (as
-  `--snapshot` does) at 60 a second with the Modern look's blend at each frame's exact moment, at
-  2880x2160 (4:3; YouTube's "4K" quality), and pipes the frames and the rendered music to ffmpeg
-  (installed; a development tool only, like POV-Ray: never needed by the app or `build.sh`). Needs a
-  check that sound and picture stay in step in the exported file.
-  It must NOT use the output-delay allowance (an exported file has no device delay).
+- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube: decided 2026-11-25 and in hand; see "Next steps", item 5.
 - REVISIT THE INTERFACE (user, 2026-11-25; wanted, not discussed yet). See "Next steps", item 6.
 - CLOSED on 2026-11-25 by the user (do not raise again unless one starts to show):
   - By eye, everything looks good at present, the 3D City's fades and camera roll and the Ships Fly-by's
