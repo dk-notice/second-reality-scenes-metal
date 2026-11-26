@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the Glenz and plasma timing change is merged; main rebuilt and tested; not yet pushed)
+Last updated: 2026-11-25 (the Glenz and plasma timing change is merged and pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -74,7 +74,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      check's numbers and checksum change).
 4. THE GLENZ AND PLASMA TIMING: DONE and merged 2026-11-25 (merge b7617f2; the user saw it in the app:
    Play Demo from the title picture and from the rotozoomer, and the Plasma scene on its own; main's
-   app rebuilt, 638 checks pass there). NOT YET PUSHED: main is ahead of GitHub; ask first.
+   app rebuilt, 638 checks pass there). Pushed to GitHub the same day.
    - Read from the released programs: `GLENZ.EXE` is `GLENZ/V.EXE` and matches `MAIN.C`;
      `PLZPART.EXE` ends on its THIRD fall (`curpal==4`, `PLZ.C` says 5) and its fade memory starts as
      zeros. The user's videos agree (three plasmas, grey last, the cube right after; the tunnel almost
