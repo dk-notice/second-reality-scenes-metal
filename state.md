@@ -77,7 +77,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    sources, find what the two parts really did with the music counter, then show the user findings and
    a plan before any code. The user will watch videos of the original (one is a 486 DX2-66 filmed with
    a camcorder) to compare by eye.
-5. Nothing else is planned. The other open questions start only when the user asks.
+5. LATER, when the demo is finished: export Play Demo (Modern look) to a video file (see "Open
+   questions"). The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
@@ -88,6 +89,14 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   not read). Research first, no code; if the original really paused longer, the user decides whether the
   timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
   Recommended; the user has not yet said to start.
+- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; after the demo
+  is finished). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
+  YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
+  with silently rendered music (as `--demo-timeline` does), draws each frame off-screen (as
+  `--snapshot` does) at 60 a second with the Modern look's blend at each frame's exact moment, at
+  2880x2160 (4:3; YouTube's "4K" quality), and pipes the frames and the rendered music to ffmpeg
+  (installed; a development tool only, like POV-Ray: never needed by the app or `build.sh`). Needs a
+  check that sound and picture stay in step in the exported file.
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
