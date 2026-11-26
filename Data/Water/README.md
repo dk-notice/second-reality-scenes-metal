@@ -1,14 +1,24 @@
 # The water scroller's original files
 
 Original data from Second Reality (Future Crew, 1993), part 13 (`WATER`, the water scroller, by Trug),
-copied unchanged from `../secondreality/WATER/`. `./build.sh` copies this folder into the app
-(`Resources/Water/`). 154 KB in all.
+copied unchanged from `../secondreality/WATER/`, and one picture made from an original file (below).
+`./build.sh` copies this folder into the app (`Resources/Water/`). The five original files are 154 KB.
 
 | File | What |
 |---|---|
 | `BKG.CLX` | The background: a 10-byte header (`RIX3`, 320, 200), 256 colours (3 bytes each, 0...63), then 320x200 colour numbers (0...191). The same picture is exported as `artwork/original/13-water-background.png`; the scene's 1993 look needs the colour NUMBERS. The part does not use this file's palette (see the next row). |
 | `MIEKKA.SCI` | The sword ("miekka" is Finnish for sword): the same header (400 wide; its height word, 250, is wrong: the file holds 35 rows and the part uses 34), THE PART'S PALETTE (the same as the background's in colours 0...191; 192...255 are the sword's), then 400x34 colour numbers, 0 = nothing. Exported as `artwork/original/13-water-font.png`. |
 | `WAT1.DAT`, `WAT2.DAT`, `WAT3.DAT` | The three position tables. For each cell of a 158-column, 34-row window on the sword (row by row): a count (16-bit), then that many screen addresses (16-bit, row x 320 + column). The part draws one table per screen refresh in turn: at each address, the cell's colour number, or the background's again where the cell is empty. After the third table the window moves one sword column. |
+
+## The Modern look's background (not an original file)
+
+`BACKGROUND-POVRAY.png` (2560x1600, 0.9 MB) is the background ray-traced again, at 8 times the size, from
+the original scene file `../secondreality/WATER/KK.POV`. `tools/water_background.py --render` makes it
+with POV-Ray 3.7 (`brew install povray`), the same file every time; without `--render` the tool compares
+the picture with `BKG.CLX`. Only that tool needs POV-Ray: the app and `build.sh` use the PNG. The tool
+changes the scene in two places so that 3.7 gives what POV-Ray 1.0 gave (the fog, and where in a pixel
+the sample is taken); `docs/scenes/water-scroller.md` says how that was found. The 1993 look does not use
+this file.
 
 ## Why the tables are files
 
@@ -41,3 +51,4 @@ SHA-256:
     4a454f4e529fe1617c1b6cafcd0b7852f198eb870e37f52da510f2dc5201e800  WAT1.DAT
     dc513b4f06d2876a28963f4d1e8b1c509d4fff1c65b28460f031d1ce6210f3e7  WAT2.DAT
     b7af775c7247e2eed95800a68f8901ab641e735d896bbf7a79c85731cd38e27b  WAT3.DAT
+    71bbe82d4b8d219419cf098758176d3a624c7e54976647114fc67d6e28521719  BACKGROUND-POVRAY.png

@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background researched: fog and half a pixel explain it; plan waits for the user)
+Last updated: 2026-11-25 (water background ray-traced again for the Modern look: built on its branch, waits for the user's look)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 635 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 637 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
   sound-output merge included (2026-11-25).
@@ -57,8 +57,23 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
-3. THE WATER BACKGROUND FROM POV-RAY: research done 2026-11-25 (see the water item under "Open
-   questions"); the plan for the Modern look waits for the user's OK. No code yet.
+3. THE WATER BACKGROUND FROM POV-RAY: BUILT 2026-11-25 on branch `claude/water-background-research-6ae63a`
+   (worktree of the same name), NOT YET MERGED: the user looks at it in that worktree's app first. After
+   the merge: `./build.sh` in the main folder, the full self-test there, and ask before pushing.
+   - The Modern look's background is `Data/Water/BACKGROUND-POVRAY.png` (2560x1600, 0.9 MB), made by
+     `tools/water_background.py --render` from `WATER/KK.POV` with POV-Ray 3.7 (the same file every
+     run). POV-Ray is a development tool only: the app and `build.sh` never run it.
+   - What made 3.7 give the 1993 picture, both measured: the scene's black FOG (3.7 leaves fog out while
+     the camera is inside the solid sky plane; `hollow` on the plane), and HALF A PIXEL (1.0 sampled each
+     pixel at its lower left corner; the camera is nudged). `WATER/DATA.TGA`, a raw 160x100 POV-Ray 1.0
+     output, shows Future Crew did not retouch the picture. All of it is on
+     `docs/scenes/water-scroller.md`, "The background, rendered again".
+   - Left over, not looked into further: the ripple highlights differ slightly (cause not found; reading
+     POV-Ray 1.0's source might tell: a download, not done). `R1.POV`...`R5.POV` and `RGB.TGA` are not
+     the versions that made the position tables, so the tables still cannot be made again.
+   - By eye, for the user: does the clean background suit the soft sword; the ripple highlights; does
+     the picture jump between the 1993 and Modern looks; the fades. If the balls' rims look soft on a
+     bigger screen, render at 16x (`SCALE` in the tool; the check's numbers and checksum change).
 4. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
@@ -70,41 +85,6 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   not read). Research first, no code; if the original really paused longer, the user decides whether the
   timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
   Recommended; the user has not yet said to start.
-- The water background re-rendered from its POV-Ray scene instead of scaled up (Modern look only). Kept
-  open by the user (2026-11-25, "we are learning and having fun"). RESEARCHED 2026-11-25 on copies in
-  the scratch folder (nothing in the app changed); a plan was shown to the user, who has not yet agreed:
-  - The background's scene is `WATER/KK.POV`. POV-Ray 3.7 (Homebrew) renders it: `povray +Ikk.pov +W320
-    +H200 +MV1.0 -A -D +L.` with the folder's `COLORS.INC` and `SHAPES.INC` and an EMPTY `textures.inc`.
-  - NOT RETOUCHED: `WATER/DATA.TGA` is a raw 24-bit POV-Ray 1.0 output of the same scene at 160x100
-    (what `P.BAT` makes). Its pixel (x, y) equals the shipped background's pixel (2x, 2y+1) to 2.9 of
-    255 (the palette's steps). So every difference from today's render is POV-Ray 1.0 against 3.7.
-  - THE COLOURS WERE THE FOG. 3.7 leaves out fog while the camera is inside a solid object, and the
-    sky (`plane { <0 1 0> 140 }`) counts everything below it as inside. One word, `hollow`, on that
-    plane brings the scene's black fog back and the picture matches: no colour fit is needed (the old
-    "0.51 x render^1.3" is dropped).
-  - THE OFFSET IS HALF A PIXEL: 1.0 took each pixel's sample at its lower left corner, 3.7 at its
-    centre. Samples moved half a pixel left and half down fit best, a sharp minimum, and it is the same
-    half pixel that puts DATA.TGA on (2x, 2y+1). (The earlier note "original one row lower" had the
-    direction wrong: the original is half a row HIGHER and half a column to the right.) The camera is
-    given as explicit vectors with the direction nudged; that reproduces `look_at` byte for byte at
-    zero nudge.
-  - With both: 93% of pixels within 8 of 255, 98% within 16, 99.4% within 32 (unchanged 3.7: 2% within
-    32). Sphere highlights, sky and water agree to a level or two. LEFT: the highlights on the rippled
-    water are up to a pixel elsewhere and up to 20% brighter or dimmer (cause not found; ripple
-    amount, frequency and position were tried); the original's checkerboard dither and 190-colour
-    bands (palette reduction, not the scene); and the balls' "speckled rims", which are fine
-    reflected rings that one sample per pixel could not show.
-  - `R1.POV` to `R5.POV` and `RGB.TGA` as they are in the folder are NOT the versions that made the
-    tables: R1's strip covers 16,272 pixels and holds only 11,403 of the tables' 20,858; `RGB.TGA` has
-    no green (rows) and its red runs to 192, not 158. So the tables cannot be checked against R1. What
-    holds: the tables came from the same camera and renderer as the background, and no table pixel is
-    on the wrong side of the balls' outline in today's render.
-  - At full size the render is clearly better than Super-xBR (pictures in `build/pov-trial/`, not in
-    git): clean rims and reflections, no dither. 2560x1920 antialiased takes 2 s; the PNG is 1 MB.
-  - PLAN SHOWN (not agreed): render once with a development-only tool, ship the PNG in `Data/Water/`
-    (POV-Ray never needed by the app or `build.sh`), Modern look only, a self-test check that the
-    shipped picture scaled down matches the original. DOSBox is no longer needed for the retouching
-    question.
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
@@ -172,7 +152,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
 - `artwork/original/`: every picture the demo shows, exported to PNG by `tools/art_export.py` (do not edit
   by hand); `rgb/` copies are what the app loads. Inventory: `artwork/README.md`.
 - `tools/`: development-only Python (standard library only): one `<scene>_reference.py` per replayed
-  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `x86interp.py` (cannot run self-modifying code).
+  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `water_background.py` (needs POV-Ray), `x86interp.py` (cannot run self-modifying code).
 - `ThirdParty/libopenmpt` (unmodified source, the only dependency), `docs/` (see the end of this file).
 
 ## Changing or rebuilding a scene
@@ -197,6 +177,8 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 - Every scene is stepped at 70 per second; the Modern look blends between steps. Every canvas is shown 4:3.
 - 1993 look = exact, including the original's slips. Modern look may stray where it is better; record each
   straying on the scene's page.
+- A picture re-made from its original source ships as a FILE made by a development tool (the water
+  background, POV-Ray): nothing new may be needed by the app or `build.sh` without the user's say.
 - Calculate tables from the original's generator where that reproduces the file exactly; ship the file
   (with a README saying why) where it cannot be remade (lens table 4, the scrollers' position tables).
 - Large binary original data is loaded from `Data/`, not written into Swift source.

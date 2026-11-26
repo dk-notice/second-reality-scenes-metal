@@ -110,7 +110,7 @@ others need material that cannot be calculated, all of it public domain like the
 | Title Picture, End Picture, Troll, Screen Switches Off, Jelly Logo | The original pictures |
 | Lens, Rotozoomer | The original picture; the Lens also one table ([Data/Lens/](Data/Lens/README.md)) |
 | Mountain Scroller | Background, text picture and three position tables ([Data/Mountain/](Data/Mountain/README.md)) |
-| Water Scroller | Background, sword picture and three position tables ([Data/Water/](Data/Water/README.md)) |
+| Water Scroller | Background, sword picture and three position tables; the Modern look's background is ray-traced again from the original POV-Ray scene file ([Data/Water/](Data/Water/README.md)) |
 | Opening Credits | The released horizon and font ([Data/OpeningCredits/](Data/OpeningCredits/README.md)) |
 | Credits | The released pictures and font ([Data/Credits/](Data/Credits/README.md)) |
 | End Scroller | The released text and font ([Data/EndScroller/](Data/EndScroller/README.md)) |
