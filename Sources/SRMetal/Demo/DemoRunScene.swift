@@ -140,6 +140,9 @@ final class DemoRunScene: DemoScene {
     var currentPart: String? { sequencer.currentPart }
     /// The scene showing now, if the part shows one (for checks).
     var sceneShowing: DemoScene? { if case .scene(let scene, _) = shown { return scene } else { return nil } }
+    /// The id of the scene the demo last showed (it stays through the black and the pictures between
+    /// scenes): where the app goes when the demo is stopped. nil before the first.
+    private(set) var lastSceneID: String?
     /// The picture showing now, by its name in `artwork/`, if the part shows one (for checks).
     var pictureShowing: String? { if case .picture(let name) = shown { return name } else { return nil } }
     /// The music's row as the parts see it now (for checks).
@@ -238,6 +241,7 @@ final class DemoRunScene: DemoScene {
                 // scene that waits for a cue already met starts on the same step as the script.
                 scene.demoUpdate(DemoContext(music: musicAtShow ?? sequencer.musicState, justShown: true, previous: previous))
                 shown = .scene(scene, entry.canvasSize)
+                lastSceneID = id
             } catch {
                 NSLog("SR Metal: Play Demo could not start scene \(id): \(error)")
                 shown = .card(entry.title)
