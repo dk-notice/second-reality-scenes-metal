@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the Glenz and plasma timing change is merged and pushed)
+Last updated: 2026-11-25 (Glenz and plasma timing merged and pushed; the output-delay toggle is built, waiting for the user to try it)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -92,11 +92,19 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- PLAY DEMO OVER BLUETOOTH HEADPHONES: the picture leads the sound (user, 2026-11-25: the techno
-  part's flash and four-column break looked off the beat over AirPods; on the MacBook's speakers they
-  are perfect, in every version compared). The app does not allow for the output device's delay
-  (`MusicPlayer` notes the music position when a block is rendered, not when it is heard). Proposed,
-  not yet agreed: ask macOS for the device's delay and read the position that much later.
+- PLAY DEMO OVER BLUETOOTH HEADPHONES (user, 2026-11-25: the techno part's flash and four-column break
+  looked off the beat over AirPods; on the MacBook's speakers they are perfect, in every version
+  compared). BUILT on branch `output-delay` (commit 1956391), NOT YET MERGED: the user tries it with
+  AirPods first. The player keeps each position with the moment its sound leaves for the device
+  (`Music/PositionHistory.swift`) and, with Music > Allow for Output Delay on (the default; remembered
+  in the preferences), reports the one from the device's reported delay ago
+  (`MusicPlayer.deviceOutputDelay`: the device's latency plus its stream's; the menu shows it once
+  music has played). Measured here: the speakers report 15.6 ms, the AirPods 160 ms. Off, it is as
+  before. `--demo-live ... delay` tests with it on. 639 checks on the branch.
+  - If AirPods still look slightly off, the reported figure is not exact: a manual trim could be added.
+  - The video export must NOT use it (exported sound has no device delay).
+  - Seen while testing, not new: when the output device changes in mid-demo over Bluetooth, making the
+    output again takes about 0.5 s (60 ms on the speakers), and the cues after it come that much late.
   Side findings from looking into it, NOT a fault and nothing to change: `TECHNO/KOE.C` flashes on row
   7 of every 8; the player (`MAIN/STMIK.300`) reports row, section and "plus" through a delay ring
   (51C5h, set up at 2AC1h): none for output modes 2 and 7, ten polls for the mixing cards.
@@ -140,7 +148,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
   - `--demo-timeline`: runs Play Demo's script against silently rendered music (0.2 s) and compares every
-    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [pause <at> <for>] [rebuild <at>]`: the same with the
+    part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [delay] [pause <at> <for>] [rebuild <at>]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
   - `--scaler-compare <picture|file.png> <folder> [x y width] [--methods ...]`: labelled comparison sheets.
   - `--credits-match <picture 1-21> <scene id> [first last [stride]]`: the steps at which a scene's 1993
