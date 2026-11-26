@@ -89,7 +89,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 5. NEXT (user, 2026-11-25): EXPORT PLAY DEMO TO A VIDEO FILE. To be talked through with the user
    first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
-   and see what could be better. Not yet discussed: ask the user what bothers them before proposing.
+   and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
+   and choosing a scene becomes secondary. A plan was shown; not yet agreed.
 7. The signed release (item 2) stays for later. Nothing else is planned.
 
 ## Open questions (not to be started unasked)
@@ -110,7 +111,9 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   - No manual trim for AirPods: the delay macOS reports (160 ms) is good enough.
   - Switching the sound output in mid-demo over Bluetooth costs about half a second: not an issue.
   - The water scroller's ripple highlights: working fine as it is.
-  - The repository is public; the songs' licence was not raised again.
+  - The repository is public, and the songs are fine to ship (settled 2026-11-25): `MUSIC0.S3M` and
+    `MUSIC1.S3M` are files of Future Crew's own 2013 release (`../secondreality/MAIN`, under its
+    UNLICENSE, "source code and data"), and the user notes the composers have welcomed other remakes.
   - `docs/future-ideas.md` was rewritten as a short list of what may come next (the old ideas are in
     the history).
   - The plasma page's two pictures were checked: byte for byte what the scene draws now at step 1,251
