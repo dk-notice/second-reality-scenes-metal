@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (left-overs gone through and mostly dropped; next: the water background from POV-Ray)
+Last updated: 2026-11-25 (water background researched: fog and half a pixel explain it; plan waits for the user)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -57,9 +57,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    submit`, `stapler staple`); an app icon and a version number. `notarytool` and `stapler` are in the
    Command Line Tools (checked). The self-test stays in the released program (it costs little). Whether
    the GitHub repository goes public is a separate decision.
-3. NEXT SESSION (agreed 2026-11-25): the POV-Ray render of the water background ONLY (see the water
-   item under "Open questions"). Redo the trial render, look into the one-row offset and the colour
-   match, then show the user findings and a plan before any code.
+3. THE WATER BACKGROUND FROM POV-RAY: research done 2026-11-25 (see the water item under "Open
+   questions"); the plan for the Modern look waits for the user's OK. No code yet.
 4. Nothing else is planned. The other open questions start only when the user asks.
 
 ## Open questions (not to be started unasked)
@@ -72,23 +71,40 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
   Recommended; the user has not yet said to start.
 - The water background re-rendered from its POV-Ray scene instead of scaled up (Modern look only). Kept
-  open by the user (2026-11-25, "we are learning and having fun"). Found in a trial that day, on
-  copies in the scratch folder (nothing in the project changed):
-  - The background's scene is `WATER/KK.POV`. `R1.POV` to `R5.POV` and `AA.POV` are NOT the picture:
-    they are the same scene with mirror surfaces and a colour-ramp strip (`rgb.tga`), slid along, which
-    is how the scroller's position tables were made. The other `.POV` files are POV-Ray samples. No
-    scene files exist in the port or the released demo; one web search found none elsewhere.
-  - POV-Ray 3.7 (Homebrew, already installed) renders it unchanged: `povray +Ikk.pov +W320 +H200
-    +MV1.0 -A -D +L.` with the folder's own `COLORS.INC` and `SHAPES.INC` and an EMPTY `textures.inc`
-    (the 1.0 file is missing; the scene uses nothing from it). 1920x1440 takes a third of a second.
-  - Measured against `artwork/original/rgb/13-water-background.png`: the shapes line up to about one
-    pixel (best fit: the original one row lower, level sideways to a quarter pixel). The original is
-    much darker (blue: original = 0.51 x render^1.3, a rough fit). After that, 88% of pixels are
-    within 16 levels and 97% within 32; the rest is in the highlights, the spheres' speckled rims
-    and the ripple bands' brightness. The original has 190 colours.
-  - Not known: whether the shading differences are 3.7 against 1.0 or retouching by Future Crew (only
-    POV-Ray 1.0 in DOSBox would tell); how to settle the one-row offset; the colour match, which is
-    partly taste. Nothing is planned: next would be a plan for the Modern look, shown to the user.
+  open by the user (2026-11-25, "we are learning and having fun"). RESEARCHED 2026-11-25 on copies in
+  the scratch folder (nothing in the app changed); a plan was shown to the user, who has not yet agreed:
+  - The background's scene is `WATER/KK.POV`. POV-Ray 3.7 (Homebrew) renders it: `povray +Ikk.pov +W320
+    +H200 +MV1.0 -A -D +L.` with the folder's `COLORS.INC` and `SHAPES.INC` and an EMPTY `textures.inc`.
+  - NOT RETOUCHED: `WATER/DATA.TGA` is a raw 24-bit POV-Ray 1.0 output of the same scene at 160x100
+    (what `P.BAT` makes). Its pixel (x, y) equals the shipped background's pixel (2x, 2y+1) to 2.9 of
+    255 (the palette's steps). So every difference from today's render is POV-Ray 1.0 against 3.7.
+  - THE COLOURS WERE THE FOG. 3.7 leaves out fog while the camera is inside a solid object, and the
+    sky (`plane { <0 1 0> 140 }`) counts everything below it as inside. One word, `hollow`, on that
+    plane brings the scene's black fog back and the picture matches: no colour fit is needed (the old
+    "0.51 x render^1.3" is dropped).
+  - THE OFFSET IS HALF A PIXEL: 1.0 took each pixel's sample at its lower left corner, 3.7 at its
+    centre. Samples moved half a pixel left and half down fit best, a sharp minimum, and it is the same
+    half pixel that puts DATA.TGA on (2x, 2y+1). (The earlier note "original one row lower" had the
+    direction wrong: the original is half a row HIGHER and half a column to the right.) The camera is
+    given as explicit vectors with the direction nudged; that reproduces `look_at` byte for byte at
+    zero nudge.
+  - With both: 93% of pixels within 8 of 255, 98% within 16, 99.4% within 32 (unchanged 3.7: 2% within
+    32). Sphere highlights, sky and water agree to a level or two. LEFT: the highlights on the rippled
+    water are up to a pixel elsewhere and up to 20% brighter or dimmer (cause not found; ripple
+    amount, frequency and position were tried); the original's checkerboard dither and 190-colour
+    bands (palette reduction, not the scene); and the balls' "speckled rims", which are fine
+    reflected rings that one sample per pixel could not show.
+  - `R1.POV` to `R5.POV` and `RGB.TGA` as they are in the folder are NOT the versions that made the
+    tables: R1's strip covers 16,272 pixels and holds only 11,403 of the tables' 20,858; `RGB.TGA` has
+    no green (rows) and its red runs to 192, not 158. So the tables cannot be checked against R1. What
+    holds: the tables came from the same camera and renderer as the background, and no table pixel is
+    on the wrong side of the balls' outline in today's render.
+  - At full size the render is clearly better than Super-xBR (pictures in `build/pov-trial/`, not in
+    git): clean rims and reflections, no dither. 2560x1920 antialiased takes 2 s; the PNG is 1 MB.
+  - PLAN SHOWN (not agreed): render once with a development-only tool, ship the PNG in `Data/Water/`
+    (POV-Ray never needed by the app or `build.sh`), Modern look only, a self-test check that the
+    shipped picture scaled down matches the original. DOSBox is no longer needed for the retouching
+    question.
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from

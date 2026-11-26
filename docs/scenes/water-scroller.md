@@ -122,6 +122,12 @@ mountain scroller.
 - Modern: the small reflections are still drawn one 320x200 pixel at a time (each an averaged colour)
   and stay coarse.
 - Modern: green and blue reach their full colour after the fade-in.
-- The background is the original picture scaled up, not re-rendered from the POV-Ray files (a later idea).
+- The background is the original picture scaled up, not re-rendered. Researched 2026-11-25, not built:
+  its scene is `WATER/KK.POV`, and POV-Ray 3.7 reproduces the picture once two things are put right.
+  The scene's black fog must be switched back on (3.7 drops fog while the camera is "inside" the sky
+  plane; `hollow` on the plane fixes it), and the sample points moved half a pixel left and down
+  (POV-Ray 1.0 sampled each pixel at its corner). `WATER/DATA.TGA`, a raw 160x100 POV-Ray 1.0 output
+  of the scene, shows the picture was not retouched. Left over: the highlights on the ripples differ
+  slightly. `R1.POV` to `R5.POV` and `RGB.TGA` are not the versions that made the position tables.
 - The original drew straight onto the screen being shown; any tearing that caused is not copied.
 - Not compared with the original running.
