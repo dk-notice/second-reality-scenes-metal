@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 641 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 648 checks, all pass (641 on main until the video export is merged). `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -104,6 +104,20 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Checks: in the self-test (the arithmetic; 630 samples every step; a frame equals `--snapshot`'s),
      and on the finished file with ffprobe/ffmpeg (735 samples a picture; the sound byte for byte the
      WAV; song 2 starting at sample 7,624 x 630; the pictures either side of part starts).
+   - BUILT on the branch (2026-11-25): `--export-video` (`App/VideoExport.swift`), `tools/export_video.py`,
+     `tools/check_video.py` (fails on copies with the picture one frame late, the sound one sample pair
+     late and one picture late), seven self-test checks (each seen to fail). First full export: 58,704
+     pictures (16:18.4) in 8 min 27 s, 33.98 GB, `~/Movies/SecondReality-Modern.mov`; the file check
+     passes on it. The fade is done by the export command (so the file's sound can be compared byte for
+     byte), not by ffmpeg. ffmpeg's DEFAULT conversion back to red-green-blue is 2-3 levels dark: the
+     check decodes with `accurate_rnd` (the file itself is right).
+   - FOUND 2026-11-25 from the user's questions, read from the released `MAIN/DATA/ENDSCRL.EXE` (pklite,
+     then lzexe), NOT YET FIXED, waiting for the user's go-ahead: (1) a `[` line draws nothing and its
+     height is (2nd char - 48) x 10 + (3rd char - 48) with no digit test (1664Fh-1681h), so the six `[8`
+     lines are 45 blank rows; our model demands two digits and draws `[8` as text. (2) at a `%` line the
+     program calls `exit(0)` (169Ah): the demo ENDS there; our looping came from the port. Proposed: fix
+     both in the scene (alone it still loops), Play Demo ends at `%` (the user to choose what the app
+     then does), the export ends there, the fade code goes. That first export has both faults in it.
    - The user looks at the exported video before the merge.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
@@ -157,6 +171,10 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   - `--snapshot <scene-id|play-demo> <modern|classic> <step> <file.png> [blend]`: a 960x720 picture.
   - `--motion-check <scene-id> <modern|classic> [first last] [--csv file]`: draws every step (Modern also
     half-way), lists jumps and one-picture-only pixels, times the steps.
+  - `--export-video plan | sound <file.wav> [seconds] | pictures [seconds] | stills <folder> <seconds|all> <n>...`:
+    the raw material of the video export (see "Next steps", item 5). Run through
+    `python3 tools/export_video.py [--seconds N] [file.mov]` (needs ffmpeg), checked by
+    `python3 tools/check_video.py [--seconds N] [file.mov]`.
   - `--demo-timeline`: runs Play Demo's script against silently rendered music (0.2 s) and compares every
     part's start with `tools/demo_timeline.py`. `--demo-live <start> <seconds> [sound] [delay] [pause <at> <for>] [rebuild <at>]`: the same with the
     real sound output (Claude cannot drive the app's window: launched from here it is not on screen).
@@ -193,7 +211,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
 - `artwork/original/`: every picture the demo shows, exported to PNG by `tools/art_export.py` (do not edit
   by hand); `rgb/` copies are what the app loads. Inventory: `artwork/README.md`.
 - `tools/`: development-only Python (standard library only): one `<scene>_reference.py` per replayed
-  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `water_background.py` (needs POV-Ray), `x86interp.py` (cannot run self-modifying code).
+  scene, `demo_timeline.py` + `music_steps.c`, `art_export.py`, `water_background.py` (needs POV-Ray), `export_video.py` and `check_video.py` (need ffmpeg), `x86interp.py` (cannot run self-modifying code).
 - `ThirdParty/libopenmpt` (unmodified source, the only dependency), `docs/` (see the end of this file).
 
 ## Changing or rebuilding a scene
