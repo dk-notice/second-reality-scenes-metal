@@ -16,6 +16,36 @@ extension CoreChecks {
             check("Water scroller: its data loads", false, "")
             return
         }
+        // The Modern look's background (tools/water_background.py prints the checksum and the shares).
+        let rendered = WaterData.bytes(WaterData.modernBackground).map { SelfTest.crc32($0) } ?? 0
+        check("Water scroller: the Modern look's background in Data/Water is the picture tools/water_background.py makes",
+              rendered == 2_372_661_021, "\(rendered)")
+        // What the Modern look DRAWS while the picture stands still (step 400), at the original's 320x200
+        // (so the graphics chip averages each 8x8 block), against the original background. `share` is how
+        // many of the pixels both have, with the drawn picture moved (dx, dy), are within 8 of 255 in every
+        // channel. The tool finds 92.1% in place and at most 89.3% moved one pixel any way.
+        var shares: [Double] = []
+        if let entry = SceneCatalog.all.first(where: { $0.id == "water-scroller" }),
+           let drawn = (try? Snapshot.render(entry: entry, look: .modern, step: 400, width: 320, height: 200))?
+               .dataProvider?.data.map({ [UInt8]($0 as Data) }), drawn.count == 64000 * 4 {
+            let original = data.background.map { data.colour(Int($0)) }.map { [byteFromVGA($0.z), byteFromVGA($0.y), byteFromVGA($0.x)] }
+            func share(_ dx: Int, _ dy: Int) -> Double {
+                var close = 0, compared = 0
+                for y in max(0, dy)..<min(200, 200 + dy) {
+                    for x in max(0, dx)..<min(320, 320 + dx) {
+                        let d = 4 * ((y - dy) * 320 + x - dx), o = original[y * 320 + x]
+                        compared += 1
+                        if (0..<3).allSatisfy({ abs(Int(drawn[d + $0]) - Int(o[$0])) <= 8 }) { close += 1 }
+                    }
+                }
+                return Double(close) / Double(compared)
+            }
+            shares = [share(0, 0), share(1, 0), share(-1, 0), share(0, 1), share(0, -1)]
+        }
+        check("Water scroller: the Modern look's still picture, drawn at 320x200, is within 8 of 255 of the original background at 90% of pixels or more, and fits better in place than moved one pixel any way",
+              shares.count == 5 && shares[0] >= 0.90 && shares[1...].allSatisfy { $0 < shares[0] - 0.01 },
+              shares.map { String(format: "%.1f%%", $0 * 100) }.joined(separator: " "))
+
         var owners = [Int](repeating: 0, count: 64000)
         for table in data.tables { for address in table.addresses { owners[Int(address)] += 1 } }
         let covered = owners.filter { $0 > 0 }.count, shared = owners.filter { $0 > 1 }.count
