@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the Glenz and plasma timing research is done; its plan waits for the user's OK)
+Last updated: 2026-11-25 (the Glenz and plasma timing change is agreed and being built)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -73,15 +73,20 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
      check's numbers and checksum change).
 4. THE GLENZ AND PLASMA TIMING RESEARCH: DONE 2026-11-25 (research only; findings under "Open
-   questions" and in `docs/demo-timeline.md`, "Found in the released programs"). NO CODE YET: the plan
-   was shown to the user, who is comparing with videos of the original (one a 486 DX2-66 filmed with a
-   camcorder) and has not yet said what to build.
-5. Nothing else is planned. The other open questions start only when the user asks.
+   questions" and in `docs/demo-timeline.md`, "Found in the released programs"). The user's videos agree: three
+   plasmas, the grey one last, the cube right after; the tunnel almost at once after the glenz fades.
+   AGREED 2026-11-25 and being built on `claude/glenz-plasma-timing-f60981`: Play Demo reads ticks in
+   both parts and ends the plasma on the third fall; the first palette one level brighter there; the
+   Plasma scene on its own gets three palettes with the original's section lengths; Glenz on its own
+   stays as it is.
+5. LATER, when the demo is finished: export Play Demo (Modern look) to a video file (see "Open
+   questions"). The other open questions start only when the user asks.
+
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- GLENZ AND THE PLASMA STILL READ THE MUSIC COUNTER AS REFRESHES; researched 2026-11-25, waiting for
-  the user's decision (no code yet). Read from the released programs:
+- GLENZ AND THE PLASMA STILL READ THE MUSIC COUNTER AS REFRESHES; researched 2026-11-25; the change
+  is agreed and being built. Read from the released programs:
   - `GLENZ.EXE` unpacks to exactly `GLENZ/V.EXE`, and its music reads are `MAIN.C`'s (cue -19, counter
     set to 0, waits for 300 and 333, end between -16 and 0). In ticks the glenz appears 448 refreshes
     after the cue instead of 333: the plate rests 226 steps, not 111. The tunnel does not move (it waits
@@ -94,8 +99,15 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
     the step called "Plasma cube starts" moves, 23,792 to 24,056.
   - Also read there: the plasma's fade memory (`fadepal`) starts as ZEROS, not 63, so the first palette
     ends one level brighter in each colour (this settles the question on `docs/scenes/plasma.md`).
-  Proposed, not agreed: Play Demo reads ticks in both parts and ends the plasma on the third fall; the
-  user decides whether the scenes on their own change (plasma: three palettes or four; Glenz: its pause).
+  Agreed and being built (see "Next steps", item 4).
+- EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; after the demo
+  is finished). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
+  YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
+  with silently rendered music (as `--demo-timeline` does), draws each frame off-screen (as
+  `--snapshot` does) at 60 a second with the Modern look's blend at each frame's exact moment, at
+  2880x2160 (4:3; YouTube's "4K" quality), and pipes the frames and the rendered music to ffmpeg
+  (installed; a development tool only, like POV-Ray: never needed by the app or `build.sh`). Needs a
+  check that sound and picture stay in step in the exported file.
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
