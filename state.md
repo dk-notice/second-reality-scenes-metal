@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the demo is finished; next: the video export and a look at the interface, both to be planned with the user)
+Last updated: 2026-11-25 (demo-first start-up is built on branch `demo-first`, waiting for the user to try it; next: the video export)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -90,7 +90,18 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
-   and choosing a scene becomes secondary. A plan was shown; not yet agreed.
+   and choosing a scene is secondary. BUILT on branch `demo-first` (commit 4089e81), NOT YET MERGED:
+   the user tries it first; then merge, rebuild main's app, full self-test (641 checks), and push (the
+   user has agreed to pushing this together with the two docs commits already on main).
+   - With no `--scene` the app starts in Play Demo, music on, the list hidden
+     (`StartupOptions.startsWithDemo`, `startsWithSidebarHidden`); `--scene <id>` starts on the scene
+     with the list showing; `--sidebar hidden|shown` decides either way.
+   - Play Demo is the list's first row, above a "Scenes" heading.
+   - Escape and Stop Demo call `AppModel.stopDemoAndBrowse`: the list opens on the scene the demo was
+     showing (`DemoRunScene.lastSceneID`).
+   - Chosen by the user: sound at launch, and Escape opening the list.
+   - NOT SEEN by Claude (the window cannot be driven from here): how the list's new first row and
+     heading look. Other interface wishes: none stated yet; ask.
 7. The signed release (item 2) stays for later. Nothing else is planned.
 
 ## Open questions (not to be started unasked)
@@ -126,7 +137,7 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
 - TWO COPIES TRAP: each worktree builds its own app, and macOS may start another copy with the same
   identity. After every merge into main, rebuild in the main folder. To be sure which copy starts:
   `open -n <full path to the .app> --args ...`.
-- Start-up options after `--args`: `--scene <id>` (ids: `opening-credits ships-flyby explosion title-picture glenz-vectors
+- With no `--scene` the app starts in Play Demo (2026-11-25). Start-up options after `--args`: `--scene <id>` (ids: `opening-credits ships-flyby explosion title-picture glenz-vectors
   dot-tunnel rings interference techno-bars troll switch-off mountain-scroller lens rotozoomer plasma
   plasma-cube bouncing-dots water-scroller sine-landscape jelly-logo city-3d end-picture credits
   end-scroller starfield`, or `play-demo`), `--look classic|modern`, `--sidebar hidden`, `--from <scene id | part 1-21>`
