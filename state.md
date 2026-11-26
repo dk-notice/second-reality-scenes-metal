@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (Glenz and plasma timing merged and pushed; the output-delay toggle is built, waiting for the user to try it)
+Last updated: 2026-11-25 (the output-delay toggle is merged; main rebuilt and tested; not yet pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 638 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 639 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -94,13 +94,13 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
 - PLAY DEMO OVER BLUETOOTH HEADPHONES (user, 2026-11-25: the techno part's flash and four-column break
   looked off the beat over AirPods; on the MacBook's speakers they are perfect, in every version
-  compared). BUILT on branch `output-delay` (commit 1956391), NOT YET MERGED: the user tries it with
-  AirPods first. The player keeps each position with the moment its sound leaves for the device
+  compared). DONE and merged 2026-11-25 (the user tried it with AirPods and said to merge; main's
+  app rebuilt, 639 checks pass there; NOT YET PUSHED, ask first). The player keeps each position with the moment its sound leaves for the device
   (`Music/PositionHistory.swift`) and, with Music > Allow for Output Delay on (the default; remembered
   in the preferences), reports the one from the device's reported delay ago
   (`MusicPlayer.deviceOutputDelay`: the device's latency plus its stream's; the menu shows it once
   music has played). Measured here: the speakers report 15.6 ms, the AirPods 160 ms. Off, it is as
-  before. `--demo-live ... delay` tests with it on. 639 checks on the branch.
+  before. `--demo-live ... delay` tests with it on.
   - If AirPods still look slightly off, the reported figure is not exact: a manual trim could be added.
   - The video export must NOT use it (exported sound has no device delay).
   - Seen while testing, not new: when the output device changes in mid-demo over Bluetooth, making the
