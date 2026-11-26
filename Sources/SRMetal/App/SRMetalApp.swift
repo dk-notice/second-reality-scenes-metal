@@ -180,6 +180,17 @@ final class AppModel: ObservableObject {
     @Published var musicMuted = false {
         didSet { music.muted = musicMuted }
     }
+    /// Play Demo follows the music as it is HEARD: it allows for the output device's delay (Bluetooth
+    /// headphones play a fraction of a second late). On unless the user turned it off (remembered).
+    @Published var allowsForOutputDelay = true {
+        didSet {
+            music.allowsForOutputDelay = allowsForOutputDelay
+            UserDefaults.standard.set(allowsForOutputDelay, forKey: Self.outputDelayKey)
+        }
+    }
+    static let outputDelayKey = "allowForOutputDelay"
+    /// The delay macOS reports for the output device in use, in milliseconds (nil until music has played).
+    @Published private(set) var outputDelayMilliseconds: Int?
     /// Why Play Demo has no sound (and so waits), or nil.
     @Published private(set) var musicProblem: String?
     /// Where Play Demo started (nil: the beginning). Read again on each restart.
@@ -207,6 +218,10 @@ final class AppModel: ObservableObject {
         }
         watchSleep()
         music.onProblem = { [weak self] problem in self?.musicProblem = problem }
+        // (didSet does not run inside init: the player is told directly.)
+        allowsForOutputDelay = UserDefaults.standard.object(forKey: Self.outputDelayKey) as? Bool ?? true
+        music.allowsForOutputDelay = allowsForOutputDelay
+        music.onOutputDelay = { [weak self] delay in self?.outputDelayMilliseconds = Int((delay * 1000).rounded()) }
     }
 
     var entry: SceneEntry { playingDemo ? demoEntry : SceneCatalog.all[sceneIndex] }
@@ -351,6 +366,10 @@ struct SRMetalApp: App {
             CommandMenu("Music") {
                 Button(model.musicMuted ? "Unmute Music" : "Mute Music") { model.toggleMute() }
                     .keyboardShortcut("m", modifiers: [])
+                // Play Demo follows the music as heard: the picture waits by the output device's delay
+                // (what macOS reports for it; shown once music has played).
+                Toggle("Allow for Output Delay" + (model.outputDelayMilliseconds.map { " (\($0) ms)" } ?? ""),
+                       isOn: Binding(get: { model.allowsForOutputDelay }, set: { model.allowsForOutputDelay = $0 }))
             }
         }
     }

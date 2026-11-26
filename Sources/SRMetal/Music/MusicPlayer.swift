@@ -1,4 +1,6 @@
 import AVFoundation
+import CoreAudio
+import QuartzCore
 import os
 
 /// Plays one of the demo's songs through the Mac's sound output, using macOS's own audio system
@@ -13,6 +15,11 @@ import os
 /// After each block the audio thread also notes the song position it has reached (section and
 /// row), for Play Demo, whose parts wait on the music. It writes that into a second lock, again
 /// only if it is free at that moment; if not, the next block (a few milliseconds later) does.
+///
+/// The sound is heard a little after it is rendered, and over Bluetooth headphones a good deal after
+/// (0.15 s and more). So each position is kept with the moment its sound leaves for the device
+/// (`PositionHistory`), and with `allowsForOutputDelay` on, `position` is the one whose sound is being
+/// heard now, going by the delay macOS reports for the output device.
 final class MusicPlayer {
     /// What the audio thread works from. `@unchecked Sendable`: only touched while holding `shared`.
     private final class Shared: @unchecked Sendable {
@@ -24,7 +31,17 @@ final class MusicPlayer {
 
     private let shared = OSAllocatedUnfairLock(initialState: Shared())
     /// The position the audio thread last reached. Always taken after `shared`, never before it.
-    private let reached = OSAllocatedUnfairLock(initialState: MusicPosition.silent)
+    private let reached = OSAllocatedUnfairLock(initialState: PositionHistory())
+
+    /// Whether `position` allows for the output device's delay. Off, it is the newest position rendered,
+    /// as it always was before 2026-11-25 (and as the commands that test the script want). Main thread.
+    var allowsForOutputDelay = false
+    /// The output device's delay as macOS reports it, in seconds: read when the sound output is made,
+    /// so again whenever the device changes. 0 if it cannot be read. Main thread.
+    private(set) var outputDelay = 0.0 {
+        didSet { if outputDelay != oldValue { onOutputDelay?(outputDelay) } }
+    }
+    var onOutputDelay: ((Double) -> Void)?
     private let engine = AVAudioEngine()
     private var source: AVAudioSourceNode?
     private var sampleRate = 48_000
@@ -89,7 +106,7 @@ final class MusicPlayer {
             state.lookChanged = false
             state.finished = false
             // Inside `shared`, so no block of the old song can report its position after this.
-            reached.withLock { $0 = start }
+            reached.withLock { $0.restart(start) }
             return old
         }
         _ = old
@@ -100,7 +117,7 @@ final class MusicPlayer {
         let old = shared.withLock { state -> TrackerSong? in
             let old = state.song
             state.song = nil
-            reached.withLock { $0 = .silent }
+            reached.withLock { $0.restart(.silent) }
             return old
         }
         _ = old
@@ -110,8 +127,43 @@ final class MusicPlayer {
     }
 
     /// The song position the sound output has reached (`.silent` when stopped). Main thread.
+    /// With `allowsForOutputDelay`, the position being HEARD: the one whose sound left for the device
+    /// `outputDelay` ago.
     var position: MusicPosition {
-        reached.withLock { $0 }
+        let delay = allowsForOutputDelay ? outputDelay : nil
+        return reached.withLock { history in
+            delay.map { history.position(at: CACurrentMediaTime() - $0) } ?? history.newest
+        }
+    }
+
+    /// The delay macOS reports for the default output device, in seconds: the device's own latency plus
+    /// its stream's (what happens after the sound has left the Mac: for Bluetooth headphones, the radio
+    /// link and the headphones' buffering). nil if it cannot be read.
+    static func deviceOutputDelay() -> Double? {
+        func read<T>(_ selector: AudioObjectPropertySelector, _ scope: AudioObjectPropertyScope,
+                     of object: AudioObjectID, into value: inout T) -> Bool {
+            var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope,
+                                                     mElement: kAudioObjectPropertyElementMain)
+            var size = UInt32(MemoryLayout<T>.size)
+            return AudioObjectGetPropertyData(object, &address, 0, nil, &size, &value) == noErr
+        }
+        var device = AudioDeviceID(0)
+        guard read(kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal,
+                   of: AudioObjectID(kAudioObjectSystemObject), into: &device), device != 0 else { return nil }
+        var rate = Float64(0), latency = UInt32(0), streamLatency = UInt32(0), stream = AudioStreamID(0)
+        guard read(kAudioDevicePropertyNominalSampleRate, kAudioObjectPropertyScopeGlobal, of: device, into: &rate),
+              rate > 0,
+              read(kAudioDevicePropertyLatency, kAudioObjectPropertyScopeOutput, of: device, into: &latency) else { return nil }
+        // The device's first output stream (reading one id from the list is enough).
+        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams,
+                                                 mScope: kAudioObjectPropertyScopeOutput,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        var size = UInt32(MemoryLayout<AudioStreamID>.size)
+        let status = AudioObjectGetPropertyData(device, &address, 0, nil, &size, &stream)
+        if (status == noErr || size > 0) && stream != 0 {
+            _ = read(kAudioStreamPropertyLatency, kAudioObjectPropertyScopeGlobal, of: stream, into: &streamLatency)
+        }
+        return Double(latency + streamLatency) / rate
     }
 
     /// How far into the song the sound output has got, in seconds (0 when stopped). Main thread.
@@ -159,6 +211,8 @@ final class MusicPlayer {
             engine.attach(node)
             engine.connect(node, to: engine.mainMixerNode, format: format)
             source = node
+            // A new output (the first, or after the device changed): its delay.
+            outputDelay = Self.deviceOutputDelay() ?? 0
         }
         if !engine.isRunning && !paused {
             do {
@@ -176,7 +230,11 @@ final class MusicPlayer {
         let shared = self.shared
         let reached = self.reached
         let rate = sampleRate
-        return { [weak self] isSilence, _, frameCount, bufferList -> OSStatus in
+        // The Mac's clock ticks to seconds (the same clock as `CACurrentMediaTime`).
+        var timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        let secondsPerTick = Double(timebase.numer) / Double(timebase.denom) / 1e9
+        return { [weak self] isSilence, timestamp, frameCount, bufferList -> OSStatus in
             let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
             let frames = Int(frameCount)
             guard buffers.count >= 2,
@@ -191,7 +249,12 @@ final class MusicPlayer {
                 }
                 let count = song.render(left: left, right: right, frames: frames, sampleRate: rate)
                 let now = MusicPosition(song: song.song, order: song.currentOrder, row: song.currentRow)
-                _ = reached.withLockIfAvailable { $0 = now }
+                // The position at the END of this block, and the moment that sound leaves for the device:
+                // the block's own time (when its first sample is due out) plus its length.
+                let stamp = timestamp.pointee
+                let starts = stamp.mFlags.contains(.hostTimeValid) ? stamp.mHostTime : mach_absolute_time()
+                let leaves = Double(starts) * secondsPerTick + Double(count) / Double(rate)
+                _ = reached.withLockIfAvailable { $0.record(now, at: leaves) }
                 if count < frames {
                     state.finished = true
                     finishedSong = ObjectIdentifier(song)
