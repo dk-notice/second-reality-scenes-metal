@@ -68,9 +68,24 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   not read). Research first, no code; if the original really paused longer, the user decides whether the
   timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
   Recommended; the user has not yet said to start.
-- The water background could be re-rendered from the POV-Ray files in `WATER/` instead of scaled up
-  (Modern look only). Unknown size: a one-hour trial would show whether today's POV-Ray renders the 1993
-  files and whether the result lines up with the original. Undecided.
+- The water background re-rendered from its POV-Ray scene instead of scaled up (Modern look only). Kept
+  open by the user (2026-11-25, "we are learning and having fun"). Found in a trial that day, on
+  copies in the scratch folder (nothing in the project changed):
+  - The background's scene is `WATER/KK.POV`. `R1.POV` to `R5.POV` and `AA.POV` are NOT the picture:
+    they are the same scene with mirror surfaces and a colour-ramp strip (`rgb.tga`), slid along, which
+    is how the scroller's position tables were made. The other `.POV` files are POV-Ray samples. No
+    scene files exist in the port or the released demo; one web search found none elsewhere.
+  - POV-Ray 3.7 (Homebrew, already installed) renders it unchanged: `povray +Ikk.pov +W320 +H200
+    +MV1.0 -A -D +L.` with the folder's own `COLORS.INC` and `SHAPES.INC` and an EMPTY `textures.inc`
+    (the 1.0 file is missing; the scene uses nothing from it). 1920x1440 takes a third of a second.
+  - Measured against `artwork/original/rgb/13-water-background.png`: the shapes line up to about one
+    pixel (best fit: the original one row lower, level sideways to a quarter pixel). The original is
+    much darker (blue: original = 0.51 x render^1.3, a rough fit). After that, 88% of pixels are
+    within 16 levels and 97% within 32; the rest is in the highlights, the spheres' speckled rims
+    and the ripple bands' brightness. The original has 190 colours.
+  - Not known: whether the shading differences are 3.7 against 1.0 or retouching by Future Crew (only
+    POV-Ray 1.0 in DOSBox would tell); how to settle the one-row offset; the colour match, which is
+    partly taste. Nothing is planned: next would be a plan for the Modern look, shown to the user.
 - Does the GitHub repository go public? To settle with the signed release. Before it does: confirm the
   two songs are covered by the same public-domain release as the code (this matters for sharing the app
   too), and know that the deleted AI pictures (30 files, 168 MB) are in Git LFS storage, reachable from
