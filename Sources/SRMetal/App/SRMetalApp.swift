@@ -245,6 +245,9 @@ final class AppModel: ObservableObject {
         start: { [unowned self] in self.demoStart },
         configure: { [weak self] scene in
             scene.onPart = { [weak self] name in self?.demoPart = name }
+            // The demo over: on to choosing, as Escape does. (Not from inside the step that ended it:
+            // that step is run by the window's drawing.)
+            scene.onEnd = { DispatchQueue.main.async { [weak self] in self?.stopDemoAndBrowse() } }
             scene.logsParts = true
             self?.demoRun = scene
         })

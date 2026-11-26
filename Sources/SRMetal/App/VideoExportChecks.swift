@@ -54,39 +54,18 @@ extension CoreChecks {
                 && Array(sound[from..<from + alone.count]) == alone,
               "the Glenz part at step \(glenz); \(alone.count) samples of the song alone")
 
-        // The fade: the last two seconds only, picture and sound alike.
-        var bytes: [UInt8] = [200, 100, 0, 255]
-        VideoExport.darken(&bytes, level: 0.5)
-        let short = VideoExport.sound(frames: 600)
-        let lastLoud = short.lastIndex { $0 != 0 } ?? -1
-        check("Video export: the last 2 seconds fade evenly to black and to silence, nothing before them",
-              VideoExport.fade(frame: 479, of: 600) == 1 && VideoExport.fade(frame: 539, of: 600) == 0.5
-                && VideoExport.fade(frame: 599, of: 600) == 0 && bytes == [100, 50, 0, 128]
-                && Array(short[..<(480 * 735 * 2)]) == Array(sound[..<(480 * 735 * 2)])
-                && short[(599 * 735 * 2)...].allSatisfy { $0 == 0 }
-                && lastLoud > 590 * 735 * 2
-                && abs(Int(short[lastLoud]) * 2) <= abs(Int(sound[lastLoud])) + 2,
-              "fade at 479, 539, 599: \(VideoExport.fade(frame: 479, of: 600)) \(VideoExport.fade(frame: 539, of: 600)) \(VideoExport.fade(frame: 599, of: 600)); bytes \(bytes); last sound at \(lastLoud)")
-
         guard let device = MTLCreateSystemDefaultDevice() else {
             check("Video export: Metal device available", false, "")
             return
         }
-        // Where it ends: on the last step before the end scroller's text starts again from the top.
-        let ending = "Video export: it ends as the end scroller's text is about to start again (16:18.3, 58,704 pictures)"
-        if let run = try? DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(),
-                                       from: .scene("end-scroller")) {
-            for _ in 0..<(plan.passEnd - plan.scrollerStart - 1) { run.tick() }
-            let before = (run.sceneShowing as? EndScrollerScene)?.model.passes
-            run.tick()
-            let after = (run.sceneShowing as? EndScrollerScene)?.model.passes
-            check(ending, before == 0 && after == 1 && plan.scrollerStart == 45_670 && plan.musicEnd == 67_036
-                    && plan.textGone == 67_817 && plan.passEnd == 68_482 && plan.frames == 58_704
-                    && plan.frames % 6 == 0 && plan.steps >= plan.passEnd && plan.steps < plan.passEnd + 7,
-                  "passes before \(before ?? -1), after \(after ?? -1); \(plan)")
-        } else {
-            check(ending, false, "Play Demo could not be started at the end scroller")
-        }
+        // Where it ends: with the demo (the end scroller's "%" line), on a whole step and a whole picture.
+        let bare = DemoSequencer(music: SilentMusic())
+        while !bare.finished && bare.time < 70 * 60 * 20 { bare.tick() }
+        check("Video export: it runs to the demo's end (16:21.1) and no further: 58,866 pictures on 68,677 steps",
+              bare.finished && plan.end == bare.time && plan.end == plan.scrollerStart + 1 + EndScrollerModel.demoLength
+                && plan.frames % 6 == 0 && plan.steps >= plan.end && plan.steps < plan.end + 7
+                && plan.scrollerStart == 45_670 && plan.musicEnd == 67_036 && plan.musicEnd < plan.textGone && plan.textGone < plan.end,
+              "\(plan); the script ends after \(bare.time) steps")
 
         // The pictures: six in a row (every blend), each what `--snapshot play-demo` draws at that step
         // and blend, and the demo then at the same place in the script as a bare run of that many steps.
@@ -107,11 +86,11 @@ extension CoreChecks {
             }
             check(same, differing.isEmpty && Set(drawn).count == 6 && VideoExport.moment(frame: 8898).blend == 0,
                   "differ from the snapshot: \(differing); \(Set(drawn).count) different pictures of 6")
-            let bare = DemoSequencer(music: SilentMusic())
-            for _ in 0..<run.steps { bare.tick() }
-            let a = run.scene.musicState, b = bare.musicState
+            let alone = DemoSequencer(music: SilentMusic())
+            for _ in 0..<run.steps { alone.tick() }
+            let a = run.scene.musicState, b = alone.musicState
             check(place, run.steps == 10_386 && a.order == b.order && a.row == b.row && a.ticks == b.ticks && a.plus == b.plus
-                    && run.scene.currentPart == bare.currentPart,
+                    && run.scene.currentPart == alone.currentPart,
                   "\(run.steps) steps; drawn: \(a); bare: \(b)")
         } catch {
             check(same, false, "\(error)")

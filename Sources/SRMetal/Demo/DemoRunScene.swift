@@ -74,6 +74,11 @@ final class DemoRunScene: DemoScene {
     private let music: DemoMusicSource
     /// Called with each part's name as it starts.
     var onPart: ((String) -> Void)?
+    /// Called once when the demo has run to its end (the end scroller's last line).
+    var onEnd: (() -> Void)?
+    /// Whether the demo has run to its end.
+    var ended: Bool { sequencer.finished }
+    private var toldEnd = false
     /// Whether each part change is written to the log (the running app; not checks or snapshots).
     var logsParts = false
 
@@ -166,6 +171,7 @@ final class DemoRunScene: DemoScene {
         shown = .black
         partsStarted = 0
         pendingPartNotice = false
+        toldEnd = false
         hookUp()
         if let startProvider { start = startProvider() }
         if let start {
@@ -180,6 +186,11 @@ final class DemoRunScene: DemoScene {
             scene.tick()
         }
         sequencer.tick()
+        if sequencer.finished && !toldEnd {
+            toldEnd = true
+            if logsParts { NSLog("SR Metal: Play Demo ended at step %d (%@)", sequencer.time - 1, DemoTimelineCommand.time(sequencer.time - 1)) }
+            onEnd?()
+        }
         if pendingPartNotice, let (name, step) = sequencer.partStarts.last {
             pendingPartNotice = false
             if logsParts { NSLog("SR Metal: Play Demo started at part %d \"%@\" (began at step %d, %@)",

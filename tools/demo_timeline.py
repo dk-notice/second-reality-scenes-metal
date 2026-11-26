@@ -17,6 +17,7 @@ Usage (FOLDER holds MUSIC0-unscrambled.s3m, MUSIC1-unscrambled.s3m and the three
   python3 tools/demo_timeline.py FOLDER 0
 It prints each part's start and end in seconds, then the exact steps the Swift is checked against.
 """
+import os
 import sys
 S = sys.argv[1]; OFF = int(sys.argv[2])
 def load(name):
@@ -129,13 +130,25 @@ part('U2E city', u2e)
 def end(): frames(163); s = T.t; until(lambda: M.plus() > -16 or T.t - s >= 5000); frames(64)
 part('ENDLOGO end picture', end)
 part('CRED credits', lambda: frames(7602))
-part('ENDSCRL end scroller (until a key)', lambda: frames(0))
+def endscrl():
+    # ENDSCRL.EXE as released: a row every 2 refreshes; a line is 25 rows, a "[" line
+    # (2nd character - 48) x 10 + (3rd - 48) blank rows (no test for digits: "[8" + CR is 45); the program
+    # quits on the first row of the "%" line: the demo's end.
+    text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'Data', 'EndScroller', 'ENDSCROL.TXT'), 'rb').read()
+    rows = 0
+    for line in text.split(b'\n'):
+        if line[:1] == b'%': break
+        rows += max(1, (line[1] - 48) * 10 + (line[2] - 48)) if line[:1] == b'[' else 25
+    # (The clock alone: the music runs out during this part, and the part waits on nothing in it.)
+    T.t += 2 * (rows + 1)
+part('ENDSCRL end scroller (to its "%" line)', endscrl)
 for name, a, b in log:
     print(f'{name:40} {a/70:7.1f} s -> {b/70:7.1f} s  ({(b-a)/70:5.1f} s)')
 # The exact steps, as the Swift quotes them: `expected` in Sources/SRMetal/App/DemoTimelineCommand.swift
 # (the part starts) and the opening credits' cues (`OpeningCreditsModel.cues`, CUES in alku_reference.py):
 # the first step on which song 1's sync value has reached 1...9.
 print('Part starts (steps):', ', '.join(str(a) for _, a, _ in log))
+print('The demo ends after step:', log[-1][2] + 1, '(the Swift: VideoExport.plan.end; the scroller shows one step after its part starts)')
 cues = Music(S1, O1, 45000); first = []
 for c in range(1, 10):
     while cues.sync() < c: cues.tick()

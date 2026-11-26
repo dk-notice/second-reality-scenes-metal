@@ -80,7 +80,7 @@ enum DemoTimelineCommand {
     static func simulate() -> (sequencer: DemoSequencer, problem: String?) {
         let music = SilentMusic()
         let sequencer = DemoSequencer(music: music)
-        while !sequencer.finished && sequencer.time < 70 * 60 * 15 {
+        while !sequencer.finished && sequencer.time < 70 * 60 * 20 {
             sequencer.tick()
         }
         return (sequencer, music.problem)
@@ -108,7 +108,7 @@ enum DemoTimelineCommand {
         if let problem { print("Music problem: \(problem)") }
         let starts = sequencer.partStarts
         for (number, part) in starts.enumerated() {
-            let end = number + 1 < starts.count ? time(starts[number + 1].step) : "until a key"
+            let end = number + 1 < starts.count ? time(starts[number + 1].step) : time(sequencer.time) + ", the demo's end"
             print(String(format: "%2d  %@  %@ -> %@", number + 1, part.name.padding(toLength: 40, withPad: " ", startingAt: 0),
                          time(part.step), end))
         }

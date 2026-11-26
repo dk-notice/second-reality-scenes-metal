@@ -252,8 +252,8 @@ python3 tools/export_video.py
 
 makes `~/Movies/SecondReality-Modern.mov`: the whole of Play Demo in the Modern look, 2880x2160 at 60
 pictures a second, as ProRes 422 with the music as uncompressed stereo sound (tens of gigabytes; it
-shows its progress and the time left). It runs through one pass of the end scroller's text and fades
-out. This needs [ffmpeg](https://ffmpeg.org) installed, which nothing else here does: the app only
+shows its progress and the time left). It runs to the demo's own end, the last line of the end
+scroller's text. This needs [ffmpeg](https://ffmpeg.org) installed, which nothing else here does: the app only
 writes the raw pictures and the sound (`--export-video`), and the script hands them to ffmpeg.
 
 Nothing in the export follows a clock. The demo is stepped 70 times a second of its own time against

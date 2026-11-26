@@ -9,11 +9,10 @@ Play Demo. Its text is in the repository's history.)
 ## Export Play Demo to a video file
 
 Wanted for YouTube, in the Modern look only (the 1993 look's 70 pictures a second do not fit YouTube's
-60). Decided with the user on 2026-11-25 and being built:
+60). Decided with the user on 2026-11-25 and built (`tools/export_video.py`; see the README):
 
 - The whole demo, 2880x2160 (4:3; YouTube's "4K") at 60 pictures a second, as ProRes 422 with PCM sound
-  in a .mov file in `~/Movies/`. It ends after one full pass of the end scroller's text, with a
-  2-second fade to black.
+  in a .mov file in `~/Movies/`. It ends where the demo does: the end scroller's last line (16:21).
 - A command steps Play Demo against silently rendered music, as `--demo-timeline` does, so nothing
   depends on the speed of the Mac or on a window, and draws each frame off screen with the Modern
   look's blend taken at that frame's exact moment. The sound output's delay is not involved.

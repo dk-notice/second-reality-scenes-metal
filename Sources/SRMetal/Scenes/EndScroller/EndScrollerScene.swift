@@ -127,12 +127,12 @@ final class EndScrollerScene: DemoScene {
     }
 
     /// What the Modern look draws of a text line: the text as the DOS character set had it (0x84 is "ä"),
-    /// without its carriage return or tabs. Nothing for the "%" line, which only tells the scroller to
-    /// start the text again (the 1993 font has no glyph for it, so the original showed nothing either).
+    /// without its carriage return or tabs. Nothing for the two kinds of mark: a "[" line (blank rows)
+    /// and the "%" line (the end), which the original did not draw either.
     /// One straying, kept on purpose: the quotation marks around a nickname show here; the 1993 font has
     /// no glyph for them.
     static func modernText(_ line: [UInt8]) -> String {
-        guard !EndScrollerModel.isLoopLine(line) else { return "" }
+        guard !EndScrollerModel.isLoopLine(line), line.first != UInt8(ascii: "[") else { return "" }
         return String(String.UnicodeScalarView(line.filter { $0 >= 32 }.compactMap { UnicodeScalar(dosCharacter($0)) }))
     }
 

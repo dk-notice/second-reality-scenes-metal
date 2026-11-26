@@ -142,8 +142,7 @@ def main():
         # 3. Song 2 starts exactly where the script starts it.
         start = GLENZ_STEP * PAIRS_PER_STEP * 4
         name = "sound: song 2 begins at sample pair %d x %d (the Glenz part's step)" % (GLENZ_STEP, PAIRS_PER_STEP)
-        # (Not within the fade of the last two seconds.)
-        if len(in_file) >= start + 44100 * 4 + 2 * 44100 * 4:
+        if len(in_file) >= start + 44100 * 4 + 4:
             song = os.path.join(scratch, "song2.wav")
             run([APP, "--music-render", "2", "1", song])
             alone = wav_samples(song)
@@ -169,7 +168,7 @@ def main():
         needed = sorted({g for f in chosen for g in (f - 1, f, f + 1)})
         stills = os.path.join(scratch, "stills")
         os.mkdir(stills)
-        run([APP, "--export-video", "stills", stills, seconds or "all"] + [str(f) for f in needed])
+        run([APP, "--export-video", "stills", stills] + [str(f) for f in needed])
         still = {f: small_picture(os.path.join(stills, "frame-%06d.png" % f)) for f in needed}
         wrong, not_same, told_apart, worst = [], [], 0, 0.0
         for f in chosen:

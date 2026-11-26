@@ -14,6 +14,9 @@ import Metal
 /// `seconds` stops early (for a trial, and for proving the checks). A fourth form, `stills`, writes
 /// single pictures of the export as PNG files, for `tools/check_video.py` to compare the file with.
 ///
+/// The export runs to the demo's own end: the end scroller's "%" line, where the released program quit
+/// (16:21). The screen has been black for some eight seconds by then, and the music silent for longer.
+///
 /// HOW SOUND AND PICTURE STAY IN STEP. Nothing here follows a clock. The demo is stepped 70 times a
 /// second of ITS time with silently rendered music (`SilentMusic`, as `--demo-timeline`): every step
 /// renders exactly 630 sample pairs. Picture k belongs at k/60 s, which is 7k/6 steps: the demo is
@@ -26,19 +29,9 @@ enum VideoExport {
     static let framesPerSecond = 60
     /// Sample pairs of sound per picture: 44,100 / 60.
     static let samplesPerFrame = SilentMusic.sampleRate / framesPerSecond
-    /// The fade to black at the very end: 2 seconds.
-    static let fadeFrames = 2 * framesPerSecond
-
     /// When picture `frame` is: after how many steps, and how far on towards the next (0, 1/6 ... 5/6).
     static func moment(frame: Int) -> (step: Int, blend: Float) {
         (7 * frame / 6, Float(7 * frame % 6) / 6)
-    }
-
-    /// How bright picture `frame` of `total` is: 1 until the last two seconds, then falling evenly to 0
-    /// on the last picture.
-    static func fade(frame: Int, of total: Int) -> Float {
-        let left = total - 1 - frame
-        return left >= fadeFrames ? 1 : Float(max(left, 0)) / Float(fadeFrames)
     }
 
     /// The length of the export, worked out from the script, the music and the end scroller's text.
@@ -49,41 +42,32 @@ enum VideoExport {
         var musicEnd: Int
         /// The step by which the last row with text in it has left the top of the screen.
         var textGone: Int
-        /// The step on which the text starts again from the top.
-        var passEnd: Int
+        /// The number of steps the demo runs before it ends (the released program quit).
+        var end: Int
         /// Pictures in the whole export (a multiple of 6, so it ends on a whole step).
         var frames: Int
         var steps: Int { frames * 7 / 6 }
     }
 
     static let plan: Plan = {
-        // The script, silently, to the end scroller and on until the music runs out.
+        // The script, silently, to its end.
         let music = SilentMusic()
         let sequencer = DemoSequencer(music: music)
-        while !sequencer.finished && sequencer.time < 70 * 60 * 15 { sequencer.tick() }
-        let scrollerStart = sequencer.partStarts.last?.step ?? 0
-        while music.lastRendered == SilentMusic.framesPerStep && sequencer.time < 70 * 60 * 40 { sequencer.tick() }
-        let musicEnd = sequencer.time - 1
-        // The end scroller's text, one pass. The scene has its first step two steps after the script
-        // shows it (the step that shows it, then `DemoRunScene.tick` moves the scene before the script).
-        var textGone = scrollerStart, passEnd = scrollerStart
-        if var model = try? EndScrollerModel.load() {
-            // `ticks`: the scene's steps before the one that draws the first row of the second pass.
-            var ticks = 0, lastTextRow = -1
-            while ticks < 70 * 60 * 30 {
-                var next = model
-                next.tick()
-                if next.passes > 0 { break }
-                model = next
-                lastTextRow = model.lastTextRow
-                ticks += 1
-            }
-            passEnd = scrollerStart + 1 + ticks
-            textGone = scrollerStart + 1 + (lastTextRow + EndScrollerModel.height + 1) * EndScrollerModel.stepsPerRow
+        var musicEnd: Int?
+        while !sequencer.finished && sequencer.time < 70 * 60 * 20 {
+            sequencer.tick()
+            if musicEnd == nil && music.lastRendered < SilentMusic.framesPerStep { musicEnd = sequencer.time - 1 }
         }
-        let end = passEnd
-        return Plan(scrollerStart: scrollerStart, musicEnd: musicEnd, textGone: textGone, passEnd: passEnd,
-                    frames: 6 * ((end + 6) / 7))
+        let scrollerStart = sequencer.partStarts.last?.step ?? 0
+        // The end scroller's text. The scene has its first step two steps after the script shows it
+        // (the step that shows it, then `DemoRunScene.tick` moves the scene before the script).
+        var textGone = scrollerStart
+        if var model = try? EndScrollerModel.load() {
+            for _ in 0..<EndScrollerModel.demoLength { model.tick() }
+            textGone = scrollerStart + 1 + (model.lastTextRow + EndScrollerModel.height + 1) * EndScrollerModel.stepsPerRow
+        }
+        return Plan(scrollerStart: scrollerStart, musicEnd: musicEnd ?? sequencer.time, textGone: textGone,
+                    end: sequencer.time, frames: 6 * ((sequencer.time + 6) / 7))
     }()
 
     // MARK: - The command
@@ -92,7 +76,7 @@ enum VideoExport {
         usage: SRMetal --export-video plan
                SRMetal --export-video sound <file.wav> [seconds]
                SRMetal --export-video pictures [seconds] > frames
-               SRMetal --export-video stills <folder> <seconds|all> <picture number> ...
+               SRMetal --export-video stills <folder> <picture number> ...
         (tools/export_video.py runs these and makes the video file; tools/check_video.py checks it)
         """
 
@@ -140,12 +124,11 @@ enum VideoExport {
                 note("\nThe export stopped: \(error)\n")
                 return false
             }
-        case "stills" where rest.count >= 3:
+        case "stills" where rest.count >= 2:
             // For `tools/check_video.py`: single pictures of the export, as PNG files.
-            guard let frames = frames(rest[1] == "all" ? nil : rest[1]) else { break }
-            let wanted = rest[2...].compactMap { Int($0) }
-            guard wanted.count == rest.count - 2, wanted == wanted.sorted(), wanted.allSatisfy({ (0..<frames).contains($0) }) else {
-                print("The pictures' numbers must be in rising order, from 0 to \(frames - 1).")
+            let wanted = rest[1...].compactMap { Int($0) }
+            guard wanted.count == rest.count - 1, wanted == wanted.sorted(), wanted.allSatisfy({ (0..<plan.frames).contains($0) }) else {
+                print("The pictures' numbers must be in rising order, from 0 to \(plan.frames - 1).")
                 break
             }
             do {
@@ -153,7 +136,6 @@ enum VideoExport {
                 var pixels = [UInt8](repeating: 0, count: width * height * 4)
                 for frame in wanted {
                     try run.draw(frame: frame, into: &pixels)
-                    darken(&pixels, level: fade(frame: frame, of: frames))
                     let file = URL(fileURLWithPath: rest[0]).appendingPathComponent(String(format: "frame-%06d.png", frame))
                     guard let image = Snapshot.image(bgra: pixels, width: width, height: height),
                           Snapshot.writePNG(image, to: file) else { return false }
@@ -177,8 +159,8 @@ enum VideoExport {
         print("The end scroller starts at \(at(p.scrollerStart)).")
         print("The music runs out at \(at(p.musicEnd)).")
         print("The last text leaves the screen at \(at(p.textGone)).")
-        print("The text starts again at \(at(p.passEnd)).")
-        print("The export: \(p.frames) pictures, \(DemoTimelineCommand.time(p.steps)), the last \(fadeFrames / framesPerSecond) s fading to black.")
+        print("The demo ends after \(at(p.end)) (the text's \"%\" line, where the released program quit).")
+        print("The export: \(p.frames) pictures, \(DemoTimelineCommand.time(p.steps)).")
     }
 
     enum Failure: Error, CustomStringConvertible {
@@ -196,7 +178,7 @@ enum VideoExport {
 
     /// The sound of the first `frames` pictures: 735 sample pairs each (left, right, ...), as the WAV
     /// file holds them. It is what the script hears: the same sequencer and silent music as
-    /// `--demo-timeline`, 630 pairs a step, with the same fade as the pictures at the end.
+    /// `--demo-timeline`, 630 pairs a step.
     static func sound(frames: Int) -> [Int16] {
         let music = SilentMusic()
         var samples = [Int16]()
@@ -205,12 +187,6 @@ enum VideoExport {
         let sequencer = DemoSequencer(music: music)
         while samples.count < frames * samplesPerFrame * 2 { sequencer.tick() }
         samples.removeLast(samples.count - frames * samplesPerFrame * 2)
-        for frame in max(0, frames - fadeFrames)..<frames {
-            let level = fade(frame: frame, of: frames)
-            for index in frame * samplesPerFrame * 2..<(frame + 1) * samplesPerFrame * 2 {
-                samples[index] = Int16((Float(samples[index]) * level).rounded())
-            }
-        }
         return samples
     }
 
@@ -281,15 +257,6 @@ enum VideoExport {
         }
     }
 
-    /// Darkens a picture's bytes for the fade (`level` 0...1; 1 leaves them alone).
-    static func darken(_ pixels: inout [UInt8], level: Float) {
-        guard level < 1 else { return }
-        let table = (0..<256).map { UInt8((Float($0) * level).rounded()) }
-        pixels.withUnsafeMutableBufferPointer { bytes in
-            for index in bytes.indices { bytes[index] = table[Int(bytes[index])] }
-        }
-    }
-
     static func export(frames: Int, pictures: Int32) throws {
         let run = try Run(width: width, height: height)
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -297,7 +264,6 @@ enum VideoExport {
         var lastNote = Date.distantPast
         for frame in 0..<frames {
             try run.draw(frame: frame, into: &pixels)
-            darken(&pixels, level: fade(frame: frame, of: frames))
             try pixels.withUnsafeBytes { bytes in
                 var done = 0
                 while done < bytes.count {

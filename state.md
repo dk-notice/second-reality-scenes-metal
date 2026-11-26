@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the video export is decided and in hand on its own branch)
+Last updated: 2026-11-26 (the video export is built on its own branch; the end scroller fixed there; a new export waits for the user's word)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -111,13 +111,20 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      passes on it. The fade is done by the export command (so the file's sound can be compared byte for
      byte), not by ffmpeg. ffmpeg's DEFAULT conversion back to red-green-blue is 2-3 levels dark: the
      check decodes with `accurate_rnd` (the file itself is right).
-   - FOUND 2026-11-25 from the user's questions, read from the released `MAIN/DATA/ENDSCRL.EXE` (pklite,
-     then lzexe), NOT YET FIXED, waiting for the user's go-ahead: (1) a `[` line draws nothing and its
-     height is (2nd char - 48) x 10 + (3rd char - 48) with no digit test (1664Fh-1681h), so the six `[8`
-     lines are 45 blank rows; our model demands two digits and draws `[8` as text. (2) at a `%` line the
-     program calls `exit(0)` (169Ah): the demo ENDS there; our looping came from the port. Proposed: fix
-     both in the scene (alone it still loops), Play Demo ends at `%` (the user to choose what the app
-     then does), the export ends there, the fade code goes. That first export has both faults in it.
+   - THE END SCROLLER'S TWO MARKS, found from the user's questions and FIXED on the branch (2026-11-26),
+     read from the released `MAIN/DATA/ENDSCRL.EXE` (pklite, then lzexe): (1) a `[` line draws nothing
+     and takes (2nd char - 48) x 10 + (3rd char - 48) rows with no digit test (164Fh-1681h), so the six
+     `[8` lines are 45 blank rows (we drew `[8` as text); (2) on the first row of the `%` line the
+     program calls `exit(0)` (169Ah): the demo ENDS there (our looping came from the port).
+     Now: `EndScrollerModel.gapHeight`, `reachedEnd`, `demoLength` (23,002 steps); the script ends with
+     `.frames(demoLength), .show(.black), .hold`; PLAY DEMO ENDS at step 68,673 (16:21.0) and the app
+     then goes to the scene list as Escape does (`DemoRunScene.onEnd`; my recommendation, the user said
+     "fix it": CONFIRM with the user, who has not seen it in the app yet). Alone the scene still starts
+     again. `tools/demo_timeline.py` gives the same end step. Music out 15:57.7, last text gone 16:12.2.
+   - The export now ends with the demo: 58,866 pictures (16:21.1). THE FADE IS GONE (the screen is
+     black for 8 s before the end; supersedes "and fade" above). `stills` no longer takes a length.
+   - The first export (33.98 GB, in `~/Movies/`) has both scroller faults; the user watched it and found
+     picture and sound right and on the beat. NOT YET RE-EXPORTED: the user said to wait for their word.
    - The user looks at the exported video before the merge.
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default

@@ -6,14 +6,14 @@
 
 The very end of the demo: after the credits, a long text creeps up the screen: "Second Reality /
 Copyright (C) 1993 by the Future Crew / This demo won the Assembly'93 ...", the sponsors, how to contact the
-group, greetings to other groups. It runs until a key is pressed, starting again from the top when it
-reaches the end.
+group, greetings to other groups. When the text is through, the demo is over: the program quits.
 
 - **Original:** `ENDSCRL/MAIN.C` (about 125 lines), built as `ENDSCRL.EXE`.
 - **This version:** `Sources/SRMetal/Scenes/EndScroller/` (added 2026-11-24). In the sidebar too.
 - **Data:** the released text and font, in `Data/EndScroller/` (see "The released text" below).
-- **Length:** the text is 542 lines; its loop mark is on line 538, 11,278 rows down; at 35 rows a second that takes
-  about 5 minutes 20 seconds, then it starts again.
+- **Length:** the text is 542 lines; its end mark (a line starting `%`) is line 538, 11,500 rows down; at 35
+  rows a second that takes 5 minutes 28.6 seconds (23,002 steps). In Play Demo the demo ends there, at
+  16:21.0, and the app goes over to the scene list. On its own the scene then starts the text again.
 
 ## How the original did it
 
@@ -54,7 +54,8 @@ every 2 steps, the same centring, glyph search, 2-pixel gaps and 16-pixel space,
 
 **1993 look:** the model's 640x400 screen in the original's four greys, through `IndexedCanvas`. The
 self-test checks: a row every 2 refreshes; the first line's ink starts exactly where the original's
-centring puts it; a `[15` line takes 15 rows; the text loops at its `%` line; the font has Y, Z and ä;
+centring puts it; a `[15` line takes 15 rows and a `[8` line 45; the demo ends on the first row of the `%`
+line (alone, the text starts again after it); the font has Y, Z and ä;
 and the graphics chip shows the model's screen exactly at 12 moments.
 
 **Modern look:** the same lines at the same places, but drawn in **SuperClarendon**, a Clarendon-style
@@ -71,11 +72,30 @@ picture of its own, and moved as it scrolls.
 | Screen | 640x400, 4 greys | the same | full resolution |
 | Font | released 25-row font | the same | SuperClarendon (macOS) |
 | Scroll | 1 row every 2 refreshes | the same | smooth, same speed |
-| End | until a key | Play Demo: until stopped; alone: loops | the same |
+| End | the program quits at the `%` line | Play Demo: ends there; alone: starts again | the same |
 | Characters the font has no glyph for | nothing shows | the same | the quotation marks around a nickname show (kept on purpose); the "%" loop line and tabs show nothing |
 
 Until 2026-11-25 the Modern look drew the "%" line (the marker that starts the text again) as a real
 percent sign just above "Second Reality" on every loop; found in the code review and fixed, with a check.
+
+## The two marks, as the released program reads them (2026-11-26)
+
+Two kinds of line in the text are marks, not text. The source release's `MAIN.C` is an earlier version
+without them, so they were read from the released program itself (`MAIN/DATA/ENDSCRL.EXE`, unpacked with
+`deark -m pklite` and then `deark -m lzexe`, and disassembled):
+
+- **A line starting `[`** draws nothing and takes (2nd character − 48) × 10 + (3rd character − 48) rows
+  (code at 164Fh-1681h). The program does not test that the characters are digits. `[10`, `[12` and `[15`
+  are 10, 12 and 15 rows. The six `[8` lines (between the USA's BBS operators) have the line's carriage
+  return (13) as their third character: 80 − 35 = **45 rows**, not 8. It looks like a slip in the text,
+  but it is what the demo did.
+- **On the first row of the line starting `%`** the program calls `exit(0)` (169Ah). The demo ends
+  there; it does not start again from the top.
+
+Until 2026-11-26 this version had both wrong: it wanted two digits, so `[8` was drawn as text (the user
+noticed it in the app), and it started the text again at `%`, as the C++ port does. Fixing the gaps
+moved everything after them 3.4 seconds later. The music runs out at 15:57.7; the last line of text
+("Second Reality") leaves the top of the screen at 16:12.2; the demo ends at 16:21.0 on a black screen.
 
 ## Limits
 

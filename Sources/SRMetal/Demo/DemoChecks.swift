@@ -111,7 +111,8 @@ extension CoreChecks {
                 && SwitchOffModel.frame(at: 4).whiteFade == 31 && SwitchOffModel.frame(at: 13).whiteFade == 59,
               "refresh 3 band \(bandHeight(3)), 4: \(bandHeight(4)), 13: \(bandHeight(13))")
         // The end scroller (released text and font): a row every 2 refreshes, lines centred by the original's
-        // rule, "[nn" = nn blank rows, "%" = back to the first line; the font has Y, Z and ä.
+        // rule; a "[" line = blank rows; the "%" line = the end (alone, the text then starts again); the
+        // font has Y, Z and ä.
         if var scroller = try? EndScrollerModel.load() {
             let font = scroller.font
             let glyphs = [UInt8]("YZa".utf8) + [0x84]
@@ -134,31 +135,62 @@ extension CoreChecks {
                 if let last = probe.placed.last, last.line == loopIndex { seenLoop = true }
                 if seenLoop, let last = probe.placed.last, last.line == 0 { looped = true; break }
             }
-            check("End scroller: a row every 2 refreshes, the first line centred as the original did, the font has Y, Z, ä; the text loops at its % line",
+            check("End scroller: a row every 2 refreshes, the first line centred as the original did, the font has Y, Z, ä; alone, the text starts again after its % line",
                   rows == 30 && glyphs.allSatisfy { font.width[Int($0)] > 0 } && gapIndex != nil && loopIndex != nil && looped
                     && firstInk.map { $0 >= font.lineStart(firstLine) } == true,
                   "rows \(rows), first ink \(firstInk ?? -1) from \(font.lineStart(firstLine)), loop line \(loopIndex ?? -1), looped \(looped)")
             let blank = scroller.lines.first { $0 == [13] }
             let loopText = loopIndex.map { EndScrollerScene.modernText(scroller.lines[$0]) }
-            check("End scroller: the Modern look draws no \"%\" for the loop line and nothing for blank lines, and keeps the text of the others",
+            let marks = scroller.lines.filter { $0.first == UInt8(ascii: "[") }
+            check("End scroller: the Modern look draws nothing for the \"%\" line, the \"[\" lines (\"[8\" too) and blank lines, and keeps the text of the others",
                   loopText == "" && blank.map(EndScrollerScene.modernText) == ""
+                    && marks.count > 50 && marks.allSatisfy { EndScrollerScene.modernText($0) == "" }
+                    && EndScrollerScene.modernText([UInt8]("[8\r".utf8)) == ""
                     && EndScrollerScene.modernText([UInt8]("A\tb\r".utf8)) == "Ab"
                     && scroller.lines.allSatisfy { !EndScrollerScene.modernText($0).contains("%") },
                   "loop line: \"\(loopText ?? "none")\"")
-            if let gapIndex {
-                // Run to where the line before the gap starts; it takes 25 rows, then the gap, then the next
-                // line. (Both waits are bounded, so a text they do not fit fails the check instead of hanging.)
+            // A "[" line: no text, and (2nd character - 48) x 10 + (3rd - 48) rows, as the released program
+            // sums them without testing for digits: "[15" is 15 rows and "[8" (then a carriage return) 45.
+            // Run to where the line before the mark starts; it takes 25 rows, then the gap, then the next
+            // line. (Both waits are bounded, so a text they do not fit fails the check instead of hanging.)
+            func rowsTaken(by mark: String) -> (rows: Int, nextIsText: Bool)? {
+                guard let index = fresh.lines.firstIndex(where: { $0 == [UInt8]((mark + "\r").utf8) }) else { return nil }
                 var gap = fresh, waited = 0
                 let limit = 80_000
-                while gap.placed.last?.line != gapIndex - 1 && waited < limit { gap.tick(); waited += 1 }
+                while gap.placed.last?.line != index - 1 && waited < limit { gap.tick(); waited += 1 }
                 let before = gap.placed.last?.firstRow ?? -1
                 while gap.placed.last?.firstRow == before && waited < limit { gap.tick(); waited += 1 }
-                let next = gap.placed.last ?? (line: -1, firstRow: -1)
-                let digits = gap.lines[gapIndex].dropFirst().prefix(2)
-                let height = Int(String(bytes: digits, encoding: .ascii) ?? "") ?? -1
-                check("End scroller: a \"[nn\" line is nn blank rows (line \(gapIndex): \(height))",
-                      waited < limit && next.line == gapIndex + 1 && next.firstRow - before == EndScrollerFont.rows + height,
-                      "next line \(next.line) after \(next.firstRow - before) rows")
+                guard waited < limit, let next = gap.placed.last else { return nil }
+                return (next.firstRow - before - EndScrollerFont.rows, next.line == index + 1)
+            }
+            let fifteen = rowsTaken(by: "[15"), eight = rowsTaken(by: "[8")
+            check("End scroller: a \"[\" line is blank rows by the released program's sum: \"[15\" 15, and \"[8\" 45 (not 8, and not text)",
+                  fifteen?.rows == 15 && fifteen?.nextIsText == true && eight?.rows == 45 && eight?.nextIsText == true
+                    && EndScrollerModel.gapHeight([UInt8]("[10\r".utf8)) == 10 && EndScrollerModel.gapHeight([UInt8]("[".utf8)) == 1,
+                  "[15: \(fifteen?.rows ?? -1) rows, [8: \(eight?.rows ?? -1) rows")
+            // The "%" line: the released program quit on its first row. Play Demo ends on that step.
+            var toEnd = fresh
+            for _ in 0..<(EndScrollerModel.demoLength - 1) { toEnd.tick() }
+            let notYet = toEnd.reachedEnd
+            let rowsBefore = toEnd.rowsDrawn
+            toEnd.tick()
+            let ending = "End scroller: the demo ends on the first row of the \"%\" line, as the released program quit (16:21.1), with a black screen"
+            if let device = MTLCreateSystemDefaultDevice(),
+               let run = try? DemoRunScene(device: device, pixelFormat: Renderer.pixelFormat, music: SilentMusic(),
+                                           from: .scene("end-scroller")) {
+                var told = 0
+                run.onEnd = { told += 1 }
+                for _ in 0..<(EndScrollerModel.demoLength - 1) { run.tick() }
+                let showing = run.sceneShowing is EndScrollerScene, early = run.ended
+                run.tick()
+                let endedNow = run.ended && run.sceneShowing == nil
+                run.tick()
+                check(ending, !notYet && toEnd.reachedEnd && toEnd.rowsDrawn == rowsBefore + 1
+                        && toEnd.placed.last.map { EndScrollerModel.isLoopLine(toEnd.lines[$0.line]) } == true
+                        && EndScrollerModel.demoLength == 23_002 && showing && !early && endedNow && told == 1,
+                      "\(EndScrollerModel.demoLength) steps; before: showing \(showing), ended \(early); then ended \(endedNow); told \(told) times")
+            } else {
+                check(ending, false, "Play Demo could not be started at the end scroller")
             }
         } else {
             check("End scroller: its text and font are there", false, "")
@@ -188,7 +220,7 @@ extension CoreChecks {
         var shows: [(visual: DemoVisual, step: Int)] = []
         var cue = -1
         sequencer.onShow = { [unowned sequencer] visual in shows.append((visual, sequencer.time)) }
-        while !sequencer.finished && sequencer.time < 70 * 60 * 15 {
+        while !sequencer.finished && sequencer.time < 70 * 60 * 20 {
             if cue < 0, shows.last?.visual == .scene("interference"), sequencer.musicState.ticks >= 925 { cue = sequencer.time }
             sequencer.tick()
         }
@@ -220,7 +252,7 @@ extension CoreChecks {
             let music = SilentMusic()
             let sequencer = DemoSequencer(continuing: ahead.sequencer, music: music)
             if let song = ahead.song { music.play(song, fromOrder: ahead.order, skipping: ahead.seconds) }
-            while !sequencer.finished && sequencer.time < 70 * 60 * 15 { sequencer.tick() }
+            while !sequencer.finished && sequencer.time < 70 * 60 * 20 { sequencer.tick() }
             let differences = DemoTimelineCommand.differences(sequencer.partStarts)
             if !differences.isEmpty || music.problem != nil {
                 wrong.append("\(start): \(music.problem ?? differences.prefix(2).joined(separator: "; "))")
