@@ -87,8 +87,8 @@ part('BEGLOGO title', lambda: frames(161))                          # BEG/BEG.C
 # ---- Song 2 (MUSIC1) from order 0 ----
 M = Music(load('s2from0.txt'), O2, 48700)
 def glenz():  # GLENZ/MAIN.C 290-411 + ZOOMER.C
-    frames(47); until(lambda: M.plus() >= -19); M.mf = 0; frames(177)
-    until(lambda: M.mf >= 333); until(lambda: -16 < M.plus() < 0, 7000)
+    frames(47); until(lambda: M.plus() >= -19); M.mf = 0; M.tk = 0; frames(177)
+    until(lambda: M.tk >= 333); until(lambda: -16 < M.plus() < 0, 7000)
 part('GLENZ', glenz)
 part('TUNNELI dot tunnel', lambda: frames(1060))                    # TUN10.PAS veke=1060
 def techno(): # TECHNO/KOE.C, KOEA/KOEB.ASM

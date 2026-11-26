@@ -11,13 +11,16 @@ import Foundation
 /// - Step pairing (as the jelly logo): what a pass draws before its wait shows on the step it is drawn in,
 ///   so pass f's bars show on the cue step + f; the palette set after wait f, worked out with c = f − 1,
 ///   shows on the same step. The plate's first picture shows on the cue step + 47.
-/// - The pause after the plate is longer than on its own: the glenz waits for music frame 333 (MAIN.C 400),
-///   which with the wipe's 47 and the plate's 177 steps makes 111 steps without a new picture (`demoPause`).
+/// - The pause after the plate is longer than on its own: the glenz waits until the music's frame counter,
+///   set to 0 on the cue step, reaches 333 (MAIN.C 400; the released GLENZ.EXE is this source). The counter
+///   counts MUSIC TICKS (52 a second), so that is about 448 steps after the cue: with the wipe's 47 and
+///   the plate's 177, some 226 steps without a new picture. The scene reads the counter (`pauseOver`).
 struct GlenzLeadIn {
     static let musicCue = -19
     static let wipeSteps = 47
     static let greyLevel = 30, fadeParts = 32
-    static let demoPause = 111
+    /// The music frame counter (ticks) the glenz waits for.
+    static let pauseEnd = 333
     static let barColour: UInt8 = 255
 
     /// The title picture: 320x400 colour numbers and their colours (VGA levels).
@@ -28,6 +31,8 @@ struct GlenzLeadIn {
     private(set) var shown = 0
     private(set) var cue: Int?
     private var music: DemoMusicState?
+    /// The counter had reached `pauseEnd` on the step before this one: the program has left its wait.
+    private(set) var pauseOver = false
 
     init(title: [UInt8], levels: [SIMD3<Int>]) {
         self.title = title
@@ -38,11 +43,14 @@ struct GlenzLeadIn {
     /// its first moment, so a cue already met there counts).
     mutating func update(music: DemoMusicState, justShown: Bool) {
         self.music = music
-        if justShown { shown = 0; cue = music.plus >= Self.musicCue ? 0 : nil }
+        if justShown { shown = 0; cue = music.plus >= Self.musicCue ? 0 : nil; pauseOver = false }
     }
 
     mutating func tick() {
         shown += 1
+        // The script sets the counter to 0 on the cue step, after this step has read it: only later
+        // steps see the part's own count.
+        if let cue, shown > cue + 1, let music, music.ticks >= Self.pauseEnd { pauseOver = true }
         if cue == nil, let music, music.plus >= Self.musicCue { cue = shown }
     }
 

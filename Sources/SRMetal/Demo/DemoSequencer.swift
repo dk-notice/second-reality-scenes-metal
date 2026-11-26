@@ -93,7 +93,7 @@ enum DemoScript {
         // ---- Song 2 (MUSIC1) from section 0 ----
         s += [.part("Glenz vectors"), .playSong(.second, order: 0), .show(.scene("glenz-vectors")),
               .frames(47), until { $0.plus >= -19 }, .resetFrameCounter, .frames(177),
-              until { $0.frame >= 333 }, until(cap: 7000) { -16 < $0.plus && $0.plus < 0 }]
+              until { $0.ticks >= 333 }, until(cap: 7000) { -16 < $0.plus && $0.plus < 0 }]
         s += [.part("Dot tunnel"), .show(.scene("dot-tunnel")), .frames(1060)]
         // TECHNO: rings, interference, the lead-in to the bars on four beats, the bars, the troll. The
         // interference scene shows the lead-in itself (`TechnoLeadIn`, which follows these same waits).

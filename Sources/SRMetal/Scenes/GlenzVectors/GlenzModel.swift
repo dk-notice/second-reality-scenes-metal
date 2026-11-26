@@ -227,9 +227,12 @@ struct GlenzModel {
     /// The plate position last drawn, in rows; nil before anything is drawn.
     private(set) var plateShown: Int?
     private var pause = 0
-    /// The pause's length (`pauseSteps` on its own; `GlenzLeadIn.demoPause` inside Play Demo), and whether
-    /// the scene starts again after `lengthInTicks` (not inside Play Demo).
+    /// The pause's length on its own. Inside Play Demo (`waitsForMusic`) the pause lasts until the scene
+    /// says the music's frame counter has got there (`musicReached`), and the scene does not start again
+    /// after `lengthInTicks`.
     private(set) var pauseLength = GlenzModel.pauseSteps
+    private(set) var waitsForMusic = false
+    var musicReached = false
     private(set) var loops = true
     private(set) var script = GlenzScript()
     /// True once the original's main loop has begun.
@@ -253,9 +256,9 @@ struct GlenzModel {
 
     mutating func reset() { self = GlenzModel() }
 
-    /// Inside Play Demo: the original's pause, set by the music's frame counter, and no second run.
+    /// Inside Play Demo: the original's pause, ended by the music's frame counter, and no second run.
     mutating func configureForDemo() {
-        pauseLength = GlenzLeadIn.demoPause
+        waitsForMusic = true
         loops = false
     }
 
@@ -280,9 +283,9 @@ struct GlenzModel {
                 return .plate(plateY / 16)
             }
         }
-        if pause < pauseLength {
+        if waitsForMusic ? !mainStarted : pause < pauseLength {
             pause += 1
-            if pause == pauseLength {
+            if waitsForMusic ? musicReached : pause == pauseLength {
                 mainStarted = true
                 return .beginMainLoop
             }
