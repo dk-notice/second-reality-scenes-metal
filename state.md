@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (the Glenz and plasma timing change is built; waiting for the user to look before the merge)
+Last updated: 2026-11-25 (the Glenz and plasma timing change is merged; main rebuilt and tested; not yet pushed)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 638 checks, all pass (on the Glenz and plasma branch; main has 637 until the merge). `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 638 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -72,11 +72,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      the versions that made the position tables, so the tables still cannot be made again.
    - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
      check's numbers and checksum change).
-4. THE GLENZ AND PLASMA TIMING: researched and BUILT 2026-11-25 on `claude/glenz-plasma-timing-f60981`
-   (commits 4816498, a97f1c0, f9a6cf4, 970f76c, c6274ed), NOT YET MERGED: the user looks at it in the
-   app first (Play Demo from the title picture for Glenz, from the rotozoomer for the plasma and cube,
-   and the Plasma scene on its own). After the merge: rebuild main's app (`./build.sh` in the main
-   folder), run the full self-test there (638 checks), ask before pushing.
+4. THE GLENZ AND PLASMA TIMING: DONE and merged 2026-11-25 (merge b7617f2; the user saw it in the app:
+   Play Demo from the title picture and from the rotozoomer, and the Plasma scene on its own; main's
+   app rebuilt, 638 checks pass there). NOT YET PUSHED: main is ahead of GitHub; ask first.
    - Read from the released programs: `GLENZ.EXE` is `GLENZ/V.EXE` and matches `MAIN.C`;
      `PLZPART.EXE` ends on its THIRD fall (`curpal==4`, `PLZ.C` says 5) and its fade memory starts as
      zeros. The user's videos agree (three plasmas, grey last, the cube right after; the tunnel almost
@@ -108,8 +106,6 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   old commits. They are NOT in the ordinary history, which is 22 MB.
 - `docs/future-ideas.md` is out of date (its second half calls Play Demo unfinished; its first half is
   the dropped "Reimagined" look). Tidy it or remove it: recommended, not yet agreed.
-- Waiting on the user by eye, BEFORE THE MERGE (the branch's app, in the worktree's `build/`): the Glenz
-  pause and the plasma's three sections inside Play Demo, and the Plasma scene on its own.
 - Waiting on the user by eye (main's `build/SRMetal.app`):
   - 3D City, Modern look against 1993: do the fades (up from black over the first second, to black over
     the last 1.5 s) look right and come at the same moment in both looks (the review suspected Modern a
