@@ -41,7 +41,7 @@ def ffmpeg_command(size, sound, output):
         "-framerate", str(size["rate"]), "-i", "pipe:0",
         "-i", sound,
         # To ProRes's colour form with the HD (BT.709) matrix, and labelled so, which is what YouTube expects.
-        "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=p210le,"
+        "-vf", "scale=in_range=pc:out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=p210le,"
                "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=tv",
         "-c:v", "prores_videotoolbox", "-profile:v", "standard",
         "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv",
