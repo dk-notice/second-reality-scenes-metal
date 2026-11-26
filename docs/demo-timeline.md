@@ -24,8 +24,8 @@ has for the part: a scene of its own, or only the original artwork so far.
 | — | (the loader waits for the next "+++" in the music) | 2 | 3:47.4 | 3:51.1 | 3.7 s | — |
 | 9 | Mountain scroller (`MNTSCRL`) | 2 | 3:51.1 | 4:20.2 | 29.1 s | **Scene** (2026-11-25) |
 | 10 | Lens, then rotozoomer (`LNS&ZOOM`) | 2 | 4:20.2 | 5:05.6 | 45.4 s | **2 scenes** (lens, rotozoomer: 2026-11-24) |
-| 11 | Plasma (`PLZPART`, first half) | 2 | 5:05.6 | 5:39.9 | 34.3 s | **Scene** |
-| 11 | Plasma cube (`PLZPART`, second half) | 2 | 5:39.9 | 6:12.9 | 33.0 s | **Scene** |
+| 11 | Plasma (`PLZPART`, first half) | 2 | 5:05.6 | 5:43.7 | 38.0 s | **Scene** |
+| 11 | Plasma cube (`PLZPART`, second half), incl. 0.7 s of empty screen | 2 | 5:43.7 | 6:12.9 | 29.2 s | **Scene** |
 | 12 | Bouncing dots (`MINVBALL`) | 2 | 6:12.9 | 6:49.8 | 36.9 s | **Scene** |
 | 13 | Water scroller (`RAYSCRL`) | 2 | 6:49.8 | 7:19.2 | 29.5 s | **Scene** (2026-11-25) |
 | 14 | 3D sine landscape (`3DSINFLD`) | 2 | 7:19.2 | 7:48.3 | 29.1 s | **Scene** |
@@ -68,9 +68,9 @@ Built 2026-11-24. **Scene ▸ Play Demo** (or P) runs the table above in the app
   | Water scroller | Its own scene (2026-11-25): black until its first music cue, the fade-in, the still picture until the music's next section, the sword until the fade-out cue |
   | 3D sine landscape | Its own scene: black until its music cue, the rise, the sinking on the music's "plus" above -30, cut at -7 (2026-11-25) |
   | Plasma cube | Its own scene: an empty screen until its music cue, then the original's frames from the first, black at the cut (2026-11-25) |
-  | Plasma | Its own scene: white until its music cue, the first palette fading down from white, the falls on the music's frame counter, empty after the fourth (2026-11-25) |
+  | Plasma | Its own scene: white until its music cue, the first palette fading down from white, the three falls on the music's tick counter, empty after the third (2026-11-25) |
   | 3D city | Its own scene: the jelly logo's last picture fading to white, the white window, the wait for section 19, the flight, the shifted whitening into the end picture (2026-11-25) |
-  | Glenz | Its own scene: the title picture held until its music cue, the wipe to grey behind black bars, the plate, the pause to music frame 333, the glenz, black until the tunnel (2026-11-25) |
+  | Glenz | Its own scene: the title picture held until its music cue, the wipe to grey behind black bars, the plate, the pause until the music's tick counter reaches 333, the glenz, black until the tunnel (2026-11-25) |
   | Tunnel, dots | The project's scene, started at the part's start and cut at its end; they fit exactly |
   | Techno | Black, rings, interference (its flash to white, then the original's lead-in: four columns wiped to black on four beats, shown by the interference scene), techno bars (all three sections: the third cut by the music, see the scene's page), then the Troll scene, each at the original's moment |
   | Loader's wait after the switch-off | Black |
@@ -147,20 +147,20 @@ The music player (STMIK) is not in the source release, so two details had to be 
    songs' tempos 120 and 130 (2 x tempo / 5 ticks a second). The script counts it the same way
    (`DemoSequencer.tickCounter`, and `Music.tk` in the simulation).
 
-   So far only the techno part reads it as ticks (the interference ends at 925, the bars at 2520). No
-   part start moves: both of its waits are followed by waits for song positions. Glenz and the plasma
-   still read it as refreshes: in ticks the Glenz pause would be about 1.6 s longer, and the plasma as
-   its source stands would then run past the plasma cube's cue, as described above, so the released
-   plasma may differ from its source.
+   The techno part was the first to read it as ticks here (the interference ends at 925, the bars at
+   2520); no part start moved, as both of its waits are followed by waits for song positions. Glenz and
+   the plasma followed the same day, once their released programs had been read (next paragraph): as
+   refreshes the Glenz pause was 1.6 s too short, and the plasma as its SOURCE stands would run past
+   the plasma cube's cue in ticks, as described above.
 
-   **Found in the released programs** (2026-11-25; research only, the app still reads refreshes in
-   these two parts until the user decides). Both programs were unpacked and read at the places that
-   call the counter.
+   **Found in the released programs** (2026-11-25; built the same day, and the user's videos of the
+   original agree: three plasmas, the grey one last, the cube right after; the tunnel almost at once
+   after the glenz fades). Both programs were unpacked and read at the places that call the counter.
    - *Glenz* (`GLENZ.EXE`, byte for byte the `V.EXE` in the source folder): the same as `MAIN.C`: the
      cue at "music plus" -19, the counter set to 0, waits for 300 and 333, the end between -16 and 0.
      Worked out with the simulation: 333 ticks are 448 refreshes, so the glenz appears 6.4 s after the
      cue, not 4.8 s, and the plate rests for 226 refreshes, not 111. The end is a song position, so
-     the tunnel does not move: 2,152 glenz frames show instead of 2,267, and the glenz's own fade to
+     the tunnel does not move: 2,150 glenz frames show instead of 2,265, and the glenz's own fade to
      black (done by frame 2,133) ends a quarter of a second before the tunnel instead of 1.9 s.
    - *Plasma* (`PLZPART.EXE`): **the released program is not `PLZ.C` as it stands.** Its loop ends when
      `curpal` is 4 (the source says 5), so the third fall ends the part and the fourth palette is never
@@ -175,6 +175,8 @@ The music player (STMIK) is not in the source release, so two details had to be 
      goes from 23,792 to 24,056 (5:39.9 to 5:43.7).
    - This also removes the reason given above for thinking the counter counted refreshes: with the
      released ending the later parts find their cues with ticks too.
+   - The released plasma's fade memory starts as zeros, so its first palette ends one level brighter
+     (see `docs/scenes/plasma.md`, "The released program").
 2. **Is the player's section number the section playing, or the next one?** Most likely the one
    playing: against the same recording the landscape comes out at 439-468 s this way, and
    431-460 s the other way.
@@ -210,14 +212,14 @@ The music player (STMIK) is not in the source release, so two details had to be 
 | U2A | section > 10 and row > 46 (`VISU/C/U2A.C` 229-240) | section > 11 and row > 54, or the animation's 521 frames (268-276) |
 | PAM | sync ≥ 10 (`PAM/OUTTAA.C` 39) | 45 steps of 4 refreshes |
 | BEG | — | 32 + 129 refreshes (`BEG/BEG.C` 24, 80-85) |
-| GLENZ | 47-refresh lead-in, music plus ≥ -19 (`GLENZ/MAIN.C` 290) | after its intro, -16 < music plus < 0 (409-411) |
+| GLENZ | 47-refresh lead-in, music plus ≥ -19 (`GLENZ/MAIN.C` 290); the glenz itself at 333 music ticks (400) | after its intro, -16 < music plus < 0 (409-411) |
 | TUNNELI | — | 1,060 refreshes (`TUNNELI/TUN10.PAS` 3, 221) |
 | TECHNO | music plus ≥ -4 (`TECHNO/KOE.C` 213) | troll waits section > 35 or 35 row > 48 (638-648), then ≤ 420 refreshes or -6 < music plus < 16 (704-709) |
 | PANICEND | — | 121 refreshes + `sleep(1)` (`PANIC/SHUTDOWN.C`) |
 | loader | music plus < 0, then > 0 (`MAIN/U2.ASM` 828-850) | |
 | MNTSCRL | 64-refresh fade, music plus ≥ 0 (`FOREST/READ2.PAS` 153-159), 127 refreshes | music plus = -11, then 65 refreshes (196-207) |
 | LNS&ZOOM | music plus ≥ -6 (`LENS/MAIN.C` 104) | 300 + wait music plus ≥ -20 + 720 + rotozoomer until music plus > -4 (211-213) |
-| PLZ | music plus ≥ 0 (`PLZPART/PLZ.C` 68) | music frame > 2259, then ~64 refreshes (79-91) |
+| PLZ | music plus ≥ 0 (`PLZPART/PLZ.C` 68) | music ticks > 1875, the third fall, then 65 refreshes (79-91; the RELEASED program: `PLZ.C` says the fourth, 2259) |
 | VECT | music plus ≥ 13 (`PLZPART/VECT.C` 116) | -4 ≤ music plus < 0 (119-120) |
 | DOTS | 130-refresh fade (`DOTS/MAIN.C` 171-180) | 2,450 refreshes or -3 ≤ music plus ≤ -1 (185-194) |
 | WATER | music plus ≥ 0 (20 refreshes of black), a 127-refresh fade-in, then a new section at row ≥ 16 (519 refreshes of the still picture; `WATER/DEMO.PAS` 97-145) | music plus = -11, then 65 refreshes (159-189) |
