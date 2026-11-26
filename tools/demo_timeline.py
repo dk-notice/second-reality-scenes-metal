@@ -2,24 +2,23 @@
 
 Each part's start and end conditions were read from the original source (see docs/demo-timeline.md,
 which also gives the results). The music is libopenmpt's, stepped 1/70 s at a time by
-tools/music_steps.c. Two details of the original player are not in the source, so they are options:
+tools/music_steps.c. One detail of the original player is not in the source, so it is an option:
   OFF    0: the player's order number is the order playing; 1: one ahead (as Scream Tracker's own player)
-  FRAMES "frames": the player's frame counter (dis_getmframe) counts screen refreshes; "ticks": music ticks
-Only OFF=0 with "frames" lets every part find its music cue, and it agrees with a recording (see the doc).
-Since 2026-11-25 the counter is known to count music ticks (found in the player's library, MAIN/STMIK.300;
-see the doc). The techno part reads it that way whatever FRAMES says (Music.tk); Glenz and the plasma still
-follow FRAMES, an open question.
+Only OFF=0 lets every part find its music cue, and it agrees with a recording (see the doc).
+The player's frame counter (dis_getmframe) counts music ticks (found in the player's library,
+MAIN/STMIK.300; see the doc): Music.tk. Glenz, the techno part and the plasma read it. The plasma follows
+the RELEASED PLZPART.EXE, which ends on its third fall (PLZ.C as published has a fourth).
 
 Usage (FOLDER holds MUSIC0-unscrambled.s3m, MUSIC1-unscrambled.s3m and the three step files):
   SRMetal --music-info --write FOLDER
   build/music_steps FOLDER/MUSIC0-unscrambled.s3m 120 0  > FOLDER/s1from0.txt
   build/music_steps FOLDER/MUSIC1-unscrambled.s3m 0 0    > FOLDER/s2from0.txt
   build/music_steps FOLDER/MUSIC0-unscrambled.s3m 120 18 > FOLDER/s1from18.txt
-  python3 tools/demo_timeline.py FOLDER 0 frames
+  python3 tools/demo_timeline.py FOLDER 0
 It prints each part's start and end in seconds, then the exact steps the Swift is checked against.
 """
 import sys
-S = sys.argv[1]; OFF = int(sys.argv[2]); TICKS = sys.argv[3] == 'ticks'
+S = sys.argv[1]; OFF = int(sys.argv[2])
 def load(name):
     return [tuple(float(x) if i == 3 else int(x) for i, x in enumerate(l.split())) for l in open(f'{S}/{name}')]
 def orders(fn, n):
@@ -28,7 +27,7 @@ O1 = orders(f'{S}/MUSIC0-unscrambled.s3m', 80); O2 = orders(f'{S}/MUSIC1-unscram
 SYNC = [(0x0000,0),(0x0200,1),(0x0300,2),(0x032f,3),(0x042f,4),(0x052f,5),(0x062f,6),(0x072f,7),(0x082f,8),(0x0900,9),(0x0d00,10),(0x3d00,1),(0x3f00,2),(0x4100,3),(0x4200,4)]
 
 class Music:
-    def __init__(s, steps, ordlist, adjust): s.st, s.ol, s.i, s.mf, s.tk, s.sum, s.adj = steps, ordlist, 0, 0.0, 0, 0, adjust
+    def __init__(s, steps, ordlist, adjust): s.st, s.ol, s.i, s.tk, s.sum, s.adj = steps, ordlist, 0, 0, 0, adjust
     def cur(s):
         if s.i >= len(s.st): sys.exit(f'demo_timeline: the music steps ran out at step {s.i} (a truncated or wrong step file?)')
         return s.st[s.i]
@@ -48,7 +47,7 @@ class Music:
             if pos <= p: return SYNC[k - 1][1] if k else 0
         return SYNC[-1][1]
     def tick(s):  # one screen refresh (1/70 s)
-        t = s.cur()[3]; s.mf += (t * 0.4 / 70) if TICKS else 1; s.i += 1
+        s.cur(); s.i += 1
         # The player's real counter (np_zframe): a music tick whenever the 16-bit sum of its "speed
         # adjust" overflows, once a refresh (MAIN/STMIK.300 at 5165h and 4353h; MAIN/U2.ASM 769-774).
         s.sum += s.adj
@@ -87,12 +86,12 @@ part('BEGLOGO title', lambda: frames(161))                          # BEG/BEG.C
 # ---- Song 2 (MUSIC1) from order 0 ----
 M = Music(load('s2from0.txt'), O2, 48700)
 def glenz():  # GLENZ/MAIN.C 290-411 + ZOOMER.C
-    frames(47); until(lambda: M.plus() >= -19); M.mf = 0; frames(177)
-    until(lambda: M.mf >= 333); until(lambda: -16 < M.plus() < 0, 7000)
+    frames(47); until(lambda: M.plus() >= -19); M.tk = 0; frames(177)
+    until(lambda: M.tk >= 333); until(lambda: -16 < M.plus() < 0, 7000)
 part('GLENZ', glenz)
 part('TUNNELI dot tunnel', lambda: frames(1060))                    # TUN10.PAS veke=1060
 def techno(): # TECHNO/KOE.C, KOEA/KOEB.ASM
-    until(lambda: M.plus() >= -4); M.mf = 0; M.tk = 0; frames(256)
+    until(lambda: M.plus() >= -4); M.tk = 0; frames(256)
     until(lambda: M.tk >= 925); frames(5); until(lambda: M.plus() >= -3); until(lambda: M.row() & 7 == 7)
     for _ in range(4): frames(21); until(lambda: M.row() & 7 == 7); frames(4)
     frames(420); frames(840); s = T.t; until(lambda: T.t - s >= 700 or M.tk > 2520)
@@ -105,10 +104,11 @@ part('(loader waits)', wait)
 def mnt(): frames(64); until(lambda: M.plus() >= 0); frames(127); until(lambda: M.plus() == -11); frames(65)
 part('MNTSCRL mountain scroller', mnt)
 def lens():
-    until(lambda: M.plus() >= -6); M.mf = 0; frames(300); until(lambda: M.plus() >= -20); frames(720)
+    until(lambda: M.plus() >= -6); M.tk = 0; frames(300); until(lambda: M.plus() >= -20); frames(720)
     s = T.t; until(lambda: M.plus() > -4 or T.t - s >= 2000)
 part('LNS&ZOOM lens + rotozoomer', lens)
-def plz(): until(lambda: M.plus() >= 0); M.mf = 0; until(lambda: M.mf > 2259); frames(65)
+def plz():    # PLZ.C 68-91 as RELEASED: the loop ends when curpal is 4 (the third fall), not 5 as PLZ.C says
+    until(lambda: M.plus() >= 0); M.tk = 0; until(lambda: M.tk > 1875); frames(65)
 part('PLZ plasma', plz)
 def vect(): until(lambda: M.plus() >= 13); until(lambda: -4 <= M.plus() < 0)
 part('VECT plasma cube', vect)

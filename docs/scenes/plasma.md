@@ -4,15 +4,17 @@
 |---|---|
 | ![](../images/plasma-modern.png) | ![](../images/plasma-classic.png) |
 
-Soft, flowing clouds of colour in a wide band across the middle of the screen. Four times the band falls
-off the bottom of the screen like a dropped object, and comes back at once in new colours fading up from
-black: red and blue, then a blue-green rainbow, then grey smoke, then pastel blue and pink.
+Soft, flowing clouds of colour in a wide band across the middle of the screen. Three times the band falls
+off the bottom of the screen like a dropped object. After the first two falls it comes back at once in
+new colours fading up from black: red and blue, then a blue-green rainbow, then grey smoke. The third
+fall was the part's end (here, on its own, it leads back to the red and blue).
 
 - **Original:** `PLZPART/PLZ.C` (main loop, tables, palettes), `ASMYT.ASM` (the per-line drawing routine),
   `COPPER.ASM` (everything timed to the screen refresh) and `TWEAK.ASM` (the screen mode), by Wildfire.
   The plasma-covered cube that followed it in the demo is a separate, later scene.
 - **This version:** `Sources/SRMetal/Scenes/Plasma/`.
-- **Length:** 2323 steps, about 33 seconds, then it repeats.
+- **Length:** 2,588 steps, about 37 seconds, then it repeats. The sections last as long as in the demo:
+  the falls come at steps 976, 2,009 and 2,526 (see "The released program" below).
 
 ## How the original did it
 
@@ -128,7 +130,7 @@ It is the same plasma: the same waves, the same motion, the same colours.
 - **The chessboard layout and which shift goes with which line**, from the original source (code review).
 - **The graphics chip matches the processor** pixel for pixel at 14 moments, including mid-fade, mid-fall
   and each palette (self-test).
-- **The scene repeats exactly** after 2323 steps and is black at the point where it repeats (self-test).
+- **The scene repeats exactly** after 2,588 steps and is black at the point where it repeats (self-test).
 - **The modern look glides without a jump** through the whole loop: the end of every step's glide is where
   the next step starts, for the band's position, the eight plasma numbers and the palette (self-test, and
   the `--motion-check` option over steps 0 to 2400: no jumps, no one-picture-only pixels).
@@ -158,8 +160,8 @@ page said that code was missing from the source release. It is there; only the s
 2. **A small hop at the start of each fall (modern look).** On the step the fall starts, the original's
    fall counter goes from 0 straight to 2. The modern look glided from 2 onwards but sat still during the
    step before, so the band stayed put and then hopped 0.34 of a line (about one screen pixel in a large
-   window) at steps 725, 1493, 1877 and 2261. It now glides into the fall. The new self-test check
-   described above caught exactly those four steps before the fix.
+   window) at the step of each fall (then 725, 1493, 1877 and 2261). It now glides into the fall. The new
+   self-test check described above caught exactly those four steps before the fix.
 
 **Confirmed correct**
 
@@ -175,8 +177,8 @@ page said that code was missing from the source release. It is there; only the s
   here. The C++ port copies its two buffers to the screen in the same arrangement.
 - The parameter speeds and wrap-around, the fall table, the order of work in each refresh (palette, then
   move, then fall or fade), the 31 fade steps and their 16-bit arithmetic including the half that is
-  not cleared between sections, the four palettes, the section order and starting numbers, and the end of
-  the scene on the fourth fall.
+  not cleared between sections, the palettes, the section order and starting numbers (the review read
+  four sections, as `PLZ.C` has; since 2026-11-25 the scene has the released program's three).
 - **Motion in the modern look**: nothing is glided across a jump. The plasma numbers are reset and the
   palette swapped only while the band is hidden (fall counter 64 and 65), and the loop point is black in
   both looks.
@@ -220,38 +222,58 @@ None of this has been compared with the original program running.
   points the other way: with music ticks the later parts overrun song 2, and a recording places the
   sine landscape where the 1/70-second reading predicts it (within 2 s), not 30 s later. So 1/70
   second, as built here, is most likely right. Still to confirm: that the recording starts with the music.
+  **Settled 2026-11-25: it is music ticks**, 52 a second, and the review's reading of the "-45" was right:
+  each fall starts on row 56 of a pattern and the new colours arrive on the bar. The later parts do not
+  overrun, because the released program has one section fewer than `PLZ.C`. See "The released program".
 - **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (now twice).
 - The pictures in `docs/images/` were remade after the review was merged, so they show the corrected 1993 look.
 
+## The released program (found 2026-11-25)
+
+The released `PLZPART.EXE` (in `MAIN/DATA`; packed twice: `deark -m pklite`, then `deark -m lzexe`) was
+read against `PLZ.C`. Three things were found; the user's videos of the original agree with the first
+(three plasmas, the grey one last, the cube right after).
+
+- **It ends on the third fall.** The loop leaves when `curpal` is 4 (`cmp word [curpal],4` at 1181Ch of
+  the unpacked image); `PLZ.C` as published says 5, and so does the `PLZ.OBJ` in the source folder, which
+  is a different build. The timetable (723, 1491, 1875, 2259, 2778) and the palette code are the
+  source's. So the fourth section and its palette ("RB-white": red through white to blue) were never
+  shown. This version had them until 2026-11-25.
+- **The counter counts music ticks** (52 a second; see [demo-timeline.md](../demo-timeline.md), "Later
+  found: it counts music ticks"). The timetable is "64 rows x 6 ticks x 2, 4 and 5 patterns, less 45":
+  song 2 has exactly five patterns between the plasma's "+++" mark and the next, and the three falls
+  start on row 56 of the second, fourth and fifth. The band is gone on the first row after the "+++".
+- **The fade's memory starts as zeros.** `fadepal` is declared without a starting value (`db 768*2
+  dup(?)`), and in the released image it is 1,536 zero bytes. The first fade adds (target - 63) x 2 / 256
+  a refresh for 127 refreshes: from zero that goes below zero at once, the card keeps only the low six
+  bits of a level (so the screen is white again on the first step), and it ends ONE LEVEL ABOVE the
+  palette: 0 shows as 1, 62 as 63 (none of the first palette's levels is 63). Too small to see.
+
 ## Inside Play Demo
 
-Since 2026-11-25 the scene follows the part there (`PLZ.C` 68-95, `COPPER.ASM` `do_drop`):
+Since 2026-11-25 the scene follows the released part there (`PLZ.C` 68-95, `COPPER.ASM` `do_drop`):
 
 - **White for 74 steps.** The part waited for "music plus" >= 0 with the screen as the rotozoomer left
   it: every colour set to white. The step that meets the cue is still white (`init_plz` sets its new
-  screen mode's 256 colours white as well), and the music's frame counter starts there: the n-th step
-  after the cue is the part's n-th refresh.
+  screen mode's 256 colours white as well), and the music's frame counter is set to 0 there: the n-th
+  step after the cue is the part's n-th refresh.
 - **The first palette fades DOWN from white** over 127 refreshes (`cop_drop` starts at 128 and the fade
-  runs while it is 129 to 255; each level moves by (target - 63) x 2 / 256 a refresh, and the card is
-  given the result a refresh later). Colour 0 fades with the rest, so the borders above and below the
-  band go from white to black too. The band is in place from the start; it does not drop in.
-- **The falls follow the frame counter:** the band starts to fall a refresh after the counter passes
-  723, 1491, 1875 and 2259 (`timetable`), each time with the next palette fading up from black as on its
-  own. The fourth fall is the end: the band is gone 64 refreshes later and the screen stays empty for
-  the one step left before the plasma cube's part begins. No second run.
+  runs while it is 129 to 255; the card is given the result a refresh later), to one level above the
+  palette, as above. Colour 0 fades with the rest, so the borders above and below the band go from
+  white to (almost) black too. The band is in place from the start; it does not drop in.
+- **The falls follow the music's tick counter:** the band starts to fall a refresh after the counter
+  passes 723, 1491 and 1875 (`PlasmaModel.timetable`): 975, 2,008 and 2,525 steps after the cue in a
+  full run. After the first two the next palette fades up from black as on its own. The third fall is
+  the end: the band is gone 64 refreshes later and the screen stays empty for the one step left before
+  the plasma cube's part begins (and for 48 more there, until the cube's cue). No second run.
 
-The self-test runs Play Demo silently from this scene and compares the white steps, the four falls, the
-end and the cube's start with the script's own numbers (0, 2259, 65) and `timetable`'s, and the first
-fade with the palette it must end on; proven to fail with the cue moved by one and with the fade's
-length changed.
+The self-test runs Play Demo silently from this scene and compares the white steps, the three falls, the
+end and the cube's start with the script's own numbers (0, 1875, 65) and the timetable's, and the first
+fade with the levels it must end on. Proven to fail with the cue moved by one, the fade's length changed,
+the third fall not the end, a fall a tick or a step early, the script waiting for 2259, the fade memory
+started at white, and the card keeping all eight bits.
 
-Not settled from the source: `fadepal`, the memory the fade works in, is declared without a starting
-value (`db 768*2 dup(?)`). The increments only make sense if it starts at 63 (white), which is what this
-version does, and then the fade ends on the exact palette. If the released program's memory held zeros
-there instead, its first palette would have ended one level brighter, with full-strength levels black.
-That would need the released `PLZPART.EXE` unpacked, or the original running, to tell.
-
-On its own the scene is unchanged (the first palette fades up from black, 2,323 steps, then it loops).
+On its own the first palette fades up from black (a deliberate difference, below) to the exact palette.
 
 ## Differences from the original, on purpose
 
@@ -261,9 +283,9 @@ On its own the scene is unchanged (the first palette fades up from black, 2,323 
   the two, which is what the viewer saw. Both frames use the same moment's numbers.
 - **No white fade at the start**, on its own. The original began with the whole screen white (left by the previous
   scene) and faded down to the first palette over 127 frames. Here the first palette fades up from black in
-  31 steps, exactly like the other three. The increments for it are chosen so it ends on the original's
+  31 steps, exactly like the other two. The increments for it are chosen so it ends on the original's
   exact first palette.
-- **It loops**, on its own. In the original the fourth fall was the end: the plasma cube followed. Here that fall leads
+- **It loops**, on its own. In the original the third fall was the end: the plasma cube followed. Here that fall leads
   back to the first section. The loop point is a black screen, so nothing jumps.
 - **Drawing is instant.** The original program drew as fast as the PC could, not once per refresh, while
   the four numbers moved on every refresh regardless. On a slow PC the picture was therefore built from

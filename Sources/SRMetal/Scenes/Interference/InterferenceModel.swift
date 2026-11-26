@@ -101,7 +101,7 @@ struct InterferenceModel {
 
     mutating func tick() {
         if leadIn != nil {
-            leadIn?.step(music: demoMusic ?? DemoMusicState(order: 0, row: 0, plus: -32, sync: 0, frame: 0, ticks: 0, noted: 0))
+            leadIn?.step(music: demoMusic ?? DemoMusicState(order: 0, row: 0, plus: -32, sync: 0, ticks: 0, noted: 0))
             return
         }
         ticks += 1

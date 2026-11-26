@@ -147,6 +147,9 @@ final class GlenzScene: DemoScene {
     func reset() { model.reset() }
     func tick() {
         if leadIn != nil {
+            // The step after the counter got there the program moves on, and the glenz's first frame is
+            // the step after that: so the model is told what was true before this step.
+            model.musicReached = leadIn!.pauseOver
             leadIn!.tick()
             if leadIn!.finished { model.tick() }   // the plate's first picture comes with pass 47
             return

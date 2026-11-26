@@ -308,18 +308,26 @@ after the one the scene is shown on; what a pass draws before its wait shows on 
 | until the cue | The title picture as the title part left it (fully in), until "music plus" reaches -19 (457 steps in a full run). The music's frame counter starts on that step |
 | cue ... cue + 46 | `zoomer2`, 47 passes: black bars (colour 255, black in the title part's palette) grow from the top of the 400-line screen to row 260 and from the bottom up to row 274, 125/260 as fast, while the whole picture (colours 0-127) fades to grey level 30 over 32 steps: (level × (32 − c) + 30 × c) >> 5, c showing one step late. A grey strip of rows 261-273 is left |
 | cue + 47 ... cue + 223 | The screen cleared and the plate's 177 pictures, as on its own |
-| ... cue + 334 | The plate at rest: the glenz waits for music frame 333 (MAIN.C 400). With the wipe's 47 steps counted, the pause is 111 steps, not the 156 once estimated (that estimate started the counter after the wipe) |
-| cue + 335 ... | Glenz frame 1 onwards, as on its own; black from frame 2133; no second run. The tunnel follows on the script's end cue (frame 2265 is the last shown) |
+| ... cue + 449 | The plate at rest: the glenz waits until the music's frame counter, set to 0 on the cue step, reaches 333 (MAIN.C 400). The counter counts music ticks, 52 a second, so that is 448 steps after the cue: the plate rests for 226 steps. The scene reads the counter itself (`GlenzLeadIn.pauseOver`) |
+| cue + 450 ... | Glenz frame 1 onwards, as on its own; black from frame 2133; no second run. The tunnel follows on the script's end cue (frame 2150 is the last shown: the glenz's fade ends a quarter of a second before the tunnel) |
+
+**The released program (2026-11-25):** `GLENZ.EXE` in `MAIN/DATA` unpacks (`deark -m pklite`) to exactly
+the `V.EXE` in the source folder, and its music reads are `MAIN.C`'s: the cue at -19, the counter set to
+0, the waits for 300 and 333, the end between -16 and 0 (`deark -m exepack` then gives a program whose
+addresses match `V.MAP`). Until that day this version read the counter as screen refreshes: the glenz
+came at cue + 335 and 2,265 frames showed. The user's videos of the original agree with the ticks: the
+tunnel comes almost at once after the glenz fades.
 
 **Modern look:** the title picture is the title part's own Modern picture (Super-xBR), faded towards
 the same grey smoothly; the bars glide between steps and have smooth edges. Started "from here" at
 Glenz, the title picture is loaded by the scene itself, so it looks the same.
 
 Checked by the self-test, run from the title picture against the script's own numbers (47, -19, 177,
-333 and the end cue): the hand-over from the title part, the hold, the cue, the bars after the first and
+333 ticks and the end cue): the hand-over from the title part, the hold, the cue, the bars after the first and
 last pass, the grey at step 33, the plate's start and end, the first glenz frame, the tunnel's step
-and the last frame. Proven to fail with the cue moved by one, the pause one step shorter, and the top
-bar two rows longer.
+and the last frame. Proven to fail with the cue moved by one, the counter value changed to 334, the glenz
+told a step early, and the top bar two rows longer. (The script's own wait for 333 has nothing to show
+for itself: it is followed by a wait for a song position, so the check reads the counter directly.)
 
 On its own the scene is unchanged (no lead-in, the 35-step pause, 2,360 steps, then it loops).
 
@@ -328,7 +336,7 @@ On its own the scene is unchanged (no lead-in, the 35-step pause, 2,360 steps, t
 - **On its own the lead-in is left out**: the wait for the music and `zoomer2`, which wipes away the
   previous scene's title picture. The scene starts with the plate dropping into a black screen.
 - **On its own the pause is shorter than the original's**: 35 steps (chosen before the music was worked
-  out) against the original's 111 (see "Inside Play Demo").
+  out) against the original's 226 (see "Inside Play Demo"). Kept on purpose (user, 2026-11-25).
 - **It loops**, on its own. After the fade it restarts at step 2360; the original stayed black until a music cue.
 - **One picture per step.** The original advanced the script once per screen refresh but drew only as
   often as the PC could. On a fast PC that is the same thing. On a slow one, faces would have been

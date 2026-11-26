@@ -15,15 +15,19 @@ import simd
 ///    parameters ("K" and "L") are drawn, interleaved like the squares of a chessboard, and the picture is
 ///    nudged by one line on alternate frames so the squares swap. At 70 frames per second the eye sees
 ///    the two mixed.
-///  - Colours come from a 256-colour palette. Four times in the scene the plasma band falls off the
-///    bottom of the screen, then reappears at once with a new palette fading up from black.
+///  - Colours come from a 256-colour palette. Three times in the scene the plasma band falls off the
+///    bottom of the screen; after the first two it reappears at once with a new palette fading up from
+///    black, and the third was the part's end (here, on its own, it leads back to the first palette).
+///    PLZ.C as published has a fourth section and palette; the released program never reaches them.
 ///
-/// Inside Play Demo it follows the part (PLZ.C 68-95, COPPER.ASM `do_drop`): the whole screen is white
-/// (left by the rotozoomer, and set again by `init_plz`) until "music plus" >= 0; the music's frame
-/// counter starts there, and the n-th step after the cue is the part's n-th refresh. The first palette
-/// fades DOWN from white over 127 refreshes (`cop_drop` starts at 128), colour 0 and so the borders with
-/// it; the band falls when the frame counter passes 723, 1491, 1875 and 2259; the fourth fall is the
-/// end, and the screen stays empty until the script moves on. No second run.
+/// Inside Play Demo it follows the part as RELEASED (PLZ.C 68-95, COPPER.ASM `do_drop`, and the unpacked
+/// PLZPART.EXE where it differs): the whole screen is white (left by the rotozoomer, and set again by
+/// `init_plz`) until "music plus" >= 0; the music's frame counter starts there, and the n-th step after
+/// the cue is the part's n-th refresh. The first palette fades DOWN from white over 127 refreshes
+/// (`cop_drop` starts at 128), colour 0 and so the borders with it. The band falls when the frame
+/// counter, which counts MUSIC TICKS (52 a second), passes 723, 1491 and 1875 (`timetable`). The released
+/// program leaves its loop when `curpal` is 4 (PLZ.C as published says 5), so the THIRD fall is the end:
+/// three palettes show, and the screen stays empty until the script moves on. No second run.
 struct PlasmaModel {
     // MARK: - Tables
 
@@ -66,8 +70,9 @@ struct PlasmaModel {
         Int(cos(Double(a) * twoPi / 128 + 3.1415926535) * 31 + 32)
     }
 
-    /// The four palettes the plasma uses, in order: 256 colours each, red/green/blue 0...63.
-    /// (The original built a fifth, which only the plasma cube that followed ever showed.)
+    /// The three palettes the plasma shows, in order: 256 colours each, red/green/blue 0...63.
+    /// (The original built two more: "RB-white", red through white to blue, which PLZ.C's fourth section
+    /// would have shown but the released program never reaches, and one only the plasma cube used.)
     static let palettes: [[SIMD3<Int>]] = {
         let p = ptau
         var redBlue = [SIMD3<Int>(0, 0, 0)]
@@ -88,32 +93,34 @@ struct PlasmaModel {
         for a in 0..<64 { grey.append(SIMD3(repeating: p[63 - a] / 2)) }
         for _ in 0..<64 { grey.append(SIMD3(0, 0, 0)) }
 
-        var pastel = [SIMD3<Int>(0, 0, 0)]
-        for a in 1..<64 { pastel.append(SIMD3(p[a], 0, 0)) }
-        for a in 0..<64 { pastel.append(SIMD3(p[63], p[a], p[a])) }
-        for a in 0..<64 { pastel.append(SIMD3(p[63 - a], p[63 - a], p[63])) }
-        for _ in 0..<64 { pastel.append(SIMD3(0, 0, p[63])) }
-
-        return [redBlue, rainbow, grey, pastel]
+        return [redBlue, rainbow, grey]
     }()
 
-    /// Starting parameters for each of the four sections: L plasma, then K plasma (PLZ.C `inittable`).
+    /// Starting parameters for each of the three sections: L plasma, then K plasma (PLZ.C `inittable`).
     static let startParameters: [(l: SIMD4<Int32>, k: SIMD4<Int32>)] = [
         (SIMD4(1000, 2000, 3000, 4000), SIMD4(3500, 2300, 3900, 3670)),
         (SIMD4(1000, 2000, 4000, 4000), SIMD4(1500, 2300, 3900, 1670)),
-        (SIMD4(3500, 1000, 3000, 1000), SIMD4(3500, 3300, 2900, 2670)),
-        (SIMD4(1000, 2000, 3000, 4000), SIMD4(3500, 2300, 3900, 3670))
+        (SIMD4(3500, 1000, 3000, 1000), SIMD4(3500, 3300, 2900, 2670))
     ]
     /// How far each parameter moves per step (COPPER.ASM `moveplz`).
     static let kSpeed = SIMD4<Int32>(-3, -2, 1, 2)
     static let lSpeed = SIMD4<Int32>(-1, -2, 2, 3)
 
-    /// The steps at which the band starts to fall, and which section follows. From the original's
-    /// `timetable` (723, 1491, 1875, 2259 frames, plus 2 because this scene starts two steps earlier in
-    /// the fall-and-return cycle). The last entry is the original's ending; here it leads back to section 0.
-    static let drops: [(step: Int, nextSection: Int)] = [(725, 1), (1493, 2), (1877, 3), (2261, 0)]
-    /// The scene repeats after this many steps (about 33 seconds).
-    static let lengthInTicks = 2323
+    /// The music frame counter values (ticks) after which the band falls (PLZ.C `timetable`: 64 rows x
+    /// 6 ticks x 2, 4 and 5 patterns, less 45). The last is the released part's end.
+    static let timetable = [723, 1491, 1875]
+    /// On its own (no music): the steps at which the band starts to fall, and which section follows.
+    /// The timetable's ticks counted as the player counted them, 48700/65536 of a tick a step from 0
+    /// (`DemoSequencer.speedAdjust`): the step the count first passes the entry, plus one because the band
+    /// moves a refresh after the program notices. That is steps 976, 2009 and 2526; inside Play Demo,
+    /// where the count is part-way to its next tick at the cue, each comes a step sooner. The last entry
+    /// is the original's ending; here it leads back to section 0.
+    static let drops: [(step: Int, nextSection: Int)] = timetable.enumerated().map { index, limit in
+        let rate = DemoSequencer.speedAdjust(.second)
+        return (((limit + 1) * 65_536 + rate - 1) / rate + 1, (index + 1) % timetable.count)
+    }
+    /// The scene repeats after this many steps (2,588, about 37 seconds): the last fall's 62 steps on.
+    static let lengthInTicks = (drops.last?.step ?? 0) + 62
 
     static let canvasWidth = 320
     static let canvasHeight = 400
@@ -150,8 +157,13 @@ struct PlasmaModel {
     private(set) var cued = false
     private(set) var ended = false
     private var ending = false
+    /// Inside Play Demo: falls begun so far, and whether the counter had passed the next `timetable`
+    /// entry on the step before this one (the program sees it on one refresh; the band has moved on the next).
+    private var fallsBegun = 0
+    private var fallDue = false
     static let startCue = 0
-    /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white.
+    /// The original's `cop_drop` at the start of the part: 129...255 fade the first palette down from white,
+    /// to one level above it (see `update`).
     static let firstFade = 128
 
     mutating func reset() { self = PlasmaModel() }
@@ -162,7 +174,10 @@ struct PlasmaModel {
             self = PlasmaModel()
             // Every colour white: the rotozoomer's last palette, and `init_plz`'s first.
             shownPalette = [UInt8](repeating: 63, count: 768)
-            fadePalette = [UInt16](repeating: 63 << 8, count: 768)
+            // The fade's own memory (`fadepal`) starts as ZEROS in the released PLZPART.EXE, not at white:
+            // the first step takes every level below zero, the card keeps only the low six bits (white
+            // again), and the fade ends one level above the palette (0 shows as 1, 62 as 63).
+            fadePalette = [UInt16](repeating: 0, count: 768)
             dropCounter = Self.firstFade
             // The script tests the cue on the very step it shows the scene.
             cued = music.plus >= Self.startCue
@@ -187,19 +202,31 @@ struct PlasmaModel {
         }
 
         if paletteWaiting {
-            shownPalette = fadePalette.map { UInt8($0 >> 8) }
+            shownPalette = fadePalette.map { Self.cardLevel($0) }
             paletteWaiting = false
         }
 
         k = (k &+ Self.kSpeed) & 4095
         l = (l &+ Self.lSpeed) & 4095
 
-        if let drop = Self.drops.first(where: { $0.step == ticks }) {
-            // The main program notices it is time: clear the fade and start the fall.
+        // The main program notices it is time: on its own at fixed steps, inside Play Demo by the music.
+        var fall: (nextSection: Int, last: Bool)?
+        if let music {
+            if fallDue {
+                fallsBegun += 1
+                fall = (fallsBegun, fallsBegun == Self.timetable.count)   // the last fall is the end
+            }
+            // (From the second step after the cue: the script sets the counter to 0 on the cue step,
+            // after the scene has read it.)
+            fallDue = ticks >= 2 && fallsBegun < Self.timetable.count && music.ticks > Self.timetable[fallsBegun]
+        } else if let drop = Self.drops.first(where: { $0.step == ticks }) {
+            fall = (drop.nextSection, false)
+        }
+        if let fall {
+            // Clear the fade and start the fall.
             for i in 0..<768 { fadePalette[i] &= 0x00FF }
             dropCounter = 1
-            // Inside Play Demo the fourth fall is the end, as in the original.
-            if music != nil && drop.step == Self.drops.last?.step { ending = true } else { section = drop.nextSection }
+            if fall.last { ending = true } else { section = fall.nextSection }
         }
 
         guard dropCounter != 0 else { return }
@@ -244,10 +271,13 @@ struct PlasmaModel {
         }
     }
 
+    /// What the video card shows for a fade value: its top byte, of which the card keeps six bits.
+    static func cardLevel(_ value: UInt16) -> UInt8 { UInt8(value >> 8) & 63 }
+
     /// How much one fade step adds, in 1/256ths of a VGA level.
     ///
-    /// The original added value x 8 for 31 steps, which stops at 31/32 of full brightness. Sections 1-3
-    /// do exactly that. Section 0 in the original faded down from white instead and ended on the exact
+    /// The original added value x 8 for 31 steps, which stops at 31/32 of full brightness. Sections 1
+    /// and 2 do exactly that. Section 0 in the original faded down from white instead and ended on the exact
     /// palette, so here it gets the smallest increment that reaches the exact value in 31 steps from black.
     private static func fadeIncrement(section: Int, value: Int) -> Int {
         section == 0 ? (value * 256 + fadeSteps - 1) / fadeSteps : value * 8
@@ -339,7 +369,7 @@ struct PlasmaModel {
     /// The state for the modern look, `alpha` (0..<1) of the way towards the next step.
     func modernParameters(alpha: Float) -> ModernParameters {
         // The palette the next step will show, so the fade can glide.
-        let next: [UInt8] = paletteWaiting ? fadePalette.map { UInt8($0 >> 8) } : shownPalette
+        let next: [UInt8] = paletteWaiting ? fadePalette.map { Self.cardLevel($0) } : shownPalette
         var palette = [SIMD4<Float>]()
         palette.reserveCapacity(256)
         for i in 0..<256 {
@@ -354,7 +384,7 @@ struct PlasmaModel {
         if (1..<64).contains(dropCounter) {
             let t = Float(dropCounter) + alpha
             top += t * t * 43 / 512
-        } else if dropCounter == 0, Self.drops.contains(where: { $0.step == ticks + 1 }) {
+        } else if dropCounter == 0, music != nil ? fallDue : Self.drops.contains(where: { $0.step == ticks + 1 }) {
             // The fall begins on the next step, where the counter goes straight from 0 to 2 (the
             // main program sets 1 and the refresh routine adds 1 in the same frame). Glide towards
             // that, or the band would sit still and then hop a third of a line.

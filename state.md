@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (water background merged and pushed; next: the Glenz and plasma timing research)
+Last updated: 2026-11-25 (the Glenz and plasma timing change is built; waiting for the user to look before the merge)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -19,9 +19,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 - PLAY DEMO (Scene menu, P; Shift-P from the sidebar's scene; Escape stops) runs all 19 parts in the
   original order with the original music (libopenmpt), changing parts on the original's music cues. Every
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
-  scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,323, Plasma Cube
+  scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 637 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 638 checks, all pass (on the Glenz and plasma branch; main has 637 until the merge). `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (private repository), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -72,23 +72,28 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      the versions that made the position tables, so the tables still cannot be made again.
    - If the balls' rims ever look soft on a bigger screen: render at 16x (`SCALE` in the tool; the
      check's numbers and checksum change).
-4. NEXT SESSION (agreed 2026-11-25): the GLENZ AND PLASMA TIMING RESEARCH (first item under "Open
-   questions"). Research only: read the released `GLENZ.EXE` and `PLZPART.EXE` (unpacked) against their
-   sources, find what the two parts really did with the music counter, then show the user findings and
-   a plan before any code. The user will watch videos of the original (one is a 486 DX2-66 filmed with
-   a camcorder) to compare by eye.
+4. THE GLENZ AND PLASMA TIMING: researched and BUILT 2026-11-25 on `claude/glenz-plasma-timing-f60981`
+   (commits 4816498, a97f1c0, f9a6cf4, 970f76c, c6274ed), NOT YET MERGED: the user looks at it in the
+   app first (Play Demo from the title picture for Glenz, from the rotozoomer for the plasma and cube,
+   and the Plasma scene on its own). After the merge: rebuild main's app (`./build.sh` in the main
+   folder), run the full self-test there (638 checks), ask before pushing.
+   - Read from the released programs: `GLENZ.EXE` is `GLENZ/V.EXE` and matches `MAIN.C`;
+     `PLZPART.EXE` ends on its THIRD fall (`curpal==4`, `PLZ.C` says 5) and its fade memory starts as
+     zeros. The user's videos agree (three plasmas, grey last, the cube right after; the tunnel almost
+     at once after the glenz).
+   - Play Demo: Glenz waits for 333 music ticks (glenz at cue + 450, was 335; the scene reads the
+     counter); the plasma falls on ticks 723, 1491, 1875 (cue + 975, 2,008, 2,525), the third fall ends
+     it, its first palette ends one level brighter; "Plasma cube" starts at step 24,056 (was 23,792),
+     with 48 empty steps instead of 312. No other part start moved.
+   - Plasma on its own: three palettes, falls at steps 976, 2,009 and 2,526, loop 2,588. Glenz on its
+     own: unchanged on purpose (35-step pause).
+   - The script's refresh counter (`DemoMusicState.frame`) and the tool's `frames|ticks` option are gone.
 5. LATER, when the demo is finished: export Play Demo (Modern look) to a video file (see "Open
    questions"). The other open questions start only when the user asks.
 
+
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- Glenz and the plasma still read the music frame counter as screen refreshes. In ticks the Glenz pause
-  would be ~1.6 s longer, and the plasma as its source stands would run past the plasma cube's cue, so
-  the released `PLZPART.EXE` may differ from the source. It CAN now be read: it was packed twice, and
-  `deark -m pklite` then `deark -m lzexe` gives a clean 224,608-byte program (2026-11-25; only unpacked,
-  not read). Research first, no code; if the original really paused longer, the user decides whether the
-  timing inside those two parts moves. See `docs/demo-timeline.md`, "Later found: it counts music ticks".
-  Recommended; the user has not yet said to start.
 - EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; after the demo
   is finished). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
   YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
@@ -103,6 +108,8 @@ Gone through with the user on 2026-11-25; what was dropped is under "Decisions i
   old commits. They are NOT in the ordinary history, which is 22 MB.
 - `docs/future-ideas.md` is out of date (its second half calls Play Demo unfinished; its first half is
   the dropped "Reimagined" look). Tidy it or remove it: recommended, not yet agreed.
+- Waiting on the user by eye, BEFORE THE MERGE (the branch's app, in the worktree's `build/`): the Glenz
+  pause and the plasma's three sections inside Play Demo, and the Plasma scene on its own.
 - Waiting on the user by eye (main's `build/SRMetal.app`):
   - 3D City, Modern look against 1993: do the fades (up from black over the first second, to black over
     the last 1.5 s) look right and come at the same moment in both looks (the review suspected Modern a
@@ -247,6 +254,12 @@ All parts are built; this is the checklist when one is redone or a new one is ad
 
 ## Traps (facts that caused mistakes)
 - The music frame counter (`dis_getmframe`) counts MUSIC TICKS, not refreshes (`MAIN/STMIK.300`).
+- The compiled files in a source folder need not be the released build: `PLZPART/PLZ.OBJ` tests
+  `curpal==5` as `PLZ.C` does, the released `PLZPART.EXE` tests 4. Read the unpacked program itself.
+- The plasma's fourth palette and section exist only in `PLZ.C`; the released part has three. Do not
+  put them back.
+- `GLENZ.EXE` after `deark -m pklite` is still packed by the linker (`link /E`): `deark -m exepack`
+  gives the 399,792-byte program whose addresses match `GLENZ/V.MAP`.
 - Jump the music by rendering and throwing away (`TrackerSong.skip`), never by libopenmpt's seek-by-seconds
   (it lands on a row start and counts song 1's later sections from the wrong place).
 
