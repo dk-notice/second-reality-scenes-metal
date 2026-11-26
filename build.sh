@@ -92,9 +92,10 @@ mkdir -p "$APP/Contents/Resources/Mountain"
 cp Data/Mountain/HILLBACK.CLX Data/Mountain/O2.SCI Data/Mountain/POS?.DAT "$APP/Contents/Resources/Mountain/"
 
 # The water scroller's background (with its colour numbers), sword picture and the three position
-# tables that cannot be calculated (see Data/Water/README.md).
+# tables that cannot be calculated, and the Modern look's background (ray-traced beforehand by
+# tools/water_background.py; POV-Ray is not needed here). See Data/Water/README.md.
 mkdir -p "$APP/Contents/Resources/Water"
-cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT "$APP/Contents/Resources/Water/"
+cp Data/Water/BKG.CLX Data/Water/MIEKKA.SCI Data/Water/WAT?.DAT Data/Water/BACKGROUND-POVRAY.png "$APP/Contents/Resources/Water/"
 
 # The credits' Modern-look pictures, captured from the scenes themselves (Modern look), at the moments
 # in CreditsModel.captures. Made here, not kept in git: they always match the scenes as built.

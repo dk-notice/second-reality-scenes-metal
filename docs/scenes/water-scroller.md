@@ -22,8 +22,9 @@ before the 3D sine landscape. It is called a scroller, but there is no text in i
   the music as the original did, and the music gives exactly those lengths (see below).
 
 **This scene uses original artwork and data:** the background picture, the sword picture and three
-position tables, in [Data/Water/](../../Data/Water/README.md) (154 KB). The tables cannot be calculated;
-see below.
+position tables, in [Data/Water/](../../Data/Water/README.md) (154 KB), and for the Modern look the
+background rendered again from its original scene file (0.9 MB). The tables cannot be calculated; see
+below.
 
 ## How the original did it
 
@@ -75,9 +76,10 @@ mountain scroller.
 
 **Modern look:** drawn afresh every frame.
 
-- The background is the picture made 8x larger by Super-xBR. The sword is its own picture made 8x the
-  same way (the user's choice, 2026-11-25, as for the mountain scroller's text), as two pictures: its
-  colours on black, and its outline.
+- The background is ray-traced again from the original scene file, at 8 times the size (2560x1600): see
+  "The background, rendered again" below. The sword is its own picture made 8x by Super-xBR (the user's
+  choice, 2026-11-25, as for the mountain scroller's text), as two pictures: its colours on black, and
+  its outline.
 - The sword's place comes from the same tables, turned into the smooth map the mountain scroller uses:
   every pixel gets a best-fit plane through the places where its neighbours' sword coordinates step, and
   each screen pixel blends the planes around it. The sword then glides instead of creeping.
@@ -91,9 +93,41 @@ mountain scroller.
 |---|---|---|---|
 | Sword movement | a third of a column a refresh, a third of the pixels at a time | the same | continuous |
 | Sword near the viewer | blocks up to 24 pixels | the same | smooth but soft (see below) |
+| Background | 320x200, 190 colours, dithered | the same | ray-traced again at 2560x1600, full colour |
 | Fades | red twice as fast, whole levels | the same | red twice as fast, smooth |
 | Green and blue after the fade-in | stop at level 62 | the same | reach the full colour |
 | Still picture before the sword | 7.4 s (waiting for the music) | the same, also on its own | the same |
+
+## The background, rendered again
+
+The scene file that made the background is still in the source release: `WATER/KK.POV`, for POV-Ray 1.0
+(1992). `tools/water_background.py` renders it with POV-Ray 3.7 at 2560x1600 with smoothed edges, and
+the result ships as `Data/Water/BACKGROUND-POVRAY.png`. POV-Ray is needed only to make that file again;
+the app and `build.sh` never run it. Rendering takes about two seconds (in 1993, at a guess, a day).
+
+Two things had to be put right before 3.7 gave the 1993 picture, both found by measuring (2026-11-25):
+
+- **The fog.** The scene has black fog, which is what makes the picture so dark. POV-Ray 3.7 leaves fog
+  out while the camera is inside a solid object, and the scene's sky, a plane high above, counts
+  everything below it as its inside. One added word, `hollow`, on that plane brings the fog back.
+- **Half a pixel.** POV-Ray 1.0 took each pixel's sample at the pixel's lower left corner, 3.7 at its
+  centre. The tool writes the camera out as plain vectors and nudges it half an original pixel left and
+  half down. Each original pixel is then exactly the middle of an 8x8 block of the new picture, which is
+  where the sword's map and masks expect it.
+
+That nothing else is needed is known from `WATER/DATA.TGA`: a raw 160x100 POV-Ray 1.0 output of the same
+scene, left in the folder. Its pixel (x, y) equals the shipped background's pixel (2x, 2y+1) to within
+the palette's steps, so Future Crew did not retouch the picture, and the darkness is the renderer's.
+
+With both fixes, the new picture scaled back down is within 8 (of 255) of the original at 92% of pixels
+and within 32 at 99.4%. What still differs: the highlights on the ripples sit up to a pixel differently
+and are up to a fifth brighter or dimmer (cause not found); the original's checkerboard dither and colour
+bands are gone (they came from reducing the picture to 190 colours); and the speckled rims of the balls
+turn out to be fine reflected rings that one sample per pixel could not show.
+
+`R1.POV` to `R5.POV` and `RGB.TGA` are the scene with mirror surfaces and a colour-ramp strip, the way
+the position tables were made, but not the versions that made the shipped tables: the tables still
+cannot be made again.
 
 ## Checks
 
@@ -108,6 +142,10 @@ mountain scroller.
 - In a silent Play Demo run it checks, against the demo script's own numbers, that the fade-in, the
   scroll and the fade-out start on the very steps the script gets past its three music cues, that the
   sine landscape follows 65 steps later, and that the scene on its own uses the same lengths.
+- The Modern background: the file's checksum, and the still picture as the Modern look DRAWS it (at
+  320x200) against the original background: 90% of pixels or more within 8 of 255, and a better fit in
+  place than moved one pixel in any direction. Seen to fail with the background drawn one pixel off,
+  with a picture rendered without the half-pixel nudge, and with one rendered without the fog.
 - Each was seen to fail with the detail broken on purpose: red not doubled, the scroll a step early, the
   tables taken in the other order, the section cue a row early, the fade-out cue a row early, the new
   column put straight into the window's last cell.
@@ -122,6 +160,7 @@ mountain scroller.
 - Modern: the small reflections are still drawn one 320x200 pixel at a time (each an averaged colour)
   and stay coarse.
 - Modern: green and blue reach their full colour after the fade-in.
-- The background is the original picture scaled up, not re-rendered from the POV-Ray files (a later idea).
+- Modern: the background is a new rendering, so its ripple highlights differ slightly from the
+  original's and its dither is gone (see above). The sword on it is still the 1993 picture scaled up.
 - The original drew straight onto the screen being shown; any tearing that caused is not copied.
 - Not compared with the original running.

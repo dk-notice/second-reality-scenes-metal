@@ -7,6 +7,8 @@ struct WaterData {
     static let folder = DataFolder.find(resource: "Water", devPath: "Data/Water", marker: "WAT1.DAT")
     static let columns = 158, rows = 34, swordWidth = 400
     static let fileNames = ["WAT1.DAT", "WAT2.DAT", "WAT3.DAT", "BKG.CLX", "MIEKKA.SCI"]
+    /// The Modern look's background: the scene ray-traced again at 8x (`tools/water_background.py`).
+    static let modernBackground = "BACKGROUND-POVRAY.png"
     /// Connected regions of fewer table pixels than this are the tiny reflections (see `ScrollTables.smoothMap`).
     static let smallRegion = 1000
 

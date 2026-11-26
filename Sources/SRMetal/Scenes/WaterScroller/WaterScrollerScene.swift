@@ -1,9 +1,12 @@
-import Metal
+import Foundation
+import MetalKit
 
 /// Draws `WaterScrollerModel`. 1993 look: the original's screen, kept from step to step and changed
 /// exactly as `putrouts1` changed it, shown through the part's palette with its fades.
 ///
-/// Modern look: everything drawn afresh each frame. The background is the picture made 8x by Super-xBR.
+/// Modern look: everything drawn afresh each frame. The background is the scene ray-traced again from
+/// its original POV-Ray file at 8x (`Data/Water/BACKGROUND-POVRAY.png`, made by
+/// `tools/water_background.py`; each original pixel is the middle of an 8x8 block of it).
 /// The sword is its own picture made 8x the same way (its colours on black, and its outline as a mask),
 /// laid over the water and the reflections through the smooth map fitted to the position tables
 /// (`ScrollTables.smoothMap`): every screen pixel works out its own place on the sword, and the sword
@@ -11,14 +14,14 @@ import Metal
 /// the tiny reflections, where a whole stretch of sword falls inside one pixel, each pixel shows the
 /// average of its stretch. The fades are the original's rule, red twice as fast, without the rounding.
 ///
-/// THIS SCENE USES ORIGINAL ARTWORK (`13-water-background`, and the files in `Data/Water`).
+/// THIS SCENE USES ORIGINAL ARTWORK (the files in `Data/Water`).
 final class WaterScrollerScene: DemoScene {
-    static let pictureName = "13-water-background"
     /// Empty rows above and below the sword in its texture, so nothing is repeated at its edges.
     static let padding = 3
     private(set) var model: WaterScrollerModel
     private let canvas: IndexedCanvas
-    private let picture: ScenePicture
+    /// The Modern look's background, 2560x1600 with smaller copies for small windows.
+    private let background: MTLTexture
     /// The sword's colours on black, 400x40 made 8x by Super-xBR.
     private let sword: MTLTexture
     /// Red: 1 where the sword is, made 8x the same way.
@@ -44,7 +47,11 @@ final class WaterScrollerScene: DemoScene {
         guard let data = WaterData.load() else { throw PictureError.missing("Data/Water") }
         model = WaterScrollerModel(data: data)
         canvas = try IndexedCanvas(device: device, pixelFormat: pixelFormat, width: 320, height: 200)
-        picture = try ScenePicture.shared(named: Self.pictureName, device: device)
+        guard let url = WaterData.folder?.appendingPathComponent(WaterData.modernBackground),
+              FileManager.default.fileExists(atPath: url.path) else {
+            throw PictureError.missing("Data/Water/" + WaterData.modernBackground)
+        }
+        background = try MTKTextureLoader(device: device).newTexture(URL: url, options: ScenePicture.textLoadOptions)
 
         /// `colours`: red, green, blue per pixel. Made 8x by Super-xBR.
         func upscaled(_ colours: [SIMD3<UInt8>], width: Int, height: Int) throws -> MTLTexture {
@@ -113,7 +120,7 @@ final class WaterScrollerScene: DemoScene {
         var uniforms = Uniforms(fadeIn: view.fadeIn / 63, fadeOut: view.fadeOut / 63,
                                 shift: view.shift ?? 0, swordOn: view.shift == nil ? 0 : 1)
         encoder.setRenderPipelineState(pipeline)
-        encoder.setFragmentTexture(picture.upscaled, index: 0)
+        encoder.setFragmentTexture(background, index: 0)
         encoder.setFragmentTexture(sword, index: 1)
         encoder.setFragmentTexture(swordMask, index: 2)
         encoder.setFragmentTexture(areaMask, index: 3)
