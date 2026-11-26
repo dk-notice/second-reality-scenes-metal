@@ -92,21 +92,14 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
 
 ## Open questions (not to be started unasked)
 Gone through with the user on 2026-11-25; what was dropped is under "Decisions in force".
-- THE TECHNO BEAT LOOKS OFF (user, 2026-11-25, against videos: the bars' flash and the four-column
-  break seem to land on the off beat; everything else "very close to perfect"). Looked into, nothing
-  changed yet; the user decides what to do. Read from the programs:
-  - `TECHNO/KOE.C` waits for the player's row to be 7 of 8 (rows 7, 15, 23, 31), and the drums are on
-    rows 0, 8, 16, 24: as this app runs it, the flash starts a whole row (0.115 s) BEFORE the beat.
-  - The player (`MAIN/STMIK.300`) reports row, section and "plus" through a delay ring (routine at
-    51C5h, set up at 2AC1h): no delay for output modes 2 and 7 (the non-mixing ones), TEN POLLS for the
-    mixing cards (Sound Blaster and the like). If a poll is a screen refresh (not yet confirmed), that
-    is 0.143 s. The tick counter (`np_zframe`) is not delayed.
-  - `KOE.C` reads the row once per drawn picture, so a slow PC noticed the beat later still.
-  - This app does not allow for the Mac's own sound output delay (`MusicPlayer` notes the position
-    when a block is rendered): over Bluetooth headphones the picture leads the sound further.
-  Not yet known: how far ahead of the heard sound the Sound Blaster mixing ran (the ring may only
-  cancel that), and which card the user's videos had. Ideas: allow for the Mac's output delay (clearly
-  right); model the mixing cards' ten-poll delay (moves every music cue; needs the mixing lead first).
+- PLAY DEMO OVER BLUETOOTH HEADPHONES: the picture leads the sound (user, 2026-11-25: the techno
+  part's flash and four-column break looked off the beat over AirPods; on the MacBook's speakers they
+  are perfect, in every version compared). The app does not allow for the output device's delay
+  (`MusicPlayer` notes the music position when a block is rendered, not when it is heard). Proposed,
+  not yet agreed: ask macOS for the device's delay and read the position that much later.
+  Side findings from looking into it, NOT a fault and nothing to change: `TECHNO/KOE.C` flashes on row
+  7 of every 8; the player (`MAIN/STMIK.300`) reports row, section and "plus" through a delay ring
+  (51C5h, set up at 2AC1h): none for output modes 2 and 7, ten polls for the mixing cards.
 - EXPORT PLAY DEMO TO A VIDEO FILE for YouTube (user, 2026-11-25; wanted, not started; after the demo
   is finished). MODERN LOOK ONLY (the user's choice: the 1993 look's 70 pictures a second do not fit
   YouTube's 60). Idea as discussed, to be planned with the user first: a command that steps Play Demo
