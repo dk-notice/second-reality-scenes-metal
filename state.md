@@ -1,6 +1,6 @@
 # Project state
 
-Last updated: 2026-11-25 (demo-first start-up is built on branch `demo-first`, waiting for the user to try it; next: the video export)
+Last updated: 2026-11-25 (the demo-first start-up is merged and pushed; next: the video export, to be talked through first)
 
 ## Goal
 A native macOS app that re-creates Second Reality (Future Crew, 1993) from scratch, drawn on the graphics
@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   part is a real scene and follows its original part's own timing inside Play Demo. On their own, some
   scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma 2,588, Plasma Cube
   2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 639 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
+- Self-test: 641 checks, all pass. `--demo-timeline`: every part starts on the step the research simulation gives, and since
   2026-11-25 `tools/demo_timeline.py` prints those steps itself (all 21 starts and the opening credits'
   9 cues equal the Swift's). main is pushed to GitHub (the repository is PUBLIC: user, 2026-11-25; checked with `gh`), the pause and
   sound-output merge and the water background included (2026-11-25).
@@ -90,9 +90,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    first; no plan agreed yet (the idea so far is under "Open questions" and in `docs/future-ideas.md`).
 6. ALSO WANTED (user, 2026-11-25): REVISIT THE INTERFACE (sidebar, look switch, menus, window title)
    and see what could be better. First wish (user, 2026-11-25): THE DEMO PLAYS AT START-UP by default
-   and choosing a scene is secondary. BUILT on branch `demo-first` (commit 4089e81), NOT YET MERGED:
-   the user tries it first; then merge, rebuild main's app, full self-test (641 checks), and push (the
-   user has agreed to pushing this together with the two docs commits already on main).
+   and choosing a scene is secondary. DONE and merged 2026-11-25 (the user tried it in the app and
+   said to merge; main's app rebuilt, 641 checks pass there; pushed the same day).
    - With no `--scene` the app starts in Play Demo, music on, the list hidden
      (`StartupOptions.startsWithDemo`, `startsWithSidebarHidden`); `--scene <id>` starts on the scene
      with the list showing; `--sidebar hidden|shown` decides either way.
@@ -100,8 +99,9 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
    - Escape and Stop Demo call `AppModel.stopDemoAndBrowse`: the list opens on the scene the demo was
      showing (`DemoRunScene.lastSceneID`).
    - Chosen by the user: sound at launch, and Escape opening the list.
-   - NOT SEEN by Claude (the window cannot be driven from here): how the list's new first row and
-     heading look. Other interface wishes: none stated yet; ask.
+   - `docs/images/window.png` (README) is out of date: the list has a new first row. Claude cannot
+     capture the window; it needs a screenshot from the user (the window only, never the desktop).
+   - Other interface wishes: none stated yet; ask.
 7. The signed release (item 2) stays for later. Nothing else is planned.
 
 ## Open questions (not to be started unasked)
