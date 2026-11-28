@@ -68,7 +68,7 @@ The Rings scene is the same 8-colour picture held still and centred, with only o
 
 ## How this version does it
 
-The first surprise was that both pictures follow exact formulas:
+Both pictures follow exact formulas:
 
 - 8-colour picture: ring number = distance to the power 1.4, divided by 16, rounded down. The colour is
   that number's remainder when divided by 8.
@@ -76,7 +76,7 @@ The first surprise was that both pictures follow exact formulas:
 
 So the pictures are calculated when the app starts, and no data files are needed.
 
-The second was that the original's layer-copying, with its eight pre-shifted copies, boils down to one
+And the original's layer-copying, with its eight pre-shifted copies, boils down to one
 plain rule: the second picture's pixel at screen position (x, y) is the 1-bit picture at
 (x + offset + wave - 7, y + offset). The -7 falls out of how the shifted copies were chosen.
 
@@ -112,8 +112,7 @@ maths per pixel; a graphics chip does it without effort.
   with and without the wave.
 - **The sine table is exact.** `sine x 256, rounded toward zero` reproduces the original `SIN1024.INC`.
 - **The graphics chip matches the processor** pixel for pixel at several moments in each scene (self-test).
-
-- **Motion, by program** (`--motion-check`, added 2026-11-14): Rings over 600 steps and Interference over
+- **Motion, by program** (`--motion-check`): Rings over 600 steps and Interference over
   its whole loop, modern look also half-way between steps. No jumps in either look, including the
   Interference loop point and the point where Rings starts repeating.
 
@@ -123,16 +122,13 @@ maths per pixel; a graphics chip does it without effort.
 - That the copy into the fourth layer always finished before the screen was drawn. The original wrote it
   straight into the picture being shown; on a slow PC part of a frame could show the previous step's
   layer. This version treats the copy as instant.
-- The modern look by eye in the running app.
 
-## Code review (2026-11-14)
+### Read against the original
 
-Reviewed line by line against `TECHNO/KOEB.ASM` (Rings) and `TECHNO/KOEA.ASM` `init_interference` /
-`do_interference` (Interference), with the wobble table from `TECHNO/KOE.C`, and with `/code-review`.
-**No bugs were found, and no code was changed.**
-
-**Confirmed correct, 1993 look.** For each pass of the original's loop, what is on screen during that
-frame was worked out and compared with what the model gives for the same step:
+Both scenes were read line by line against `TECHNO/KOEB.ASM` (Rings) and `TECHNO/KOEA.ASM`
+`init_interference` / `do_interference` (Interference), with the wobble table from `TECHNO/KOE.C`. For
+each pass of the original's loop, what is on screen during that frame was worked out and compared with
+what the model gives for the same step:
 
 - Rings: the fade value is 2 per step, used as "colour x fade / 256"; the colour rotation steps back one
   place per step, starting at 7; the window sits at (160, 100). The palette is sent twice per frame (the
@@ -143,15 +139,14 @@ frame was worked out and compared with what the model gives for the same step:
   moved on by then, which is why the model uses "step + 1" for the wave and "step" for the positions.
 - The two palettes, the 5 and 7 places per step, the starting turn of 211, the wobble starting to grow
   after 350 steps by one notch per 16, the wobble table's rounding towards zero, and the plain copying
-  rule (x + offset + wave - 7), which was derived again from the assembly during the review.
+  rule (x + offset + wave - 7), derived again from the assembly.
 - Every picture lookup stays inside the 640x400 pictures (columns 57...568, rows 36...363 at the extremes).
+- Modern look: every use of the "how far to the next step" value goes through one number, step +
+  fraction; at the Interference loop point (1024) the two paths, the wave and the colour rotation are
+  whole turns on from step 0 and the wobble strength is 0, and Rings repeats every 8 steps once faded
+  in, so nothing glides across a jump.
 
-**Confirmed correct, modern look.** Every use of the "how far to the next step" value was checked. All
-of them go through one number, step + fraction; at the Interference loop point (1024) the two paths, the
-wave and the colour rotation are whole turns on from step 0 and the wobble strength is 0, and Rings
-repeats every 8 steps once faded in, so nothing glides across a jump.
-
-**Not reproduced (noted, not changed):**
+Not reproduced:
 
 - The original's very first frame. Its position variables start at zero and are only calculated at the
   end of the first pass, so for one frame the original showed the top-left corner of the ring picture.
@@ -160,33 +155,25 @@ repeats every 8 steps once faded in, so nothing glides across a jump.
   the 1993 look; and its rings are measured from the exact centre, which puts ring edges about half a
   canvas pixel outside the 1993 look's.
 
-**Possible tidy-ups** (left for a later pass): the scroll, wobble and rotation formulas are written twice
-(whole numbers and decimals); the 200-entry wobble list is rebuilt on every draw, even for Rings; the
-model's `Phase` repeats what `part` and `ticks` already say; `SceneError`, used by other scenes, is
-declared at the bottom of `InterferenceScene.swift`.
-
 ## Differences from the original, on purpose
 
 - **Two scenes instead of one sequence** (on their own; Play Demo joins them again).
 - **No white-out in Rings.** The original faded the rings in, then carried on adding brightness until the
   whole screen was white, and ended after 256 steps. Here Rings stops at full brightness and keeps flowing.
-- **Interference loops seamlessly.** The original cut away on a music cue: by the demo's timeline, worked
-  out later, 989 steps in (when the music's frame counter, started with Rings, reached 925 music
-  ticks; it was first read as screen refreshes, 669 steps). Here it runs 1024 steps. The two pictures' paths advance 5 and 7 places per step through a 1024-place sine table,
-  so after 1024 steps both are exactly where they started, as are the wave and the colour rotation. The
+- **Interference loops seamlessly.** The original cut away on a music cue, 989 steps in (when the
+  music's frame counter, started with Rings, reached 925 music ticks). Here it runs 1024 steps. The two
+  pictures' paths advance 5 and 7 places per step through a 1024-place sine table, so after 1024 steps both are exactly where they started, as are the wave and the colour rotation. The
   wave also shrinks back to nothing over the last 240 steps, which the original did not do. The self-test
   checks that the scene returns to its exact first frame.
 - **The colour flow starts immediately.** The original waited for a beat in the music.
 
 ### Inside Play Demo
 
-Play Demo (2026-11-24) shows Rings for 256 steps, as long as the original's, then Interference until the
-music's frame counter reaches 925. That counter counts music ticks, 52 a second (found 2026-11-25 in
-the player's library; see `docs/demo-timeline.md`), so the interference shows for 989 steps, measured
-from the script's silent run. (It was first read as screen refreshes, which cut it at 669 steps, 4.6 s
-early.)
+Play Demo shows Rings for 256 steps, as long as the original's, then Interference until the music's
+frame counter reaches 925. That counter counts music ticks, 52 a second (see `docs/demo-timeline.md`),
+so the interference shows for 989 steps, measured from the script's silent run.
 
-Inside Play Demo the interference then follows the original (2026-11-25):
+Inside Play Demo the interference follows the original:
 
 - **Full wobble to the end.** The wave grows to full strength and stays there; this scene's own
   shrinking-back (over its last 240 steps, there only so it can loop) is left out, and it does not loop.

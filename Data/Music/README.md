@@ -25,6 +25,10 @@ Checked 2026-11-24: unscrambled `MUSIC0.S3M` matches a widely circulated unscram
 players play straight through. The demo's own order list is kept here, because its "+++" separators
 and "---" ends are what the demo's parts synchronised on.
 
+libopenmpt reports those markers as order numbers 0xFFFE ("+++") and 0xFFFF ("---"), drops trailing
+"---" entries, and reports 78 orders and 5 sub-songs for `MUSIC0.S3M`, 99 orders and 1 sub-song for
+`MUSIC1.S3M`.
+
 To get standard S3M files to open in a tracker or player:
 
 ```bash

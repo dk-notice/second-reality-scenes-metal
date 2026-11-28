@@ -8,7 +8,7 @@ A tunnel of dotted rings that snakes around as you fly down it, with alternating
 
 - **Original:** `TUNNELI/TUN10.PAS` by Trug, about 230 lines of Turbo Pascal with a short assembly loop.
 - **This version:** `Sources/SRMetal/Scenes/DotTunnel/`
-- **Length:** 1060 steps, about 15 seconds, then it loops.
+- **Length:** 1060 steps, about 15 seconds, then it loops. In Play Demo it runs once, the same 1060 steps.
 
 ## How the original did it
 
@@ -77,8 +77,11 @@ rings first), and the same erasing, each dot blanking the old pixel of the dot i
 order just before it is drawn. So the same dots go missing each frame as in 1993. The result is a 320x200
 picture of colour numbers, which the graphics chip shows through the original's palette.
 
-(Until the code review of 2026-11-14 this look was calculated on the graphics chip with the screen cleared
-every frame, which showed every dot. See "Code review" below.)
+Clearing the screen every frame instead, and drawing every dot, would differ from the original in 163 to
+296 pixels at steps 100, 300, 500, 700 and 900 (of about 3,800 lit), and in 1,003 of the 1,061 frames.
+
+The original does not leave stale dots on screen as the tunnel empties: the only ring that is never erased
+is the one in the nearest slot, and that ring is always entirely off the screen.
 
 ## What was checked
 
@@ -88,21 +91,30 @@ every frame, which showed every dot. See "Code review" below.)
 - **The 1993 pictures match a separate re-run of the original.** The original's main loop (`TUN10.PAS`,
   Pascal and its inline assembly) was written out again in Python, reading the original `TUNNEL.DAT` and
   `SINIT.DAT`, erasing included. This version's screen has the same checksum at steps 60, 250, 500, 777,
-  900 and 1000 (self-test). The Python re-run and the Swift replay were written by the same reviewer from
-  the same source, a few minutes apart, so this guards against slips in the port, not against both
-  misreading the original the same way.
+  900 and 1000 (self-test). The Python re-run and the Swift replay were both written from the same
+  reading of the source, so this guards against slips in the port, not against both misreading the
+  original the same way.
 - **The circle table is the original's.** Spot values from `TUNNEL.DAT` are in the self-test, and the
-  formula was checked against all 8,832 points again during the review.
+  formula was checked against all 8,832 points.
+- **The rest of `TUN10.PAS`, by reading** (with `BALLGEN3.PAS` and `SINGEN.PAS` for the tables;
+  `ROUTINES.ASM` is an older drawing routine that `TUN10.PAS` does not use): the conveyor belt and the
+  order of its steps; the steering formula and its table indexes; the band switch every 8 steps; the 102
+  invisible rings at the end and the length of 1060; ring sizes (`16384 div (slot*7+95)`, used as an
+  index into the circle table, whose first entry is radius 10); the palette, including the two black
+  entries that blank the ring in slot 5; rows off the top or bottom never reach beyond the original's
+  guard tables (rows stay within -67...248; the guards cover -100...401), so no stray pixels come from
+  there. Modern look: rings glide towards the slot they will be in next step, the reference point glides
+  the same way, and the tunnel is empty for the last three steps, so nothing is carried across the loop.
 - **No dots are left behind at the end.** The re-run shows the original's screen is empty from step 1053
   on, and so is this version's (self-test, steps 1054 to 1059).
-- **The graphics chip shows the processor's picture** pixel for pixel at six moments (self-test). Since
-  the review this only proves the display path; the check above is the one that matters.
+- **The graphics chip shows the processor's picture** pixel for pixel at six moments (self-test). This
+  only proves the display path; the check above is the one that matters.
 - **Motion, by program** (`--motion-check`, both looks, the whole loop). Modern look: no jumps, including
   at the loop point. 1993 look: four steps stand out (110, 111, 117, 124). They are the original's: at
   those steps the ring everything is drawn relative to moves by one whole pixel, so the whole picture
   shifts by a pixel at once. The modern look glides through them.
 
-### What was not checked
+## What was not checked
 
 - Nothing was compared with a running original or a recording.
 - The original's list of old dot positions is never set up before use, so on a real PC it held whatever
@@ -110,39 +122,9 @@ every frame, which showed every dot. See "Code review" below.)
   off-screen instead gives identical pictures at every step).
 - On a slow PC the original skipped steps (it advanced the tunnel once per screen refresh that had
   passed, but drew once). That changes which dots get blanked. This version always draws every step.
-- The modern look was checked by program and in still pictures, not by eye in the running app.
-
-## Code review (2026-11-14)
-
-Reviewed line by line against `TUNNELI/TUN10.PAS` (with `BALLGEN3.PAS` and `SINGEN.PAS` for the tables;
-`ROUTINES.ASM` is an older drawing routine that `TUN10.PAS` does not use), and with `/code-review`.
-
-**Found and fixed: the 1993 look showed dots the original did not.** The page used to say that erasing
-dot by dot only mattered at the very end. It matters all the time (see "That erasing eats dots" above):
-a clear-and-redraw picture differs from the original's in 163 to 296 pixels at steps 100, 300, 500, 700
-and 900 (of about 3,800 lit), and in 1,003 of the 1,061 frames. The 1993 look now replays the original's loop. Its
-pictures changed at every step with dots on screen; for example the lit pixels at step 500 went from
-3,895 to 3,732. `docs/images/dot-tunnel-classic.png` was made again.
-
-**Corrected in this page:** the old note that the original left "a few stale dots" on screen as the
-tunnel emptied. It does not: the only ring that is never erased is the one in the nearest slot, and that
-ring is always entirely off the screen.
-
-**Confirmed correct:** the conveyor belt and the order of its steps; the steering formula and its table
-indexes; the band switch every 8 steps; the 102 invisible rings at the end and the length of 1060; ring
-sizes (`16384 div (slot*7+95)`, used as an index into the circle table, whose first entry is radius 10);
-the palette, including the two black entries that blank the ring in slot 5; rows off the top or bottom
-never reach beyond the original's guard tables (rows stay within -67...248; the guards cover -100...401),
-so no stray pixels come from there. Modern look: every use of the "how far to the next step" value was
-checked: rings glide towards the slot they will be in next step, the reference point glides the same way,
-and the tunnel is empty for the last three steps, so nothing is carried across the loop.
-
-**Possible tidy-ups** (left for a later pass): the size and brightness formulas are written out again in
-the modern look; 320, 200, 160 and 100 are literal numbers in several places; the modern look's far ring
-appears at once at 3% brightness (slot 81) rather than fading in.
 
 ## Differences from the original
 
 - **Looping.** The original ran once. This one loops; the tunnel has emptied by then, so the loop is clean.
 - **Modern look only:** the original's palette happened to blank one ring near the viewer. The modern look
-  does not.
+  does not. Its farthest ring appears at once at 3% brightness (slot 81) rather than fading in.

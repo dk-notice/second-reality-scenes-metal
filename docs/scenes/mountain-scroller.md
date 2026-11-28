@@ -13,7 +13,7 @@ the leaves. Part 9 of the demo, after the screen switches off and before the len
 - **Original:** `FOREST/READ2.PAS` (about 220 lines of Turbo Pascal) and `FOREST/ROUTINES.ASM` (one
   routine, `putrouts`, 20 instructions), by Trug. Built into `MNTSCRL.EXE`. `READ.PAS` is an earlier
   version; `READMASK.PAS` made the position tables.
-- **This version:** `Sources/SRMetal/Scenes/MountainScroller/` (added 2026-11-25).
+- **This version:** `Sources/SRMetal/Scenes/MountainScroller/`.
 - **Length:** on its own 2,036 steps (about 29 seconds): black, 64 steps of leaves fading in, 1,906 of
   scrolling (the hills and text fade in during the first 127), 65 of fading out, then it starts again. In
   Play Demo it follows the music as the original did: the scroll starts on "music plus" ≥ 0 (met at once
@@ -69,8 +69,7 @@ program had set up before its next wait for the screen (the same rule as the jel
 **Modern look:** drawn afresh every frame.
 
 - The background is the picture made 8x larger by Super-xBR; the text is its own picture made 8x the
-  same way (the user's choice, 2026-11-25, over three macOS fonts: it is hand-drawn lettering, and no
-  font comes close).
+  same way (chosen over three macOS fonts: it is hand-drawn lettering, and no font comes close).
 - The text's place on the hills comes from the same tables, turned into a smooth map. A pixel listed in
   table k at window column c covers the third of a column from c + (2 − k)/3, and its cell's row is
   known; where two neighbouring pixels are one step apart, the line between them is where the coordinate
@@ -90,7 +89,7 @@ program had set up before its next wait for the screen (the same rule as the jel
 | Hills' fade | stops at level 62 | the same | reaches the full colour |
 | Streak after the text | yes | the same | yes |
 
-## Checks
+## What was checked
 
 - `tools/mountain_reference.py` checks the tables' structure, shows which way the three tables order
   (99.7% of neighbouring pixels in order one way, 69% the other), reports the palette facts above, and
@@ -104,10 +103,13 @@ program had set up before its next wait for the screen (the same rule as the jel
   the tables taken in the other order, the fade-out cue loosened.
 - `--motion-check mountain-scroller modern`: no jumps over the whole run.
 
-## Differences and limits
+## Differences from the original
 
 - Modern: no shimmer on the leaves under the text; the hills reach their full colour.
 - Modern: where one hill hides part of another, the text's edge there follows the 320x200 grid (the map
   cannot know where exactly the nearer hill ends).
 - The original drew straight onto the screen being shown; any tearing that caused is not copied.
+
+## What was not checked
+
 - Not compared with the original running.

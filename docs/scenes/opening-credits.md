@@ -11,7 +11,7 @@ code, additional design) fade in and out over it, each on its cue. The text stay
 slides under it. The part ends on the horizon's right half: the very picture the ships part starts on.
 
 - **Original:** `ALKU/MAIN.C` with `TWEAK.ASM`, `ASMYT.ASM` and `COPPER.ASM` (by Wildfire), built as `ALKU.EXE`.
-- **This version:** `Sources/SRMetal/Scenes/OpeningCredits/` (added 2026-11-25). First in the sidebar.
+- **This version:** `Sources/SRMetal/Scenes/OpeningCredits/`. First of the scenes in the sidebar.
 - **Data:** the RELEASED horizon and font, in `Data/OpeningCredits/`. Reference replay: `tools/alku_reference.py`.
 - **Length:** in Play Demo 5,605 steps (1 min 20.1 s) from the start of the music. On its own the scene
   leaves out the 16 seconds of black before the first title: it starts 70 steps before it and runs 4,547
@@ -72,8 +72,7 @@ script's silent run gives them:
 | A fifth page | Empty; waits for cue 9. (After it the program prepares a "BUG BUG BUG / Timing error" page, a guard that only shows if the timing went wrong; here it never reaches the screen.) |
 | End | The scroll reaches 320 at 5,539; a last palette fade (invisible) and the hand-over: 5,605 |
 
-Until 2026-11-25 the timeline took the end as "cue 9 plus 60 refreshes" (1:12.9): the scroll's own length
-puts it at 1:20.1. Nothing after it moves: the ships part waits for a fixed point in the song (1:33.8),
+The end is set by the scroll's own length, at 1:20.1, not by cue 9. Nothing after it moves: the ships part waits for a fixed point in the song (1:33.8),
 showing the same picture.
 
 **Step pairing.** The program sets the start address and fine scroll together; the copper writes both just
@@ -90,7 +89,7 @@ program did: inside Play Demo from the script's music, on its own from the measu
 makes the screen: the horizon at the scroll position on lines 50...349, the title's or page's text ORed in,
 and the palette of that moment (the copper's fades in its fixed-point steps).
 
-### Modern look (chosen by the user, 2026-11-25)
+### Modern look
 
 - **Horizon:** the original through Super-xBR, fading in smoothly and scrolling 1/9 pixel a step rather
   than a pixel every 9.
@@ -98,12 +97,10 @@ and the palette of that moment (the copper's fades in its fixed-point steps).
   1993 glyphs' top line, each line stretched sideways to cover exactly the 1993 line's ink: the original
   letters were very wide, about twice Superclarendon's natural width. Fades glide between steps.
 - **The Dolby Surround logo** is a logo, not text: the original pixels through Super-xBR.
-- The comparison sheets the choice was made from: `build/scaler-compare/opening-font-page.png` and
-  `opening-font-title.png` (made with scratch tools; not kept in git).
 
 ### Inside Play Demo
 
-Play Demo shows this scene from the first step of the music (until 2026-11-25 a title card), told the
+Play Demo shows this scene from the first step of the music, told the
 music's sync value each step, for the script's 5,605 steps; then the ships' horizon. The script's waits
 (`DemoScript.steps`: each title's cue then 427 steps, cue 4 then 2,947) are the same as the scene's.
 
@@ -119,7 +116,7 @@ music's sync value each step, for the script's 5,605 steps; then the ships' hori
 - **The hand-over:** the last screen is the ships' horizon exactly.
 - **On its own:** 4,547 steps from 70 before the first title, then again.
 - **Modern text:** Superclarendon, each line's capitals on the 1993 lines and its ink as wide as the 1993
-  line: all 19 lines of the 3 titles and 4 pages (until the 2026-11-25 code review, page 1 only). Proven to
+  line: all 19 lines of the 3 titles and 4 pages. Proven to
   fail unstretched, with the lines placed from the wrong point, and with the titles moved down.
 - **The Modern logo** is on the 1993 logo's lines, with no Modern text under it. Proven to fail with the
   logo moved 10 lines.
@@ -130,12 +127,12 @@ music's sync value each step, for the script's 5,605 steps; then the ships' hori
   ships' horizon picture. Proven to fail with the music's sync read a step off, and with black shown
   instead of the horizon.
 - **The cues** (1,128 ... 5,045) and the part's end (5,605) are also what `tools/demo_timeline.py` prints,
-  from its own simulation of the music (it printed only seconds until the code review).
+  from its own simulation of the music.
 - **The graphics chip matches the 1993 reference** at 17 steps (the generic per-scene check).
-- The credits' picture 1 (which shows this part's "Code" page) is now captured from this scene, step 3,664
+- The credits' picture 1 (which shows this part's "Code" page) is captured from this scene, step 3,664
   of its own count (see `docs/scenes/credits.md`).
 
-### Not checked
+## What was not checked
 
 - Nothing was compared with the original running.
 - The program's own work (drawing the titles, preparing each page) is assumed to fit in the time it had,

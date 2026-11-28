@@ -72,7 +72,7 @@ After a stall the clock catches up on a quarter of a second at most, so a scene 
 minutes of steps.
 
 Play Demo is different, because its music plays on a clock of its own and does not stall with the picture.
-Two rules keep them together (added 2026-11-25):
+Two rules keep them together:
 
 - **A short stall is made up in full**, up to 5 seconds (a scene being made at a part change, a hitch):
   the missed steps are run at once. Dropped, every later step would lag the music by that much.
@@ -123,8 +123,8 @@ way.
 
 **Replay it on the processor.** Where the original's picture depends on the order things were drawn and
 erased in video memory, the model replays those steps exactly, producing a picture of pixel numbers and a
-palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Dot Tunnel (since the
-code review: its dots are drawn and erased one by one, as in 1993), Techno Bars,
+palette. A shared helper, `Core/IndexedCanvas.swift`, then shows it the way a VGA card would. Dot Tunnel (its dots are drawn and
+erased one by one, as in 1993), Techno Bars,
 Bouncing Dots, Hidden Starfield, 3D Sine Landscape, Plasma Cube, Glenz Vectors, Ships Fly-by, the 3D City,
 the Rotozoomer, the Lens, the Jelly Logo, the two scrollers and the End Scroller work this way.
 
@@ -138,8 +138,16 @@ Some originals showed two slightly different pictures on alternate frames and le
 ## The window
 
 The window (`App/SRMetalApp.swift`) is the standard Mac two-part layout, which SwiftUI calls a
-`NavigationSplitView`: a **sidebar** on the left listing every scene, and the scene picture filling the
-rest. The toolbar holds the Modern / 1993 switch and a restart button.
+`NavigationSplitView`: a **sidebar** on the left, and the scene picture filling the rest. The sidebar's
+first row is Play Demo; below a "Scenes" heading come all the scenes. The toolbar holds the Modern / 1993
+switch and a restart button.
+
+**Start-up and the end.** With no `--scene` option the app starts in Play Demo from the beginning, with
+the music on and the sidebar hidden (`StartupOptions`). Escape, or Stop Demo, stops it and opens the
+sidebar on the scene the demo was showing (`AppModel.stopDemoAndBrowse`). When the demo reaches its own
+end, the end scroller's last line, the picture stays black, Play Demo stays chosen and the sidebar opens
+(`DemoRunScene.onEnd`, `AppModel.demoEnded`). It does not go on to the End Scroller scene: that would
+start the text again and look like a loop.
 
 All of these controls do the same simple thing: they change one small object, `AppModel`, which holds the
 current scene, the current look, whether the sidebar is showing, and whether Play Demo is running. The sidebar highlight, the toolbar
@@ -148,7 +156,8 @@ switch, the window title, the menu and the picture all follow that object, so th
 **Restart** asks the scene to `reset()` and zeroes the clock. The self-test checks that every scene's
 `reset()` really does go back to its first frame.
 
-**Single-key shortcuts.** L, R and the arrow keys have no Command key, so macOS would normally offer them
+**Single-key shortcuts.** L (look), R (restart), P (Play Demo), M (mute), the arrow keys (previous and
+next scene) and Escape (stop the demo; only while it plays) have no Command key, so macOS would normally offer them
 first to whatever has the keyboard focus. A focused sidebar list would keep them: arrow keys move its
 selection, and letters jump to a row by name. So the app looks at every key press before the window does
 (`AppModel.installKeyShortcuts`), handles just these keys itself, and passes everything else on. The list
@@ -198,7 +207,7 @@ also calls the checks kept next to what they check: `Scenes/<Name>/<Name>Checks.
 `Music/MusicChecks.swift`, `Core/PictureChecks.swift`): the scene
 list, the clock, the 4:3 picture area, the start-up options and the `--snapshot` and `--motion-check`
 command lines, the 3D helpers, smooth triangles, the palette picture, and the sidebar pictures drawn on
-two threads at once. They were added by the code review described at the end of this page.
+two threads at once.
 
 **Tables and pictures against the original's data.** Several tables that the original loaded from data
 files are calculated here instead. The test compares them with values taken from the original files, and
@@ -223,8 +232,9 @@ second) and every part must start on the step the research simulation gives; sta
 scene and part, every later part must still start on the same step; and each scene that waits for the
 music must react on the very step the script gets past that cue.
 
-There are 558 checks in all (2026-11-25); the test's last lines give the number run. Each new check is
-first shown to fail with the thing it guards broken on purpose.
+There are 649 checks in all; the test's last lines give the number run. The full self-test fails if
+that number is not `SelfTest.expectedChecks`, so a block of checks that silently stops running is
+noticed. Each new check is first shown to fail with the thing it guards broken on purpose.
 
 **The 3D engine against the original's code.** The engine in `Core/Visu/` is also tested by itself,
 apart from the scenes that use it: 124 test pictures (single objects, clipping cases, whole frames of the ships and city
@@ -288,10 +298,10 @@ original part did. Shown on its own, a scene is never called this and keeps its 
 uses it for its flash on the beat; the troll, the end picture, the lens, the rotozoomer, the jelly logo
 and the two scrollers use it to wait for the same music cues as the original parts. It is also called once on the step a scene is first shown
 (`justShown`), before the demo script checks its next cue: the Lens uses that to start on the same step as
-the script when its music cue is already met (2026-11-24).
+the script when its music cue is already met.
 
 A scene may also give a `currentCanvasSize` when its canvas changes as it runs; the window and
-`--snapshot` then use that instead of the entry's fixed size. Only Play Demo needs it (2026-11-24): to the
+`--snapshot` then use that instead of the entry's fixed size. Only Play Demo needs it: to the
 window it is one scene, which shows other scenes, pictures and title cards in turn (`Demo/`; see
 [demo-timeline.md](demo-timeline.md#play-demo-how-the-app-follows-this-table)).
 
@@ -304,10 +314,9 @@ through **Super-xBR** (`Core/PictureScaler.swift`), a pixel-art scaler by Hyllia
 between the picture's pixels and redraws them as smooth lines and curves, making the picture 8 times
 larger in three doubling rounds (320x200 becomes 2560x1600); that is then scaled smoothly to the screen. It only blends the
 original's colours, never invents new detail, and a self-test check makes sure no new pixel is brighter
-or darker than the original pixels around it. Chosen by the user (2026-11-24) over a plain smooth
-stretch, sharp pixels and xBR level 2, after side-by-side pictures (`--scaler-compare`), and 8x over
-4x for crisper outlines in fullscreen (it is made while the app runs, so the program does not grow); AI-upscaled
-pictures were tried earlier and dropped.
+or darker than the original pixels around it. It was chosen over a plain smooth stretch, sharp pixels
+and xBR level 2 from side-by-side pictures (`--scaler-compare`), and 8x over 4x for crisper outlines in
+fullscreen (it is made while the app runs, so the program does not grow). No AI-upscaled artwork is used.
 
 A scene that shows an original picture uses the shared toolkit in `Core/PictureLayer.swift`:
 `ScenePicture` holds a picture in both versions (the original, and the Super-xBR one, made on first
@@ -319,114 +328,67 @@ Super-xBR picture, so the scaler's edge choices do not change as a picture fades
 
 ## House rules for scenes
 
-These came out of building the first scenes.
-
 - **Calculate rather than copy.** If a table the original shipped as data follows a formula, find it,
   prove it reproduces the file exactly, and calculate the table.
 - **Keep the 1993 look pixel-faithful in how things are drawn**, including the original's quirks where they
   affect pixels.
-- **Original artwork is declared.** At first the rule was "no original artwork unless a scene cannot do
-  without it" (Glenz Vectors' plate, the ships' models and horizon). Since Play Demo (2026-11-24) the
-  picture-based parts are built too, so many scenes now use original pictures and data; each says so at
-  the top of its page, and the README lists them. No AI-upscaled artwork: the Modern look scales the
-  originals with Super-xBR.
-- **Make each scene work on its own.** Scenes loop cleanly, silently. The first scenes leave out
-  full-screen white flashes and lead-ins to other scenes; the later ones keep what the original part
-  showed. A scene on its own gets no invented pause where the demo waited for the music, unless the
+- **Original artwork is declared.** Each scene that uses original pictures or data says so at the top of
+  its page, and the README lists them. No AI-upscaled artwork: the Modern look scales the originals with
+  Super-xBR.
+- **Make each scene work on its own.** Scenes loop cleanly, silently. Some (Rings, Interference, Dot
+  Tunnel and others) leave out full-screen white flashes and lead-ins to other scenes; most keep what the
+  original part showed. A scene on its own gets no invented pause where the demo waited for the music, unless the
   original really showed something during that wait. Straying from the original is fine, as long as the
   scene's page says so.
 - **Inside Play Demo a scene follows the music** as the original part did, to the step.
 
-## Code review of the core and the app (2026-11-14)
+## Video export
 
-This section is a record of that day: its counts (twelve scenes, 235 checks, 109 test pictures) are that
-day's, not today's.
+`--export-video` (`App/VideoExport.swift`) makes the raw material for a video of the whole of Play Demo
+in the Modern look: 2880x2160 pictures at 60 a second, and the music as a WAV file. It follows no clock.
+The demo is stepped against silently rendered music, 630 sound sample pairs a step at 44,100 Hz (735 a
+picture), and picture k is drawn at step 7k div 6 with a blend of (7k mod 6)/6 towards the next step. So
+sound and picture cannot drift, however fast or slow the Mac is. The export ends with the demo itself.
 
-The code in `Core/` (except the 3D engine in `Core/Visu/`, reviewed separately), in `App/` (except
-`VisuTestCommand.swift`), `build.sh` and `Package.swift` was reviewed after all twelve scenes were done:
-once with Claude Code's `/code-review` command and once by hand, concentrating on the clock, threads, the
-two looks, the palette picture, the layouts shared between Swift and shaders, the 3D helpers, the window,
-the command line, the self-test itself and the build script. A finding was only acted on once it had
-been shown to be real, by a command or by a new self-test check that fails on the old code.
+`tools/export_video.py` runs it and hands the pictures and sound to ffmpeg, which writes a ProRes 422 .mov
+to `~/Movies/`; `tools/check_video.py` checks the finished file (counts, the sound byte for byte, song 2's
+start, pictures either side of part starts). ffmpeg is needed only by those two scripts: the app and
+`build.sh` never use it. One trap: ffmpeg's default conversion back to red-green-blue comes out 2-3 levels
+dark, so the check decodes with `accurate_rnd`; the file itself is right. The self-test checks the
+arithmetic and that an exported picture equals `--snapshot`'s.
 
-### Found and fixed
+## How the reference tools work
 
-| What was wrong | How it was shown | Fix |
-|---|---|---|
-| The clock's "how far into the next step" number could be exactly 1, though scenes are promised it stays below 1. (The sum is right in 64-bit numbers; squeezing it into 32 bits rounds it up.) | New check fed the old code ten seconds of a steady 60 Hz and 120 Hz display: it happened both times | The number is held just under 1. No visible effect was ever likely: a picture drawn at 1 is where the next step starts anyway |
-| `IndexedCanvas`: a colour number beyond the end of a short palette showed a colour left behind by an earlier frame (the three palette buffers are reused and were never blanked) | New check: 24 of 32 test pixels wrong on the old code | The rest of the buffer is blanked: such pixels are black. No scene's 1993 picture changed |
-| `--snapshot` and `--motion-check` crashed on a negative step number | Run: no message, crash exit code 133 | Usage message, exit code 1 |
-| `--motion-check` with one number, a mistyped number or a backwards range ignored it and checked the whole loop; a failed `--csv` still ended "successfully" | Run: `... rings classic 100` checked 20,000 steps; `--csv /no/such/x.csv` exited 0 | Usage message, or exit code 1 |
-| A mistyped `--scene`, `--look` or `--sidebar` value, or an unknown `--option` (such as `--selftests`), was ignored and the first scene opened | Run | The problem is printed with the list of options and scenes; exit code 2, no window |
-| `--snapshot`'s 1993 look chose the canvas pixel under each output pixel's top-left corner; the window uses its centre. Rows and columns could be one output pixel off | New check: 8,658 pixels wrong for Dot Tunnel at 960x720 on the old code | Uses the centre. Pictures in `docs/images/` were not remade (the difference is at most one pixel at block edges) |
-| A failed compile left the previous build's app in `build/`, looking like the new one | Ran `build.sh` with a compiler that always fails: the old app survived and ran | `build.sh` removes the old app before compiling |
-| Holding the L key flipped the look at the keyboard's repeat rate (R already ignored repeats) | Reasoned from the code only: keys cannot be sent to the app by program | L ignores repeats too. **Not tried by hand** |
+The reference tools in `tools/` are development-only Python (standard library only); the app never runs
+them. Several of them run the original's assembly SOURCE TEXT in a small interpreter, `tools/x86interp.py`:
+not a PC emulator, but a reader of Turbo Assembler text that lays out the data in a 1 MB memory with the
+VGA's four planes and runs each instruction as a small Python function. A base layer handles IDEAL-style
+text and about 35 instructions; a MASM layer turns macros, `REPT` and `dup` into that dialect and adds
+calls and the VGA colour ports; `visu_reference.py` adds more of its own. An unsupported instruction only
+fails if it is actually run, so check new code paths before trusting a result.
 
-### Confirmed sound
+What was learned using them:
 
-- **Clock.** 700 steps in ten seconds (give or take one) at 50, 60, 70, 100, 120 and 144 Hz; never more
-  steps in one frame than the display's speed needs (two at 60 Hz, one at 120 Hz); steps plus fraction
-  move on by the same amount every frame; 17 steps after an hour's pause; a new scene or a restart begins
-  with a frame at step 0 and no carried-over time (read from the code).
-- **Threads.** The sidebar's background thread makes its own scenes and its own graphics queue, and the
-  only things shared with the main thread are tables that never change after they are first worked out
-  (Swift makes that first working-out safe). Pictures reach the window on the main thread. A new check
-  draws all twelve sidebar pictures on two threads at once and requires identical results. The app was also
-  run under Apple's thread sanitizer (a build that reports two threads touching the same data unsafely):
-  100 seconds from launch with the 3D City showing while the sidebar pictures were drawn, and then the
-  whole self-test. It reported nothing either time. (Under the sanitizer the self-test's stopwatch check,
-  "City 1993 replay keeps up", fails, because the sanitizer makes everything several times slower; the
-  other 234 checks pass.) A sanitizer only sees what actually ran, so this is good evidence, not proof.
-- **The two looks.** The 4:3 area is the largest centred one for exact, wide and tall windows (new check).
-  A 320x400 canvas (Plasma) in the 1993 look was seen centred at 4:3 in a capture of the app's window.
-  `--snapshot` works from another folder.
-- **Layouts shared with shaders.** `SmoothTriangles.Vertex` is 48 bytes with fields at 0, 16 and 32, as
-  Metal lays out `float2, float3, float4`; palettes are `float4`, 16 bytes each (new checks, and a drawn
-  test of each).
-- **`Math3D`.** The two perspective matrices put a point at centre + focal x (x, y) / z with y downwards
-  and give the documented depth values; quarter turns go the documented way; the original's combined turn
-  `rotationYXZ` equals turn-about-y x turn-about-x x turn-about-z with each angle the OPPOSITE way round
-  from the single-axis helpers (now noted here; found by trying every order); the 3D and on-screen
-  "faces the camera" tests agree on 500 triangles.
-- **`SmoothTriangles`.** Triangles with no area add nothing; either corner order gives true edge
-  distances and a one-pixel margin; two triangles sharing an edge draw as one even square of the right area.
-- **`build.sh`.** Stops on any failed step; copies all 52 data files; the signature verifies.
+- Read the part's MAKEFILE first: it settles which files, and even which artwork, were live.
+- Built files can differ from their generator source, and a source folder's compiled files from the
+  released program: check against the released one (see `state.md`, "Changing or rebuilding a scene").
+- Self-modifying code (numbers patched into instructions) needs a small text rewrite before it can be
+  interpreted.
+- Compare palettes as well as screens: a reference run once found a port mistake that reading had missed.
+- Fill the heap with 0xCC before each test case, so a result cannot quietly depend on an earlier case.
 
-### Weak self-test checks
+## Swift and Metal traps
 
-- *Graphics chip against reference* passed when both pictures were black (21 of the 124 checkpoints are),
-  and skipped a checkpoint without failing if it could not draw. Now: a failure if it cannot draw, and at
-  least half of each scene's checkpoints must show a picture.
-- *Dot Tunnel loops* only checked a counter that the model sets to 0 itself. Now it also checks that the
-  tunnel is empty on the last step and that the picture after the loop is the first picture.
-- Checkpoints out of order would have been compared at the wrong step: now checked.
-- The self-test now prints how many checks ran, so a block of checks going missing shows.
-- Left as they are, reported to the sessions that own them: *VISU modern look stays close in 7 test
-  cases* skips any case it cannot find by name, so it could pass having compared fewer than seven (or
-  none); *City 1993 replay keeps up* is a stopwatch test and can fail on a busy Mac with nothing wrong.
+- `setVertexBytes` holds at most 4 KB. Use a vertex buffer for anything bigger.
+- The Swift compiler can give up ("unable to type-check in reasonable time") on a closure that builds a
+  `SIMD4` from several `Float(...)` conversions and divisions; write the parts out as separate `let`s.
 
-### Known limits, not changed
+## Known limits of the core
 
 - `byteFromVGA` stops the program if given a value outside 0...63. No scene does; clamping instead would
   hide a scene's mistake.
 - `Math3D.project` has no guard for points at or behind the camera. Its one user (Plasma Cube) never has any.
-- `SmoothTriangles` draws a triangle much thinner than a pixel too bright (about a quarter of a pixel
-  wide however thin it is). Only matters for faces seen almost exactly edge-on.
-- If the 1993 look's small picture cannot be created (out of graphics memory) the window shows an
-  undefined picture rather than black. Could not be made to happen, so not touched.
-- The clock reads the time when the display asks for a picture, not the time the picture will appear.
-  Using the display's own timestamp might make Modern motion a touch more even; a proposal, not a fault.
-
-### Not verified
-
-- Anything that needs a person at the keyboard: L, R and the arrow keys with the sidebar focused, holding
-  L down, the toolbar, fullscreen in and out (and the sidebar coming back), resizing, moving the window
-  between a Retina and an ordinary display, sleep and wake, quitting while the sidebar pictures are still
-  being drawn, and what macOS restores at the next launch.
-- A 60 Hz display: this Mac's is 120 Hz, so 60 Hz was checked with made-up times only.
-- The window's own scaling-up of the 1993 picture is checked by eye in a capture, not pixel by pixel
-  (the self-test checks the small picture, and `--snapshot`'s scaling, exactly).
-- Macs with Intel graphics.
-- Whether all twelve sidebar pictures had finished within the sanitizer's 100 seconds was not observed
-  (drawn one after another by themselves under the sanitizer they take about 50 seconds).
-
+- `SmoothTriangles` draws a triangle much thinner than a pixel too bright (about a quarter of a pixel wide
+  however thin it is). Only matters for faces seen almost exactly edge-on.
+- Not tried: Macs with Intel graphics (the app is built for Apple silicon only), and a 60 Hz display
+  other than with made-up times.

@@ -11,7 +11,7 @@ the Future Crew rings, follows the 3D city and fades to black before the credits
 
 - **Original:** `BEG/BEG.C` (about 85 lines) and `END/END.C` (about 130 lines, half of it a commented-out
   text scroller). Built as `BEGLOGO.EXE` and `ENDLOGO.EXE`. Who drew the pictures is not recorded here.
-- **This version:** `Sources/SRMetal/Scenes/FadingPicture/` (added 2026-11-24): one scene class,
+- **This version:** `Sources/SRMetal/Scenes/FadingPicture/`: one scene class,
   `FadingPictureScene`, set up twice. The pictures are drawn with the shared toolkit
   (`Core/PictureLayer.swift`, see [how-it-works.md](../how-it-works.md#pictures-in-the-modern-look)).
 - **Length:** title 161 steps (2.3 seconds) in the demo; end picture 163 steps, then a hold until the
@@ -60,6 +60,9 @@ refreshes and laid on top of the enlarged picture.
 ## Limits
 
 - Not compared with the original running.
+- Inside Play Demo the end picture may start its fade-out one step after the original would have: the
+  scene checks "music plus" with the music one step older than the original's "wait, then check" would
+  see. If so, the last, black step of the fade falls on the credits' first step. Not settled.
 - The original's white screen at the start was the palette at white over whatever was on screen (the
   title program also filled video memory with colour 15 first); this version shows the picture faded to
   full white, which is the same colour.

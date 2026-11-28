@@ -16,7 +16,8 @@ and both shrink to nothing.
   see-through polygon filler), `VID.ASM` (screen mode numbers), and the picture `FC.UH` (the plate).
 - **This version:** `Sources/SRMetal/Scenes/GlenzVectors/`, plus `Core/Math3D.swift` and
   `Core/SmoothTriangles.swift`.
-- **Length:** 2360 steps, about 34 seconds, then it repeats.
+- **Length:** on its own 2360 steps, about 34 seconds, then it repeats. In Play Demo it starts with the
+  original's lead-in and waits for the music, and runs once (see "Inside Play Demo").
 
 **This scene uses original artwork.** The plate is a hand-drawn picture from the 1993 demo, kept in
 `GlenzFloorArt.swift` as data. See "The plate is a picture" below for why.
@@ -162,7 +163,7 @@ steps (original frame = step - 212):
 | Steps | What happens |
 |---|---|
 | 1-177 | The plate drops in, bounces, settles |
-| 178-212 | Pause (see "Deliberate differences") |
+| 178-212 | Pause, on its own (see "Differences from the original") |
 | 213- | The first glenz falls from above the screen under gravity |
 | 362, 620 | It lands and bounces; near the floor it is squashed by how deep it is, then wobbles as a spring |
 | 879-882 | Third landing (see "Kept quirks": it sticks for four frames) |
@@ -236,21 +237,18 @@ and the chip is handed triangles already placed on the screen; nothing here need
 | Lighting | on-screen area, via 16 palette entries per face | the same | on-screen area, per face |
 | Edges | hard | hard | smooth |
 | Plate | picture, rows squeezed | the same picture | the same picture, 8x by Super-xBR, then smoothly scaled |
-| Start | after a lead-in tied to the previous scene and the music | plate drops in from black | the same |
-| End | black until a music cue | loops after 2360 steps | the same |
+| Start | after a lead-in tied to the previous scene and the music | on its own: plate drops in from black; Play Demo: the lead-in | the same |
+| End | black until a music cue | on its own: loops after 2360 steps; Play Demo: black until the cue | the same |
 
 ## What was checked
 
 - **The 1993 pictures, against the original's own assembly.** `tools/glenz_reference.py` reads
   `MATH.ASM`, `VEC.ASM` and `NEW.ASM` as text and carries their instructions out one at a time in the
-  small x86 interpreter first written for the Plasma Cube tool (extended with 20 or so more
-  instructions, near calls and the colour ports; both layers now live in `tools/x86interp.py`). `MAIN.C` is re-written in Python. At 26 steps spread over the whole
+  small x86 interpreter `tools/x86interp.py`. `MAIN.C` is re-written in Python. At 26 steps spread over the whole
   scene (1, 100, 177, 214, 330, 420, 440, 600, 800, 925, 960, 980, 1000, 1014, 1100, 1300, 1500, 1700,
   1900, 2050, 2100, 2200, 2250, 2300, 2340, 2359) the screen's colour numbers and all 256 palette
   colours are identical to the Swift model's. The self-test repeats this comparison by checksum. Since
   every frame depends on the ones before, a match at step 2340 says a good deal about the 2339 before it.
-  This comparison found one mistake in the first Swift version (the "unlit on its first frame" quirk
-  below), which is the point of having it.
 - **The sine table.** `MATHSIN.INC` (4500 entries) equals `trunc(sin * 32767 + 0.5)` except entries
   3300 and 3900, where the true value lies exactly on the rounding edge; those two are set by hand.
   Checked by checksum in the self-test. `SIN1024.INC` equals the app's shared table.
@@ -269,38 +267,39 @@ and the chip is handed triangles already placed on the screen; nothing here need
 - **The two looks against each other**: pictures at steps 365, 420, 440 and 1300 looked at side by
   side, and at step 1300 the red levels sampled on a grid of points agree.
 - **The loop**: black at step 0 and at step 2359, and step 2360 is step 0 again (self-test).
-- **The modern look in motion (2026-11-14 review).** A self-test runs one whole loop and into the next
+- **The script, by reading against `MAIN.C`:** the plate's fall and its row arithmetic; the 256
+  starting colours; rotation counters; both wander rules and the first glenz's exit; grow and shrink (the
+  original's `else if (frame > 1400+789)` branch can never run and is rightly absent); the bounce, squash
+  and spring, with 16-bit wrapping where the original has it; the three palette phases; which glenz is
+  drawn when; the floor clamp ending at frame 800. No out-of-range read: the wipe touches rows up to 199,
+  palette blocks stay inside the 256 colours, the filler holds columns to 1...319.
+- **The modern look in motion.** A self-test runs one whole loop and into the next
   and checks, for both glenzes at every step they are drawn (3,502 in all): the modern look's 14 corners
   start each step within 3 pixels of the 1993 look's (worst found: 1.85; the 1993 ones are rounded to whole
   pixels), and each step's glide ends exactly where the next begins. Together these mean every glide runs
   from one 1993 position to the next and across nothing else: not across the bounces, the squash, the
   second glenz appearing, the change of wander rule at step 2013, the shrink or the restart. It also checks
   that both looks start and stop drawing each glenz on the same step, and that the plate never moves
-  further in a step than it is falling. `--motion-check glenz-vectors modern` over the loop reports two
+  further in a step than it is falling, nor jumps when it settles. `--motion-check glenz-vectors modern` over the loop reports two
   jumps, both expected: the plate's first appearance, and step 1070 (see "Kept quirks").
 
 ## What was not checked
 
 - **Against a running original or a recording.** Nothing here has been compared with the real program
   on screen.
-- **`MAIN.C` as a whole.** The script was ported by reading, twice (Python and Swift), by the same
-  author, and read a third time, independently, in the 2026-11-14 review, which found no difference.
-  Only the bounce line was confirmed in the compiled code. It has not been run.
+- **`MAIN.C` as a whole.** The script was ported by reading, into both Python and Swift, and read once
+  more against the Swift with no difference found. Only the bounce line was confirmed in the compiled
+  code. It has not been run.
 - **Three small changes to the assembly text in the tool**: `rotlist` writes numbers into its own
   instructions, which the tool keeps in variables instead; the C calling wrappers are bypassed; a
   debugging macro is emptied. None should change a result.
-- **Timing against the music**: not checked when this was written. The demo's timeline (2026-11-24,
-  [demo-timeline.md](../demo-timeline.md)) now has the original's cues: see "The pause" below.
-- **The modern look's colours in motion.** Positions are now checked by program (above); how the
-  colours and blending look while moving was checked only by the picture-difference numbers of
-  `--motion-check` and a few still pictures, not by a person watching.
 - **The linked library `gl10.lib`.** `zoomer2` calls `setpalarea`, which is in no source file here, so
   it presumably comes from that library. Only the lead-in uses it; its effect (colours 0-127 set) is
   plain from the call, so the lead-in was built on that reading.
 
 ## Inside Play Demo
 
-Since 2026-11-25 the scene follows `GLENZ/MAIN.C` (288-411) and `ZOOMER.C` there. Step n is the n-th
+The scene follows `GLENZ/MAIN.C` (288-411) and `ZOOMER.C` there. Step n is the n-th
 after the one the scene is shown on; what a pass draws before its wait shows on the step it is drawn in.
 
 | Steps | What shows |
@@ -311,11 +310,10 @@ after the one the scene is shown on; what a pass draws before its wait shows on 
 | ... cue + 449 | The plate at rest: the glenz waits until the music's frame counter, set to 0 on the cue step, reaches 333 (MAIN.C 400). The counter counts music ticks, 52 a second, so that is 448 steps after the cue: the plate rests for 226 steps. The scene reads the counter itself (`GlenzLeadIn.pauseOver`) |
 | cue + 450 ... | Glenz frame 1 onwards, as on its own; black from frame 2133; no second run. The tunnel follows on the script's end cue (frame 2150 is the last shown: the glenz's fade ends a quarter of a second before the tunnel) |
 
-**The released program (2026-11-25):** `GLENZ.EXE` in `MAIN/DATA` unpacks (`deark -m pklite`) to exactly
+**The released program:** `GLENZ.EXE` in `MAIN/DATA` unpacks (`deark -m pklite`) to exactly
 the `V.EXE` in the source folder, and its music reads are `MAIN.C`'s: the cue at -19, the counter set to
 0, the waits for 300 and 333, the end between -16 and 0 (`deark -m exepack` then gives a program whose
-addresses match `V.MAP`). Until that day this version read the counter as screen refreshes: the glenz
-came at cue + 335 and 2,265 frames showed. The user's videos of the original agree with the ticks: the
+addresses match `V.MAP`). Videos of the original agree that the counter counts music ticks: the
 tunnel comes almost at once after the glenz fades.
 
 **Modern look:** the title picture is the title part's own Modern picture (Super-xBR), faded towards
@@ -331,12 +329,12 @@ for itself: it is followed by a wait for a song position, so the check reads the
 
 On its own the scene is unchanged (no lead-in, the 35-step pause, 2,360 steps, then it loops).
 
-## Deliberate differences
+## Differences from the original
 
 - **On its own the lead-in is left out**: the wait for the music and `zoomer2`, which wipes away the
   previous scene's title picture. The scene starts with the plate dropping into a black screen.
-- **On its own the pause is shorter than the original's**: 35 steps (chosen before the music was worked
-  out) against the original's 226 (see "Inside Play Demo"). Kept on purpose (user, 2026-11-25).
+- **On its own the pause is shorter than the original's**: 35 steps against the original's 226
+  (see "Inside Play Demo"). Kept on purpose.
 - **It loops**, on its own. After the fade it restarts at step 2360; the original stayed black until a music cue.
 - **One picture per step.** The original advanced the script once per screen refresh but drew only as
   often as the PC could. On a fast PC that is the same thing. On a slow one, faces would have been
@@ -385,38 +383,3 @@ All in the 1993 look.
   sweep stops one pixel short of the bottom-right corner.
 - **A face narrowed to nothing**: if a triangle's first and last corners land on the same pixel, the
   last is dropped and the two-cornered remainder draws nothing.
-
-## Code review (2026-11-14)
-
-**What was reviewed.** `GlenzModel.swift` (script, plate, pipeline, colour rules, modern look),
-`GlenzFiller.swift`, `GlenzScene.swift` and `GlenzFloorArt.swift`. The script and the plate's fall were
-read line by line against `GLENZ/MAIN.C`. The assembly routines (`MATH.ASM`, `VEC.ASM`, `NEW.ASM`) were
-not read again in full: they are already run instruction by instruction by the reference tool, and the 26
-stored comparisons still pass. Also a general code review of the folder, and the modern look in motion.
-
-**Found and fixed: the plate snapped when it settled (modern look).** While falling, the modern look
-places the plate by the fall's exact position; once settled it used the whole row the 1993 look draws.
-The fall ends at 47 15/16, so on step 177 the plate jumped up by 0.94 of a row within one step, about four
-times its speed just before (`--motion-check`: a change of 0.8 where 0.13 is usual). Now it stays where
-the fall ended. The new self-test fails at exactly that step with the fix removed.
-
-**Looked like a fault, is the original's:** the one-step dimming at step 1070 (see "Kept quirks"). Both
-looks do it, and a re-run of `MAIN.C`'s rule puts the switch on that step.
-
-**Confirmed correct, by reading against `MAIN.C`:** the plate's fall and its row arithmetic; the 256
-starting colours; rotation counters; both wander rules and the first glenz's exit; grow and shrink (the
-original's `else if (frame > 1400+789)` branch can never run and is rightly absent); the bounce, squash
-and spring, with 16-bit wrapping where the original has it; the three palette phases; which glenz is
-drawn when; the floor clamp ending at frame 800. No out-of-range read was found: the wipe touches rows up
-to 199, palette blocks stay inside the 256 colours, the filler holds columns to 1...319.
-
-**Confirmed by program:** the modern look's geometry (`Math3D.rotationYXZ`, `Math3D.canvasPosition`, the
-crossed angles and the swapped scale numbers) agrees with the 1993 look to within 1.85 pixels at every step.
-
-**Still unverified:** see "What was not checked".
-
-**Possible tidy-ups** (not done; for a later `/simplify` pass): `modernState()` copies the model and
-steps the script on the copy for every drawn frame, where once per step would do; the 1993 look rebuilds
-its 256-colour list and the modern look its vertex lists on every frame; `GlenzModel.plateShown` is now
-only used to tell whether the plate has been drawn at all.
-

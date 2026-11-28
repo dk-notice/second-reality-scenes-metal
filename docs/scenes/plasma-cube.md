@@ -29,13 +29,12 @@ Things that turned out **not** to be there:
   trace of them. They are a leftover picture and palette. So this scene uses **no original artwork**:
   the face texture is calculated.
 - **The plasma's tables are not used either.** The cube does not touch `psini`, `lsini4`, `lsini16` or
-  the plasma routine, and the "fifth palette" the flat plasma prepares is only its own last fade. The
-  cube's "plasma" is a separate, much cheaper trick (below). Nothing in `Scenes/Plasma/` is shared or
+  the plasma routine, nor any of the flat plasma's palettes (only `PLZ.C` uses `pals`). The cube's "plasma" is a separate, much cheaper trick (below). Nothing in `Scenes/Plasma/` is shared or
   was changed.
 - **There is no grey floor and no shadow** anywhere in the shipped code. `VECT.C` has room in its data
   layout for lines and more shapes, but only the cube is defined and only faces are drawn. There is a
   commented-out chessboard texture in `PLZFILL.C`.
-- **The "doubling"** in the old planning notes is real, but it is about pixels, not a second cube: see
+- **The "doubling"** some descriptions of this part mention is about pixels, not a second cube: see
   "Half a block sideways on alternate frames" below.
 - `MAIN.ASM` is just the compiler's listing of `MAIN.C`.
 
@@ -170,8 +169,7 @@ graphics chip through `IndexedCanvas`, which looks the colours up.
 Two replays run side by side, half a cycle apart, so that at every step there is a picture for each of
 the two sideways shifts. The 1993 look shows the even mix of the two (see "Deliberate differences").
 
-**Modern look: real 3D triangles.** This is the first scene here to use the graphics chip the way it
-is normally used for 3D. Each visible face is sent as two triangles with its position in front of the
+**Modern look: real 3D triangles.** The graphics chip is used the way it is normally used for 3D. Each visible face is sent as two triangles with its position in front of the
 camera; `Core/Math3D.swift` builds the matrix that reproduces the original's projection, and the chip
 does the divide by distance itself. For every screen pixel the chip then works out the texture from the
 same two wave formulas, in floating point, so there are no four-pixel blocks and no 64-level steps. The
@@ -200,8 +198,8 @@ one fades in over the earlier one, so there is no dark seam.
 
 - **The picture against the original's own code.** `tools/plasmacube_reference.py` (Python) reads
   `PLZA.ASM` and `SPLINE.ASM` as text, expands their macros, and carries out the instructions one at a
-  time in a small x86 interpreter with a model of the card's planes (since moved, unchanged, to
-  `tools/x86interp.py`, which the later tools share). That covers the line filler, the
+  time in a small x86 interpreter with a model of the card's planes (`tools/x86interp.py`, shared by the other
+  reference tools). That covers the line filler, the
   eraser, the palette dimming and the path blending, with the original `RATA.INC`, `SPLINE.INC` and
   `SINIT.INC`. The C parts are re-written in Python in the tool. The Swift replay produces **identical
   screens (every colour number) and identical palettes** at steps 16, 60, 100, 416, 800, 1200, 1600,
@@ -218,7 +216,7 @@ one fades in over the earlier one, so there is no dark seam.
 - **By eye.** Pictures of both looks at steps 60, 416, 800 and 1600 show the same cube in the same
   place with the same pattern and colours. The modern pattern sits slightly differently across a
   steeply angled face, which is the perspective correction.
-- **The modern look is the same cube, by program** (added by the code review below). At every one of
+- **The modern look is the same cube, by program.** At every one of
   the 2048 steps the self-test compares the modern look's cube with the 1993 replay's: the same faces
   are drawn (except at 16 steps where a face is almost exactly edge-on and one look draws it a step
   before the other), every corner is within 4.3 units of the 1993 position (the cube is 250 across;
@@ -228,78 +226,52 @@ one fades in over the earlier one, so there is no dark seam.
   point (steps 1990 to 2100) finds no jumps; the most pixels that appear for one picture only is 58
   of 172,800, along thin edges while the cube rises into view.
 
-## Code review (2026-11-14)
-
-Both looks were reviewed: the automatic `/code-review` over the scene's four files, and a second,
-independent reading of the two C files that had only ever been ported by reading (`VECT.C` and
-`PLZFILL.C`), line by line against `PlasmaCubeModel.swift` and `PlasmaCubeFiller.swift`.
-
-**Found and fixed**
-
-- **Nothing wrong was found in the scene itself.** No picture changed.
-- **The reference tool's `--src` option did not work.** `tools/plasmacube_reference.py` read the
-  original's tables as the file loaded, before it looked at its options, so it only ran when the
-  original source sat in one particular place next to the project. Fixed (for this tool only; the
-  shared interpreter was not touched). With that, the tool was run again from scratch for steps 16, 60
-  and 416: the original assembly gives the same screen and palette checksums the self-test expects.
-
-**Confirmed correct, by the second reading**
-
-- `VECT.C`: the order of the eight path values; the light direction; the nine turn numbers, including
-  C's rule that `>>15+7` means "shift by 22" and where the 32-bit and 16-bit cut-offs fall; the corner
-  arithmetic and the two divides; the face test and its sign; the light level and the
-  remember-by-drawing-position rule; the page counter, which page is drawn and which shown, and that
-  the 2-pixel offset of a drawn page matches the 2-pixel slide when that page is shown.
-- `PLZFILL.C`: the wave table, texture, shift table and three colour ranges; finding the top corner;
-  the edge set-up (16.16 numbers, the +0.5 start, "a height of 0 counts as 1"); the order in which the
-  two edges are replaced; the eraser's choice of "three frames ago".
-- The cosine table: the original reads cosines 256 entries further along its sine table, past entry
-  1023. `SINIT.INC` holds 1287 entries and they repeat exactly from 1024 on, so wrapping the index, as
-  this version does, reads the same numbers.
-- **Motion in the modern look.** It has no state of its own: every picture is worked out from "step
-  plus fraction", so nothing can be glided across a jump. The pattern's scroll wraps from 64 to 0, where
-  the wave it drives repeats exactly. At the loop point both looks are black. (The modern cube's last
-  steps are 1 brightness level out of 255 above black, because its light is not rounded down to a
-  whole level as the 1993 one is.)
-
-**Possible tidy-ups** (left for a later clean-up pass, nothing wrong with the picture)
-
-- The 1993 look rebuilds its two 320x400 pictures and its palette on every drawn frame, though they
-  only change once per step.
-- `setEdge` in `PlasmaCubeFiller.swift` repeats the same six lines for each of the two edges.
-- Each loop and reset builds a whole new model, including two 256 KB copies of the card's memory.
-- The guards that return colour 0 for a texture read past the tables, and the "distance at least 1"
-  guard, never run on this path; a comment says so, but nothing would report it if they did.
+- **The C parts, read a second time independently** (`VECT.C` and `PLZFILL.C`, line by line against
+  `PlasmaCubeModel.swift` and `PlasmaCubeFiller.swift`; no difference found):
+  - `VECT.C`: the order of the eight path values; the light direction; the nine turn numbers, including
+    C's rule that `>>15+7` means "shift by 22" and where the 32-bit and 16-bit cut-offs fall; the corner
+    arithmetic and the two divides; the face test and its sign; the light level and the
+    remember-by-drawing-position rule; the page counter, which page is drawn and which shown, and that
+    the 2-pixel offset of a drawn page matches the 2-pixel slide when that page is shown.
+  - `PLZFILL.C`: the wave table, texture, shift table and three colour ranges; finding the top corner;
+    the edge set-up (16.16 numbers, the +0.5 start, "a height of 0 counts as 1"); the order in which the
+    two edges are replaced; the eraser's choice of "three frames ago".
+  - The cosine table: the original reads cosines 256 entries further along its sine table, past entry
+    1023. `SINIT.INC` holds 1287 entries and they repeat exactly from 1024 on, so wrapping the index,
+    as this version does, reads the same numbers.
+- **The modern look has no state of its own:** every picture is worked out from "step plus fraction",
+  so nothing can be glided across a jump. The pattern's scroll wraps from 64 to 0, where the wave it
+  drives repeats exactly. At the loop point both looks are black. (The modern cube's last steps are 1
+  brightness level out of 255 above black, because its light is not rounded down to a whole level as
+  the 1993 one is.)
 
 ## What was not checked
 
 - Nothing was compared with the original program running, or with a recording. The interpreter proves
   the assembly is replayed correctly. The C code around it (`VECT.C`, `PLZFILL.C`) was ported by
-  reading, into the Python tool and into Swift by one author, and then read a third time by the code
-  review, which found no difference. That is three readings and no running original: a misreading
+  reading, into the Python tool and into Swift, and then read a third time independently, which found no
+  difference. That is three readings and no running original: a misreading
   shared by all of them would still not show up.
 - The texture and shift tables were calculated by the original at start-up, so there is no file to
   compare with. They depend on the 1993 compiler's `sin()` agreeing with today's to within rounding
   to a whole number, which is very likely but not proven.
-- When the music started and ended the part was not known when this was written. The demo's timeline
-  (2026-11-24, [demo-timeline.md](../demo-timeline.md)) has since worked it out from `VECT.C`'s two music
-  cues; see "Inside Play Demo" below. Viewers in 1993 did see the cube go fully dark: the loop ran for
+- When the part starts and ends comes from `VECT.C`'s two music cues ([demo-timeline.md](../demo-timeline.md);
+  see "Inside Play Demo" below). Viewers in 1993 did see the cube go fully dark: the loop ran for
   1,999 refreshes and the cube is black from frame 1995.
 - Which moment of the refresh the palette and the page flip took effect was not modelled (see below).
-- The modern look's texture (the pattern on the faces) and its edge smoothing were checked by eye only,
-  in still pictures. Its geometry, light and motion are now checked by program (see above).
+- The modern look's texture (the pattern on the faces) and its edge smoothing were checked by eye only.
+  Its geometry, light and motion are checked by program (see above).
 - That the PC kept up with 70 pictures a second is an assumption; on a slower PC the original showed
   fewer pictures of the same motion.
 
 ## Inside Play Demo
 
-Since 2026-11-25 the scene follows the part's two music cues there (`VECT.C` 114-120):
+The scene follows the part's two music cues there (`VECT.C` 114-120):
 
 - **An empty screen for 48 steps.** The part cleared the screen (`tw_opengraph`) and waited for "music
   plus" >= 13, with the plasma's band already fallen away. The step that meets the cue is still empty:
-  the loop first shows its empty page for one refresh and counts it. (Until 2026-11-25 this wait was 312
-  steps here: the plasma before it was read as shorter than the released program's. The cube's own
-  steps did not move. See [plasma.md](plasma.md), "The released program".)
+  the loop first shows its empty page for one refresh and counts it. (The wait is this short because
+  the released plasma ends on its third fall: see [plasma.md](plasma.md), "The released program".)
 - **Then the original's frames, one a step:** the n-th step after the cue shows frame n, from a fresh
   start. This version's 16-step lead-in (which starts the cube below the screen, for the loop) is not
   used, so the cube appears with the tip of a corner already in view, as it did.

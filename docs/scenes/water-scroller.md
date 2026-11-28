@@ -15,7 +15,7 @@ before the 3D sine landscape. It is called a scroller, but there is no text in i
   `putrouts1`, 20 instructions), by Trug. Built into `RAYSCRL.EXE`. `DATGEN.PAS` made the position
   tables; `TESTI.PAS` and `KOE.PAS` are experiments. The same technique as the
   [Mountain Scroller](mountain-scroller.md), by the same coder.
-- **This version:** `Sources/SRMetal/Scenes/WaterScroller/` (added 2026-11-25); the table reader and the
+- **This version:** `Sources/SRMetal/Scenes/WaterScroller/`; the table reader and the
   Modern look's map are shared with the mountain scroller (`Core/ScrollTables.swift`).
 - **Length:** on its own 2,044 steps (about 29 seconds): black, 127 steps of fading in, 519 of the still
   picture, 1,332 of the sword passing, 65 of fading out, then it starts again. In Play Demo it follows
@@ -66,8 +66,10 @@ below.
 **The data.** The five original files are loaded as they are. The tables could not be worked out again:
 `DATGEN.PAS` read four ray-traced pictures (`k1`, `k2`, `k3`, `k5.mtv`) that are not in the source
 release. One such picture is there, `MASK.MTV`, but it is from an earlier trial and fits the tables
-nowhere. The files are the released version: the built part in the source release (`RAYSCRL.EXE`,
-unpacked) contains all five whole.
+nowhere; even `GREEN.CLX` is not quite the one used (78 of its 20,858 addresses disagree with the
+tables). The files are the released version: the built part in the source release (`RAYSCRL.EXE`,
+unpacked) contains all five whole. (`MIEK.OBJ` in the source folder is an older sword; `MIEKKA` is the
+one used.)
 
 **1993 look:** the original's 320x200 screen, kept from step to step and changed exactly as the program
 changed it: one table a step, the window moving after the third, both fades in whole levels with red
@@ -77,8 +79,8 @@ mountain scroller.
 **Modern look:** drawn afresh every frame.
 
 - The background is ray-traced again from the original scene file, at 8 times the size (2560x1600): see
-  "The background, rendered again" below. The sword is its own picture made 8x by Super-xBR (the user's
-  choice, 2026-11-25, as for the mountain scroller's text), as two pictures: its colours on black, and
+  "The background, rendered again" below. The sword is its own picture made 8x by Super-xBR (as for the
+  mountain scroller's text), as two pictures: its colours on black, and
   its outline.
 - The sword's place comes from the same tables, turned into the smooth map the mountain scroller uses:
   every pixel gets a best-fit plane through the places where its neighbours' sword coordinates step, and
@@ -105,7 +107,7 @@ The scene file that made the background is still in the source release: `WATER/K
 the result ships as `Data/Water/BACKGROUND-POVRAY.png`. POV-Ray is needed only to make that file again;
 the app and `build.sh` never run it. Rendering takes about two seconds (in 1993, at a guess, a day).
 
-Two things had to be put right before 3.7 gave the 1993 picture, both found by measuring (2026-11-25):
+Two things had to be put right before 3.7 gave the 1993 picture, both found by measuring:
 
 - **The fog.** The scene has black fog, which is what makes the picture so dark. POV-Ray 3.7 leaves fog
   out while the camera is inside a solid object, and the scene's sky, a plane high above, counts
@@ -163,4 +165,7 @@ cannot be made again.
 - Modern: the background is a new rendering, so its ripple highlights differ slightly from the
   original's and its dither is gone (see above). The sword on it is still the 1993 picture scaled up.
 - The original drew straight onto the screen being shown; any tearing that caused is not copied.
+- Taken from the original, not from the C++ port: the port runs 126 fade waits, not 127, and fixed the
+  red slip (both fades loop `pf := 0 to 3`, so each colour's red moves twice per round); this version
+  keeps both as the original has them.
 - Not compared with the original running.
