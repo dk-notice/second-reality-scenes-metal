@@ -52,7 +52,9 @@ A modern graphics chip needs none of them, so each scene's documentation explain
 what replaced it.
 
 The app opens straight into **Play Demo**, as a demo should: the whole of it from the beginning, with its
-music. Press Escape to stop it and choose a scene from the list instead.
+music. It ends by itself after 16 minutes 21 seconds, on the end scroller's last line, as the released
+demo did: the picture stays black and the scene list opens. Press Escape at any time to stop it and
+choose a scene from the list instead.
 
 **Play Demo** (the first row of the list, the **Scene** menu, or press P) runs the whole demo, all 19 parts in the original order with
 the original music (the real tracker songs, played live by libopenmpt, which is built into the program: see
@@ -61,8 +63,7 @@ the original music (the real tracker songs, played live by libopenmpt, which is 
 Demo from Part** at any of its parts, with the music jumped to that moment, so everything after stays in
 step. The scenes in the sidebar play on their own, silently, and repeat.
 
-All 19 parts are this project's scenes (the opening credits, the last, since 2026-11-25). See
-[docs/demo-timeline.md](docs/demo-timeline.md).
+All 19 parts are this project's scenes. See [docs/demo-timeline.md](docs/demo-timeline.md).
 
 ## Scenes
 
@@ -91,13 +92,8 @@ All 19 parts are this project's scenes (the opening credits, the last, since 202
 | End Scroller | Future Crew | [docs/scenes/end-scroller.md](docs/scenes/end-scroller.md) |
 | Hidden Starfield | Psi | [docs/scenes/starfield.md](docs/scenes/starfield.md) |
 
-The first twelve scenes (2026-11-14) were the purely calculated ones and the 3D ones; Ships Fly-by and the
-3D City share the original's 3D engine, which was built and checked against the original's code first: see
-[docs/visu-engine.md](docs/visu-engine.md). Picture-based parts, scrollers and stills were out of scope at
-first. Since Play Demo exists (2026-11-24) they have been added one at a time: the Explosion, the title and
-end pictures, the troll and the screen switch-off, the end scroller, the rotozoomer, the lens, the jelly
-logo, the mountain scroller, the water scroller, the credits and, last, the opening credits.
-What may come next is in [docs/future-ideas.md](docs/future-ideas.md).
+Ships Fly-by and the 3D City share the original's 3D engine, which has its own page:
+[docs/visu-engine.md](docs/visu-engine.md).
 
 ### What is calculated and what is original material
 
@@ -124,7 +120,8 @@ Super-xBR, a pixel-art scaler; no AI-upscaled artwork is used.
 
 ## Build and run
 
-You need a Mac with macOS 15 or later and Apple's Command Line Tools (`xcode-select --install`).
+You need a Mac with Apple silicon (M1 or later; the app is built for that only and has not been tried on
+an Intel Mac), macOS 15 or later, and Apple's Command Line Tools (`xcode-select --install`).
 The full Xcode app is not needed, and nothing else needs installing: the one outside library, libopenmpt
 (for the music), is included as source code and built by `build.sh`.
 
@@ -184,12 +181,13 @@ Put these after `--args` when starting the app, for example
 | `--look modern` or `--look classic` | Start in that look |
 | `--sidebar hidden` or `--sidebar shown` | Start with the scene list hidden or showing (without it: hidden when the app starts in the demo, showing when it starts on a scene) |
 | `--from <scene id or part number>` | With `--scene play-demo`: start the demo where that scene first shows, or at that part (1-21, as `--demo-timeline` numbers them) |
-| `--music off` | Start with the music muted |
+| `--music off` or `--music on` | Start with the music muted, or not (the default) |
+| `--end-scroller-steps <n>` | With `--scene play-demo --from end-scroller`: a trial of the demo's end, the end scroller cut to n steps |
 
 A mistyped option or scene name is reported (run the program directly to see the message) and the app
 does not start.
 
-Two more are run directly on the program inside the app, and open no window:
+These commands are run directly on the program inside the app, and open no window:
 
 ```bash
 build/SRMetal.app/Contents/MacOS/SRMetal --selftest
@@ -301,10 +299,9 @@ shaders (MIT licence).
   these).
 - [docs/demo-timeline.md](docs/demo-timeline.md): when each part of the original demo starts and ends, worked
   out from its source and simulated against the real music, and how Play Demo follows it.
-- [docs/future-ideas.md](docs/future-ideas.md): what may come next (a video export, the interface, a signed release).
+- [docs/future-ideas.md](docs/future-ideas.md): what may come next (a signed release).
 - `Data/*/README.md`: what each folder of original data holds, and why it has to ship.
-- [state.md](state.md): working notes: current status, rules, and what is next.
-- [docs/dev-notes.md](docs/dev-notes.md): the detailed working notes up to 2026-11-25, kept as an archive.
+- [state.md](state.md): development notes (status, rules, traps); not needed to use the app.
 
 ## How faithful is the 1993 look?
 
@@ -372,10 +369,11 @@ The music is played with **libopenmpt** (<https://lib.openmpt.org/>), copyright 
 Developers and Contributors and Olivier Lapicque, used under the BSD 3-clause licence: see
 [ThirdParty/libopenmpt/LICENSE](ThirdParty/libopenmpt/LICENSE). It is the only outside library in the program.
 
-The end scroller's text and font are the RELEASED demo's, taken unchanged from the data of the C++ port
+The end scroller's text is the released demo's `MAIN/DATA/ENDSCROL.TXT`. Its font, which the source
+release has only in an earlier version, was taken unchanged from the data of the C++ port
 **SecondReality++** (<https://github.com/XorJS/SecondRealityPlusPlus>, public domain under the
-Unlicense), whose authors extracted them from the released demo; the source release has only an earlier
-version. See [Data/EndScroller/README.md](Data/EndScroller/README.md). No code was taken from the port.
+Unlicense), whose authors extracted it from the released demo. See
+[Data/EndScroller/README.md](Data/EndScroller/README.md). No code was taken from the port.
 The end scroller's Modern look uses SuperClarendon, a typeface that comes with macOS (not included in
 this project).
 

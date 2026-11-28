@@ -29,13 +29,13 @@ The code is mostly assembly and C, with three parts in Turbo Pascal.
 | 3 | Explosion | `PAM.EXE` | `PAM` | Trug / Wildfire |
 | 4 | Title picture | `BEGLOGO.EXE` | `BEG` | |
 | 5 | Glenz vectors | `GLENZ.EXE` | `GLENZ` | Psi |
-| 6 | **Dot tunnel** | `TUNNELI.EXE` | `TUNNELI` | Trug |
-| 7 | **Rings, interference, techno bars** | `TECHNO.EXE` | `TECHNO` | Psi |
+| 6 | Dot tunnel | `TUNNELI.EXE` | `TUNNELI` | Trug |
+| 7 | Rings, interference, techno bars | `TECHNO.EXE` | `TECHNO` | Psi |
 | 8 | Picture, then the screen "switches off" | `PANICEND.EXE` | `PANIC` | Wildfire |
 | 9 | Mountain scroller | `MNTSCRL.EXE` | `FOREST` | Trug |
 | 10 | Lens, then rotozoomer | `LNS&ZOOM.EXE` | `LENS` | Psi |
 | 11 | Plasma, then plasma cube | `PLZPART.EXE` | `PLZPART` | Wildfire |
-| 12 | **Bouncing dots** | `MINVBALL.EXE` | `DOTS` | Psi |
+| 12 | Bouncing dots | `MINVBALL.EXE` | `DOTS` | Psi |
 | 13 | Water scroller (a sword sliding over ray-traced water) | `RAYSCRL.EXE` | `WATER` | Trug |
 | 14 | 3D sine landscape | `3DSINFLD.EXE` | `COMAN` | Psi |
 | 15 | Jelly logo | `JPLOGO.EXE` | `JPLOGO` | Psi |
@@ -45,8 +45,8 @@ The code is mostly assembly and C, with three parts in Turbo Pascal.
 | 19 | End scroller | `ENDSCRL.EXE` | `ENDSCRL` | |
 | | Hidden starfield | `DDSTARS.EXE` | `DDSTARS` | Psi |
 
-All of these except the opening credits (1) and the credits (18) are re-created in this project (the
-bold marks only the first three that were). Several programs hold two or three effects back to back.
+All of these are re-created in this project. Several programs hold two or three effects back to back.
+The demo ends inside the last one: on the end scroller's `%` line the released `ENDSCRL.EXE` quits.
 The folder names do not always match the program names; some rows were matched from the existing port's
 naming and not confirmed from every build script.
 

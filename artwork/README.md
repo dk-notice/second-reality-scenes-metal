@@ -2,8 +2,8 @@
 
 Every picture the released *Second Reality* (Future Crew, 1993) shows, exported to PNG. The app shows
 these originals; for the Modern look it scales them up on the graphics chip with Super-xBR, a
-pixel-art scaler (chosen 2026-11-24), and will re-make a picture from its source where that is possible (decided 2026-11-24, replacing
-an earlier plan of AI-upscaled versions, which were removed). Like the rest of the original, the artwork was released
+pixel-art scaler, or re-makes a picture from its source where that is possible (the water background).
+No AI upscaling is used. Like the rest of the original, the artwork was released
 into the public domain in 2013.
 
 | Folder | What is in it |
@@ -57,7 +57,7 @@ shape: 320x200 and 320x400 pictures become 1600x1200; the two 640-wide pictures 
 | `00-start-setup-screen` | Setup menu (`START`) | 640x400 | The screen with the setup options, before the demo starts. How much of its width shows at once has not been checked. Rows 300-331 are not part of the picture: they hold the menu's font. |
 | `01-opening-horizon` | 1, opening credits (`ALKU`) | 640x200 | Night horizon the opening credits appear over. Two screens wide; it scrolls sideways. **Colours 1-3** are the text's greys and white in the built copy (the artist's file has dark blues there); 921 pixels of the picture use them. The PNG has the colours the demo showed. |
 | `01-opening-font` | 1 | 1500x30 | The credits font. No colours of its own: the shades (black = empty, white = solid) are coloured by the program. The built copy has one stray byte in front, which shifted every letter one pixel; the PNG leaves it out. |
-| `02-ships-horizon` | 2, ships fly-by (`VISU`) | 320x200 | Dusk horizon under the ships. Rows outside 25-174 are black (the 3D picture only filled that band). Used by the Ships Fly-by scene (which would use a replacement, `Data/Visu/U2ABG-modern.png`, if one existed; none does). |
+| `02-ships-horizon` | 2, ships fly-by (`VISU`) | 320x200 | Dusk horizon under the ships. Rows outside 25-174 are black (the 3D picture only filled that band). Used by the Ships Fly-by scene. |
 | `04-title` | 4, title picture (`BEG`) | 320x400 | "Second Reality" title with the creature. |
 | `05-glenz-plate` | 5, glenz vectors (`GLENZ`) | 320x200 | The chequered plate the glenz lands on (top 108 rows; the rest is empty). Already in the Glenz Vectors scene. The program combines its colour numbers with the glenz's, so for that scene the colour **numbers** matter, not just the look. |
 | `07-troll` | 7, after the techno bars (`TECHNO`) | 320x400 | The troll. Part 8 then "switches the screen off" on this picture (it has no picture of its own). |
@@ -69,7 +69,7 @@ shape: 320x200 and 320x400 pictures become 1600x1200; the two 640-wide pictures 
 | `13-water-font` | 13 | 400x35 | Not a font: a picture of a sword with a flame in front and sparks behind, with its own colours (192...255); the part slides it over the water (see `docs/scenes/water-scroller.md`). (The file's header says 400x250; the data is 400x35.) |
 | `15-jelly-logo` | 15, jelly logo (`JPLOGO`) | 320x400 | The warrior on a horse ("Ice Kingdom"). The program squashes and wobbles it row by row. |
 | `17-end-picture` | 17, end picture (`END`) | 320x400 | The Future Crew ring. |
-| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits, as linked into the released `CRED.EXE`. Most are miniature screenshots of the part. **Plan (user, 2026-11-24): replace them with screenshots of this project's finished scenes** (nearly all parts are built now; the credits part itself is not). See the warnings below. |
+| `18-credits-pic01` ... `pic18` | 18, credits (`CREDITS`) | 160x100 each | 21 small pictures, one per part, shown beside each part's credits, as linked into the released `CRED.EXE`. Most are miniature screenshots of the part. The Modern look shows captures of this project's own scenes instead (`--credits-captures`, made by `build.sh`). See the warnings below. |
 | `18-credits-font` | 18 | 1500x40 | The credits font (shades 0-9, coloured by each credits picture's palette). The program uses the top 32 rows. |
 | `19-endscroller-font` | 19, end scroller (`ENDSCRL`) | 1500x30 | The end scroller's font; shades, coloured by the program. |
 | `starfield-text-panels` | Hidden part (`DDSTARS`) | 320x200 | The two text panels of the hidden starfield part. Left out of this project's Hidden Starfield scene. 16-colour picture using 4. |
@@ -80,7 +80,7 @@ them, which has not been checked.
 
 ## Warnings
 
-- **Credits pictures come from the released program** (since 2026-11-25), unpacked from
+- **Credits pictures come from the released program**, unpacked from
   `MAIN/DATA/CRED.EXE` with `deark` (Homebrew), which `tools/art_export.py` needs for them. The
   artist's files in the source (`CREDITS/PICS/*.LBM`) differ: pictures 02, 05b, 09, 14b, 16, 17 and 18
   were redrawn or replaced for the release (02 is a "PART PIC MISSING" placeholder there, a real
