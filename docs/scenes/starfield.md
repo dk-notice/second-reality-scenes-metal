@@ -117,30 +117,35 @@ the original's perspective formula without the rounding.
 
 - **The live source is the built source.** The constants in `STARS.ASM` are present in `K.EXE` (the
   program the makefile builds and copies to the demo as `DDSTARS.EXE`).
-- **The original's own code agrees (since the 2026-11-14 review).** `tools/starfield_reference.py` reads
+- **The original's own code agrees.** `tools/starfield_reference.py` reads
   `STARS.ASM` as text and carries out its star routines one instruction at a time in the project's small
   x86 interpreter: the random numbers, the set-up of the stars and the two perspective tables, `staradd`
   and `staradd2`. The Swift model gives the same perspective tables, the same first stars, and the same
   whole 320x400 screen at 15 steps chosen either side of every mark in the timetable (1, 2, 33, 64, 500,
-  900, 901, 1200, 1201, 1217, 1499, 1500, 1501, 1700, 1984; self-test). Unlike the earlier check, this does
-  not depend on anyone's reading of those routines. What the tool does *not* run from the original is listed
+  900, 901, 1200, 1201, 1217, 1499, 1500, 1501, 1700, 1984; self-test). This does not depend on
+  anyone's reading of those routines: the random numbers; the perspective tables; star set-up and the
+  100 unseen steps; the let-in limit and its two step sizes; re-placing a star that has flown past; the
+  row and column limits; the three colour bands; dots combining; the echo 17 pictures on. (One detail it
+  settled: the original takes a star's depth, subtracts 2, and uses the *result* both to place the dot
+  and to pick its colour: `movzx bx,[si]` / `sub bl,2` / look up the tables with `bx`.) What the tool does *not* run from the original is listed
   under "What was not checked".
 - **Modern against 1993.** In saved pictures at step 1100, about 99% of lit 1993 pixels had a modern star
-  within 3 pixels (re-measured roughly after the review's fix: 104 of 14,844 did not). Steps 300 and 1900
-  were compared before the fix and by eye only.
-- **Modern look in motion (2026-11-14 review).** `--motion-check starfield modern` over the whole loop found
+  within 3 pixels (104 of 14,844 did not).
+- **Modern look in motion.** `--motion-check starfield modern` over the whole loop found
   no jumps; the change from one picture to the next stays smooth across steps 1, 33, 900/901, 1200/1201,
   1217, 1500, 1984/1985 and the loop point.
 - **The graphics chip matches the processor** pixel for pixel at eleven moments (self-test). For this kind
   of scene that proves only the display path.
 - **The loop.** After 2048 steps the model is back at its starting state, and the last frame before that
-  is one fade step from black (self-test).
+  is one fade step from black (self-test). The restart shows one fully black step in both looks, then
+  the fade-in starts at its second level.
+- By reading: the mirror, the timetable, the fade and its one-step lead.
 
 ## What was not checked
 
 - **Nothing was compared with the original program running.** No DOS emulator was used. Where each dot
   goes within a picture is now checked against the original's code (above). These parts still rest on
-  reading `do_stars` and the video set-up, now read twice (when written, and in the review): that switching
+  reading `do_stars` and the video set-up (read twice): that switching
   off line-doubling gives 400 separate lines with stars on the even ones; the order of the palette change
   and the page swap; the step marks (900, 1200, 1500) and which routine runs when; and the EMS page
   arithmetic (that the ring really is 64 pictures and "17 further on" and "32 further on" mean what they
@@ -149,12 +154,16 @@ the original's perspective formula without the rounding.
 - The third-party C++ port was looked at only to confirm it also uses a 320x400 screen and the same
   timetable marks. It was not run or compared pixel for pixel.
 - The perspective tables have no original data file to compare with: the original calculated them too.
+- Modern look: the middle of the star field is half a canvas pixel (1/640 of the width) right of the
+  1993 look's. Too small to see. When a star's run ends, its leading dot disappears at once (as in the
+  1993 look); the ease-out only softens the replayed copies.
+- `tools/x86interp.py` stops with an error on a shift by a count of zero held in CL (`shr ch,cl`), which a
+  real processor treats as "do nothing". The starfield tool works round it.
 
 ## Differences from the original
 
-- **The text panels are left out.** They are a picture, and when this scene was built pictures were out
-  of scope. (They no longer are, and the panels are exported as `artwork/original/starfield-text-panels.png`,
-  but they have not been added.)
+- **The text panels are left out.** They are exported as `artwork/original/starfield-text-panels.png`
+  but not shown.
 - **It ends, and loops.** The original ran until a key was pressed, getting ever denser. This version stops
   adding stars after step 1984, plays the finished loop for the last 64 steps while fading to black (the
   original's 33-step fade-in, run backwards), and starts again from black. Step 1984 was chosen by eye:
@@ -162,41 +171,3 @@ the original's perspective formula without the rounding.
 - **Each loop is identical.** The random numbers start from the same seed every time round, as they did
   every time the original was started.
 - **Modern look only:** the changes listed under "Modern look" above.
-
-## Code review (2026-11-14)
-
-**What was reviewed.** Both Swift files, line by line against `DDSTARS/STARS.ASM` and `KOE.ASM`, with the
-third-party C++ port as a second opinion; a general code review of the folder; and the modern look in
-motion over the whole loop.
-
-**Found and fixed: every 1993-look dot was one step out of place.** The original takes a star's depth,
-subtracts 2, and uses the *result* both to place the dot and to pick its colour
-(`movzx bx,[si]` / `sub bl,2` / look up the tables with `bx`). This version placed the dot with the depth
-from *before* the subtraction: each dot sat where the original drew it one step earlier, slightly nearer the
-middle. The Python re-write used as the check had the same misreading, which is why the old self-test
-passed. Proof: the same instruction bytes are in the built `K.EXE`; the C++ port reads it the same way;
-and running the original routines in the interpreter gives different pictures from the old Swift at every
-step compared (step 1: checksum 3540269994 against the old 2529779785) and identical ones after the fix.
-All 1993 pictures of this scene changed, by a pixel or two per dot; the stored checksums were replaced with
-the original's. The modern look's flights were moved by the same one step so the two looks still agree.
-The old page listed this as a "kept quirk"; it was not one.
-
-**Confirmed correct** (by the interpreter run): the random numbers; the perspective tables; star set-up and
-the 100 unseen steps; the let-in limit and its two step sizes; re-placing a star that has flown past; the
-row and column limits; the three colour bands; dots combining; the echo 17 pictures on. By reading: the
-mirror, the timetable, the fade and its one-step lead.
-
-**Looked at and left alone.**
-- Modern look: the middle of the star field is half a canvas pixel (1/640 of the width) right of the 1993
-  look's. Too small to see.
-- Modern look: when a star's run ends, its leading dot disappears at once (as in the 1993 look); the
-  ease-out only softens the replayed copies.
-- The loop restart shows one fully black step in both looks, then the fade-in starts at its second level.
-- `tools/x86interp.py` stops with an error on a shift by a count of zero held in CL (`shr ch,cl`), which a
-  real processor treats as "do nothing". The starfield tool works round it without changing the shared
-  interpreter.
-
-**Possible tidy-ups** (not done; for a later `/simplify` pass): the list of flights is copied to the
-graphics chip on every frame although it only changes on a step; three buffers are cycled on the assumption
-that no more than three frames are ever in progress; the three unused padding fields of `Flight`.
-

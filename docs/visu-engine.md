@@ -10,10 +10,10 @@ Two parts of Second Reality are real 3D: the **ships fly-by** near the start (`U
 city** near the end (`U2E.EXE`). Both are the same program with different data. The shared part is a
 small 3D engine its author (Psi) called **VISU**, about 4,000 lines of assembly and a little C.
 
-This page describes that engine, the data it reads, and this project's version of it. The engine was
-built and checked by itself first, so that when the two scenes were added, a wrong picture could be
-traced to either the engine or the scene. Both scenes now exist
-([scenes/ships-flyby.md](scenes/ships-flyby.md), [scenes/city-3d.md](scenes/city-3d.md)). What the engine consists of:
+This page describes that engine, the data it reads, and this project's version of it. The engine is
+checked by itself, apart from the two scenes that use it
+([scenes/ships-flyby.md](scenes/ships-flyby.md), [scenes/city-3d.md](scenes/city-3d.md)), so a wrong
+picture can be traced to either the engine or the scene. What the engine consists of:
 
 - `Sources/SRMetal/Core/Visu/`: the engine, for both looks.
 - `Data/Visu/`: the original models and animation, 52 files, 257 KB (see "The data" below).
@@ -95,8 +95,8 @@ that the loader has to trust ("this block holds so many corners", "this polygon 
 the engine then follows them without looking, as the original did. So the loader checks every one
 against what the file really holds, once, when the file is read, and turns a file that does not add
 up away with a message saying what is wrong (`VisuError.badFile`). A damaged animation file cannot
-be checked without playing it, so the animation simply ends where the damage is. See "Code review"
-below for how this was tested.
+be checked without playing it, so the animation simply ends where the damage is. See "Robustness and other checks"
+below for how this is tested.
 
 ### Object file (`NAME.001` ...)
 
@@ -337,7 +337,7 @@ chip. Every polygon is cut into triangles fanning out from its first corner. Wha
 - **Light.** The original's rule, worked out for each corner on the graphics chip without rounding to
   a whole colour number; the colour is then blended between neighbouring palette entries. So shading
   is smooth where the original shows bands and blocks. Like the original, it lets an object's scale
-  weaken or strengthen the light (see "Code review": at first it did not).
+  weaken or strengthen the light (see "Robustness and other checks").
 - **Near plane.** Cut exactly by the graphics chip, with correct colours, where the original shows
   wrong colours on Gouraud polygons (see "Kept quirks").
 - **Motion.** A scene keeps the pose (where every object is) of the last two animation frames and
@@ -390,7 +390,7 @@ and the self-test draws every case with the Swift engine and expects the same ch
 | 15 | whole frames of the ships animation |
 | 31 | whole frames of the city animation, including both sides of the ship-ordering rule |
 | 4 | runs of 40 to 65 consecutive pictures by ONE engine (so leftover state is tested too) |
-| 14 | more whole frames of the city animation, chosen by the code review to reach what the cases above did not (see "Code review") |
+| 14 | more whole frames of the city animation, chosen to reach what the cases above did not (see "Robustness and other checks") |
 | 1 | ships frames 22 and 261 drawn by one engine, for the same reason |
 | 59 | single objects: 6 turns of the small ship; the ship across each window edge, two corners and the near plane; different fields of view; the big ship from outside, inside and below; flat-shaded buildings, Gouraud trees and cars, the logo, polygons with 10 and 12 corners; a second window setting |
 
@@ -425,15 +425,20 @@ demo's copies. The background picture file matches the one linked into `U2A.EXE`
 **The modern look** has nothing exact to compare with. It was looked at next to the 1993 picture
 for sixteen cases, and the self-test holds it loosely: the average difference per colour channel
 between the two looks stays under 8 out of 255 in seven cases (measured over all 124: 5.2 at most).
+In motion, every step of both scenes was rendered and compared with its neighbours by program (see the
+scenes' pages), and both scenes were watched in the running app. Objects that sit almost on top of
+each other (roads 10 units above ground plates) and city frames 901...1099, where the original forced
+the ship to be drawn last, show no trouble: drawing every city frame with its objects in reverse order
+changes at most 2 pixels, so the depth buffer separates all objects cleanly.
 
 ### What was NOT checked
 
 - **Against a running original or a recording.** Everything above compares with the original's CODE,
   not with a PC running it.
 - **The C parts by running them.** `vis_loadobject`, `vis_drawobject`, the animation reader and the
-  object ordering were ported by reading, twice by the same author (Python and Swift), and have
-  now been read a third time, independently, by the code review below, which found no difference
-  from `VISU.C`, `U2A.C` and `U2E.C`. That is still reading: the C code has never been compiled
+  object ordering were ported by reading, twice (Python and Swift), and
+  read a third time, independently, against `VISU.C`, `U2A.C` and `U2E.C` (no difference found; see
+  "Robustness and other checks"). That is still reading: the C code has never been compiled
   and run against this version.
 - **Whole scenes.** Nothing on this page covers how the scenes start, end, fade, or keep time with
   the music; the table above is from reading `U2A.C` and `U2E.C`. Each scene's own page says what was
@@ -447,12 +452,6 @@ between the two looks stays under 8 out of 255 in seven cases (measured over all
   they do not at the two ends of that range (every frame drawn in turn by one engine, against each
   frame drawn alone by a fresh engine: identical in all 2,322 frames). A PC that drew only SOME of
   the earlier frames is in between and was not tried.
-- **The modern look in motion by eye.** For both scenes every step was rendered and compared with
-  its neighbours by program (see the scenes' pages). The two things this page used to warn about
-  for the city did not happen: objects that sit almost on top of each other (roads on ground plates,
-  10 units apart) and frames 901...1099, where the original forced the ship to be drawn last. Drawing
-  every city frame with its objects in reverse order changes at most 2 pixels, so the depth buffer
-  separates all objects cleanly and the modern picture does not depend on drawing order.
 
 ## Not ported
 
@@ -460,123 +459,97 @@ between the two looks stays under 8 out of 255 in seven cases (measured over all
 `calc_rotate16`, `calc_project16`, `calc_sftranslate`, the dot, sky, sight, picture-copy and text
 routines, the 640x400 mode, and the oversampling switches (always off in the two scenes).
 
-## Code review (2026-11-14)
+## Robustness and other checks
 
-The engine was reviewed after it was finished: by the `/code-review` tool, and by hand against the
-original source (`VISU/VISU.C`, `ACALC.ASM`, `ADRAW.ASM`, `ADRAWCLP.ASM`, `AVID.ASM`, `AVIDM1.ASM`,
-`AVIDFILL.ASM`, and the two scene programs `VISU/C/U2A.C` and `U2E.C`). Since the 1993 drawing
-already matched the original assembly in 109 pictures, the review went for what that could not
-show. Every finding below was demonstrated before it was changed; things that could not be
-demonstrated are listed as such, not fixed.
+The engine was also read against the original source (`VISU/VISU.C`, `ACALC.ASM`, `ADRAW.ASM`,
+`ADRAWCLP.ASM`, `AVID.ASM`, `AVIDM1.ASM`, `AVIDFILL.ASM`, `VISU/C/U2A.C`, `U2E.C`) for what the
+picture comparisons cannot show.
 
-### Found and fixed
+### Guards
 
-- **A damaged data file crashed the program.** The loader trusted the numbers in the files. Fourteen
-  kinds of damage were each shown to stop the program dead ("index out of range"): a corner or
-  normal count larger than its block; an order list naming a corner that does not exist or pointing
-  outside the polygon block; a scene file whose object list is placed outside the file, is empty,
-  or claims more objects than the file holds; an empty list of animations, or an animation number
-  with no file name; an animation cut off inside a record. Now every count and position is checked
-  when the file is read, and such a file is turned away with a message saying what is wrong
-  (`VisuObject.swift`, `VisuWorld.swift`). The real files pass every check unchanged.
-- **Clipping could run past the engine's working memory.** Each cut can add corners to a polygon,
-  and nothing limited that. The original had room for 16 corners and would have scribbled over
-  whatever came next; this version would stop with an error once a polygon passed 40. Real
-  polygons are convex and gain at most one corner per cut (the most in either animation is 16).
-  But a search found a 16-corner zig-zag that the four window edges cut into more than 40 corners,
-  and drawing it did stop the program. Growth now ends at 32 corners and is counted as a fault
-  (`VisuEngine.mostClippedCorners`). Random zig-zags did not get there (the worst of 200,000 reached
-  35); it took a directed search, so no ordinary damaged file is likely to.
-- **Modern look: scaled objects were lit differently from the 1993 look.** The shader brought every
-  turned normal back to length 1 before working out the light. The original does not, and the
-  recordings scale some objects (see "Light" under "What the engine does for one object"). Measured
-  on ships frame 100, over the big ship's 127,000 pixels of a 960x720 picture: the modern look was
-  on average 4.5 of 255 brighter than the 1993 look; without the normalising, 0.7. The 1993
-  pictures are untouched (the motion check of both scenes, before and after, is the same but for a
-  pixel here and there).
-- **`--visu-test compare` hid every error.** With the data folder missing it printed nothing and
-  reported success. It now says which case could not be drawn and why, and reports failure. (Checked
-  by hand; there is no self-test for a missing data folder.)
-
-### Tests added
-
-- **15 more cases checked against the original assembly.** Both whole animations were played through
-  the Swift replay with temporary counters on every branch worth naming (which cutters ran and in
-  which combinations, which filler loops, which order list was chosen for which object, every early
-  exit), and the same counters were read for the 109 test cases. The animations reached five things
-  the cases did not: a Gouraud polygon cut by the top, bottom and right edges at once (city frame
-  417, a tree); a flat polygon cut by the near plane and the bottom edge (frame 1176); an edge
-  list that ends on its right side (frame 1571, the logo); an object dropped for being off the
-  left side only (frame 1247); the left-over clip flag sending a polygon through two or three
-  extra cutters at once (city frame 498, and ships frame 261 after frame 22). They also used 32 pairs of object
-  and order list that no case drew. Fourteen city frames and one two-frame ships run reach all of
-  it; the original assembly drew them, and the Swift replay's pictures are identical. With them, the
-  cases reach every counted branch and every object-and-order-list pair that either animation
-  reaches. (The counters were removed again; `tools/visu_reference.py` records which frames and why.)
-- **Self-test:** both whole animations without a fault and without a pixel depending on carried-over
-  state; 2,466 damaged files (17 object files and 15 scene files damaged in one named way each,
-  the rest cut short at many lengths or with one number changed, the same on every run) of which
-  none may crash, plus 401 scribbled polygons; the modern look's light on the scaled big ship;
-  and the two scenes built and stepped on four threads at once (below). `--visu-test damaged`
-  runs the damaged files by themselves and lists the named cases.
-
-### Confirmed, nothing to fix
-
-- **The C parts**, read independently against the original: `vis_loadobject` (block walk, one order
-  list per `ORD` block, default flags), `vis_drawobject` (which normals are turned, the order-list
-  choice by nearest direction vertex), the animation reader (byte for byte: the object number
-  carried over within a frame, the three sizes of signed number, word or byte matrix changes, the
-  two-byte frame end and end mark), the insertion sort, and `U2E.C`'s two ordering rules including
-  its frame counter (`currframe` counts in twos, so "over 1800 and under 2200" is frames 901 to
-  1099). The scene files' special-ordering byte is 0 in both, so `U2A.C`'s test-only rules never ran.
-- **`vid_init(3)`**, which `U2A.C` calls with the comment "oversample x 4", sets the same numbers
-  as the ordinary mode (`m1o_init` in `AVIDM1.ASM`: oversampling shift 0). So "oversampling off"
-  holds for the ships too.
+- **Damaged data files are turned away**, not crashed on. Every count and position is checked when
+  a file is read (a corner or normal count larger than its block; an order list naming a corner that
+  does not exist or pointing outside the polygon block; a scene file whose object list is outside the
+  file, empty, or claims more objects than the file holds; an empty list of animations or one with no
+  file name; an animation cut off inside a record), with a message saying what is wrong
+  (`VisuObject.swift`, `VisuWorld.swift`). The real files pass every check.
+- **Clipping is limited to 32 corners.** Each cut can add corners; real polygons are convex and gain
+  at most one per cut (16 at most in either animation), but a 16-corner zig-zag can be cut into more
+  than 40. The original had room for 16 and would have overwritten what came next. Growth ends at 32
+  and counts as a fault (`VisuEngine.mostClippedCorners`).
+- **The modern look lights scaled objects as the original does:** turned normals are not brought
+  back to length 1 (the recordings scale some objects; see "Light" above). On the big ship this keeps
+  the modern look within 0.7 of 255 of the 1993 look's brightness.
+- **`--visu-test compare`** says which case could not be drawn and why, and reports failure (for
+  example with the data folder missing).
 - **A missing data file** stops the scene with a message naming the file, in `--snapshot`,
-  `--visu-test` and the self-test (tried with a copy of the app with the data removed, and with
-  one object file removed). The data is found when the app is started by full path from another
-  folder, by a relative path, through a symbolic link, and as the bare program in `.build/`.
-- **Threads.** The sidebar builds scenes on a background thread while the main scene runs. Each
-  scene has its own world, engine and renderer; the only things shared are tables and the data
-  folder's place, which are worked out once and never change (and, since 2026-11-24, the picture
-  scaler that makes the ships' 8x background, one per graphics chip, behind a lock). Four scenes built and stepped at
-  once on four threads draw exactly what one alone draws (self-test). That is a test, not a proof.
-- **Depth, the near plane and hidden faces in the modern look**, by reading the shader and
-  `Math3D.perspectiveNearOverZ`: the near plane cuts exactly at the engine's distance, an object's
+  `--visu-test` and the self-test. The data is found when the app is started by full path from
+  another folder, by a relative path, through a symbolic link, and as the bare program in `.build/`.
+
+### Coverage
+
+- **15 of the 124 cases were chosen from the animations** so that the cases reach every branch the
+  animations reach: a Gouraud polygon cut by the top, bottom and right edges at once (city frame 417,
+  a tree); a flat polygon cut by the near plane and the bottom edge (frame 1176); an edge list that
+  ends on its right side (frame 1571, the logo); an object dropped for being off the left side only
+  (frame 1247); the left-over clip flag sending a polygon through two or three extra cutters at once
+  (city frame 498, and ships frame 261 after frame 22); and 32 pairs of object and order list no
+  other case drew. `tools/visu_reference.py` records which frames and why.
+- **Self-test:** both whole animations without a fault and without a pixel depending on carried-over
+  state; 2,466 damaged files (17 object files and 15 scene files damaged in one named way each, the
+  rest cut short at many lengths or with one number changed, the same on every run), none of which
+  may crash, plus 401 scribbled polygons; the modern look's light on the scaled big ship; and the two
+  scenes built and stepped on four threads at once. `--visu-test damaged` runs the damaged files by
+  themselves and lists the named cases.
+
+### Confirmed by reading
+
+- **The C parts:** `vis_loadobject` (block walk, one order list per `ORD` block, default flags),
+  `vis_drawobject` (which normals are turned, the order-list choice by nearest direction vertex), the
+  animation reader (byte for byte: the object number carried over within a frame, the three sizes of
+  signed number, word or byte matrix changes, the two-byte frame end and end mark), the insertion
+  sort, and `U2E.C`'s two ordering rules including its frame counter (`currframe` counts in twos, so
+  "over 1800 and under 2200" is frames 901 to 1099). The scene files' special-ordering byte is 0 in
+  both, so `U2A.C`'s test-only rules never ran.
+- **`vid_init(3)`**, which `U2A.C` calls with the comment "oversample x 4", sets the same numbers as
+  the ordinary mode (`m1o_init` in `AVIDM1.ASM`: oversampling shift 0). So "oversampling off" holds
+  for the ships too.
+- **Threads.** The sidebar builds scenes on a background thread while the main scene runs. Each scene
+  has its own world, engine and renderer; the only things shared are tables, the data folder's place
+  and the picture scaler that makes the ships' 8x background (one per graphics chip, behind a lock).
+  Four scenes built and stepped at once draw exactly what one alone draws (self-test). That is a
+  test, not a proof.
+- **Depth, the near plane and hidden faces in the modern look** (the shader and
+  `Math3D.perspectiveNearOverZ`): the near plane cuts exactly at the engine's distance, an object's
   own polygons never hide each other, and a hidden face collapses to nothing in both passes.
-- **Nothing is rebuilt every frame that matters**: the triangles of each model are made once and
-  kept, and the off-screen pictures are remade only when the window changes size.
+- **Nothing that matters is rebuilt every frame:** each model's triangles are made once and kept,
+  and the off-screen pictures are remade only when the window changes size.
 
-### Looked at, not demonstrated, left alone
+### Small risks, not seen
 
-- **The modern renderer's palette** is written into one buffer shared by all frames. If the graphics
-  chip ever ran a frame behind, the city's fade could be one step (1/70 of full brightness) early
-  for one frame. Not seen, not measurable in the headless tools.
+- **The modern renderer's palette** is one buffer shared by all frames. If the graphics chip ever ran
+  a frame behind, the city's fade could be one step (1/70 of full brightness) early for one frame.
 - **The cache of each model's triangles** is filed under the model's identity without holding on to
-  the model. A renderer that outlived its scene's models and was handed new ones could mix them
-  up. No renderer does: each belongs to one scene.
-- **The ships' Modern background** (the 8x picture since 2026-11-24, or a replacement picture; none is
-  shipped) is sampled through smaller copies of itself when shown small, and the band's crisp top and
-  bottom edges are only guarded at full size.
+  the model. A renderer handed new models after its scene's were gone could mix them up; none is
+  (each renderer belongs to one scene).
+- **The ships' Modern background** is sampled through smaller copies of itself when shown small; the
+  band's crisp top and bottom edges are only guarded at full size.
 - **A blend value outside 0...1** on the `--visu-test` command line is used as given.
 
-### Possible tidy-ups (for a later `/simplify` pass; none is a bug)
+## Pitfalls when changing a scene that uses the engine
 
-- `VisuEngine`: `rotate` and `project` make new lists for every object of every frame, and `clear`
-  sets pixels one at a time. Measured cost is small (0.25 ms a city step).
-- `City3DScene` builds the 256-colour palette list on every drawn frame, even at full brightness,
-  and draws the objects during the black steps.
-- `VisuTestCommand.modern` converts the palette by hand; `VisuPlayback.colours` does the same.
-  `VisuTestCommand.classic` sets a case up twice.
-- `VisuPlayback` loads and parses every object file twice (once for the look-ahead copy).
-- `ShipsFlybyModel.animationFrames` (521) and `City3DModel.animationFrames` (1801) are written out;
-  `VisuWorld.frameCount` could supply them (the self-test checks they agree).
-- `VisuTest.worlds` is a shared, unguarded cache; only the self-test and `--visu-test` use it.
-- The self-test then took about 14 seconds (10 before): the whole-animation check about 2 of them
-  and the damaged files about 1.5. (Today, with every later scene's checks, about 35 seconds.)
-
-### Still not verified
-
-Against a running original or a recording; the C parts by running them; a PC that drew only some
-frames; the modern look by eye in the running app. The start and end of each scene as the demo
-showed them are on the scenes' pages.
+- **`reset()` must restart the engine as well as the world** (`VisuPlayback.restart` calls
+  `engine.resetClipper()`): the engine carries state from polygon to polygon (the never-cleared clip
+  flag, left-over bytes in its polygon records), and the self-test's "restarts from its first frame"
+  check compares pictures exactly.
+- **`VisuPose.blended` pairs objects by identity.** A pose taken from a second `VisuWorld` (the
+  look-ahead copy) has different objects, so nothing pairs and the "blend" silently shows the next
+  frame: no glide, and stills look perfect. Re-label the look-ahead pose with the main world's
+  objects, as `VisuPlayback` does; the self-test's "half-way between frames half-way through a step"
+  check catches it.
+- **Do not share one `VisuWorld` between scene instances** (scenes are made on background threads for
+  the sidebar).
+- **Never leave test files in `build/SRMetal.app/Contents/Resources/Visu/` while rendering:** the app
+  reads its data there, and a test background left for a minute showed up as a "pop" in two pictures.
+- **Stills cannot show motion faults.** Render between steps (`--snapshot <id> modern <step> <file>
+  0.5`) or use `--motion-check`.

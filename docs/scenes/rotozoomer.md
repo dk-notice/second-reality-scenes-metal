@@ -10,7 +10,7 @@ the lens in part 10 of the demo.
 
 - **Original:** `LENS/MAIN.C` (`part3`, about 80 lines) and `_rotate` in `LENS/ASM.ASM` (about 140
   lines), by Psi. Built into `LNS&ZOOM.EXE` together with the lens.
-- **This version:** `Sources/SRMetal/Scenes/Rotozoomer/` (added 2026-11-24).
+- **This version:** `Sources/SRMetal/Scenes/Rotozoomer/`.
 - **Length:** 2,000 steps (about 28.6 seconds), then 35 white steps and it starts again. In Play Demo it
   stops (white) as soon as the music reaches its cue ("music plus" above −4), as the original did.
 

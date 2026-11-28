@@ -9,11 +9,12 @@ right into the top half while its credits rise from the bottom, both slowing dow
 few seconds; then both slide away, speeding up, and the next screen comes.
 
 - **Original:** `CREDITS/MAIN.C` with `TWEAK.ASM` (by Wildfire), built as `CRED.EXE`.
-- **This version:** `Sources/SRMetal/Scenes/Credits/` (added 2026-11-25). In the sidebar too, between End
+- **This version:** `Sources/SRMetal/Scenes/Credits/`. In the sidebar too, between End
   Picture and End Scroller.
 - **Data:** the RELEASED pictures and font, in `Data/Credits/` (see below). Reference replay:
   `tools/credits_reference.py`.
-- **Length:** 21 screens of 362 steps (5.2 s): 7,602 steps, 1 min 48.6 s. On its own it then starts again.
+- **Length:** 21 screens of 362 steps (5.2 s): 7,602 steps, 1 min 48.6 s, the same in Play Demo. On its
+  own it then starts again.
 
 ## The released version differs from the source
 
@@ -75,14 +76,13 @@ retrace, so the one written after the wait shows a refresh later. While the pict
 position therefore lags its fine scroll by a step, as it did in 1993 (up to 3 pixels of difference). This
 rests on how VGA cards latch the start address, not on the source alone.
 
-### Modern look (chosen by the user, 2026-11-25)
+### Modern look
 
 - **Pictures:** this project's own scenes, captured in their Modern look at the step whose 1993 look
   is most like the released picture (`SRMetal --credits-match`; the ships by eye, since no step of the
   ships scene matches the released picture well). `build.sh` renders them into the app at 1280x960
   (`SRMetal --credits-captures`), so they always match the scenes as built and are not kept in git.
-  Picture 1 is the Opening Credits scene's "Code" page (2026-11-25; until then the released picture
-  through Super-xBR), chosen within that page, since dimmer steps match the picture's darker colours
+  Picture 1 is the Opening Credits scene's "Code" page, chosen within that page, since dimmer steps match the picture's darker colours
   better. Picture 21
   shows the credits screen itself, as the released one does: it is this scene's own Modern screen 21,
   captured with that picture made the plain way.
@@ -116,8 +116,8 @@ rests on how VGA cards latch the start address, not on the source alone.
 
 ### Inside Play Demo
 
-Play Demo shows this scene for the credits part, 7,602 steps from its first, then the end scroller
-(until 2026-11-25 it showed the 21 pictures as stills). The part has no music cues.
+Play Demo shows this scene for the credits part, 7,602 steps from its first, then the end scroller.
+The part has no music cues.
 
 ## What was checked
 
@@ -127,12 +127,12 @@ Play Demo shows this scene for the credits part, 7,602 steps from its first, the
   of a released one.
 - **Every other font row:** row 0 of a letter is on the left half of memory, row 1 on the right.
 - **The graphics chip matches the 1993 reference** at 14 steps (the generic per-scene check).
-- **Modern look:** the 20 captures are in the app at 1280x960; held, the picture covers exactly the 1993
+- **Modern look:** the 21 captures are in the app at 1280x960; held, the picture covers exactly the 1993
   picture's place and the text starts on the 1993 text's line; the capitals are 15 rows tall on the same
   rows. Each proven to fail with the detail broken.
 - **Play Demo:** the scene shows for the script's 7,602 steps from its own first step, then the end scroller.
 
-### Not checked
+## What was not checked
 
 - Nothing was compared with the original running. The start-address lag rests on VGA behaviour.
 - The original drew each screen's text and picture after its first wait; on a slow PC that took longer

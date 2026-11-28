@@ -129,7 +129,7 @@ from one picture to the next (see "Kept quirks").
 - The **background** is the same picture, made 8 times larger by Super-xBR (a pixel-art scaler, see [how-it-works.md](../how-it-works.md#pictures-in-the-modern-look)) when the scene starts, then
   drawn first, scaled smoothly to the screen. Edges such as the hill line become clean curves instead of
   pixel steps; it is still somewhat softer than the sharp ships. The band's top and bottom edges are kept
-  crisp. (Until 2026-11-24 it was the original picture smoothly stretched, which looked blurrier.)
+  crisp.
 - The **ships** are drawn by the engine's modern renderer (`VisuModernRenderer`): real triangles at
   the display's resolution, a depth buffer between objects, the original's own back-to-front order
   within an object, the original's lighting rule without rounding to whole colour numbers, smoothed
@@ -161,8 +161,8 @@ picture; no such file is shipped.
 
 ## What was checked
 
-- **The 1993 pictures, against the original's own assembly.** The engine was checked before this
-  scene existed: 124 test pictures (109 at first, 15 added by the code review below) identical to
+- **The 1993 pictures, against the original's own assembly.** The engine is checked by itself:
+  124 test pictures identical to
   those from the original assembly run instruction by instruction (see
   [the engine's page](../visu-engine.md)). Fifteen of them are whole frames of this
   animation (frames 20, 60, 100, 140, 180, 220, 262, 275, 300, 340, 380, 420, 460, 500, 520), drawn
@@ -196,17 +196,27 @@ picture; no such file is shipped.
     view from behind the camera, through the nearest drawable distance: for a few frames slivers of
     ship grow to fill a third of the picture. Both looks show the same shapes there (looked at frame
     by frame), so it is the recorded flight, not a drawing fault.
-  - **It found a real bug that still pictures could not show.** In the first version the modern look
-    did not glide at all: it showed the NEXT frame for the whole step. Every still was perfect. The
-    half-step pictures were identical to the following step's, which gave it away. Fixed, and the
-    self-test now checks that half-way through a step every object is half-way.
 - **The glide.** At every step of the loop, the modern look's blend is half-way at half a step and
-  arrives exactly at the next step's positions (self-test), so there is no jerk at step boundaries.
+  arrives exactly at the next step's positions, and half-way through a step every object is half-way
+  (self-test), so there is no jerk at step boundaries. (Stills cannot show a missing glide: see the
+  engine's page, "Pitfalls".) The look-ahead for the glide starts on the last pause step and stops on
+  the last step of the loop, so the modern look never glides across the loop point.
 - **The loop.** The first frame is the plain background; every pause step is the plain background;
   the ship enters by sliding over the top edge (first seen at frame 23, about one and a half pixel
   rows a step, not popping in); on the last step only 4 distant pixels of ship remain; and step 592
   is step 0 again (self-test).
-- **Restart** returns to the exact first frame, engine state included (self-test).
+- **Restart** returns to the exact first frame, engine state included (self-test). One engine drawing
+  every frame in turn gives exactly the pictures a fresh engine gives for each frame alone (all 521
+  frames), so the "clip flag that is never cleared" changes no pixel here.
+- **`U2A.C`, read independently against this scene:** the whole 320x200 background copied in before
+  every picture; the picture's 64 colours copied to palette entries 192 to 255; the first picture
+  drawn is animation frame 0 with nothing switched on (unlike the city, which skips its first turn);
+  one animation frame per screen refresh; the test-only ordering rules behind the scene file's flag
+  byte, which is 0, never run. (`U2A.C` differs from `U2E.C` only in start, end, clearing, pacing and
+  ordering.)
+- **The big ship's light.** The modern look lights the scaled big ship as the 1993 look does (see
+  "Kept quirks"): at animation frame 100 the two differ by 0.7 of 255 on average over its 127,000
+  pixels (self-test).
 - **The replacement-background option** was tried once with a tinted 1280x800 test picture: the modern
   look showed it with the ships over it and crisp band edges, the 1993 look was unchanged.
 
@@ -215,20 +225,21 @@ picture; no such file is shipped.
 - **Against a running original or a recording.** Everything above compares with the original's code
   and data, not with a PC running it.
 - **`U2A.C` by running it.** The background copy, the palette set-up, the animation reader, the
-  object ordering and the pacing were ported by reading, and read again independently in the code
-  review below, which found no difference. The C program has never been compiled and run against
+  object ordering and the pacing were ported by reading, and read again independently, which found
+  no difference. The C program has never been compiled and run against
   this version.
 - **The start and end as the demo showed them.** That the previous part leaves the same horizon on
   screen, and where in the music the scene began and was cut, were read from the source, not seen.
   The demo's script has both end conditions ([demo-timeline.md](../demo-timeline.md)); run against the
   music, the animation's 521 refreshes are over before the music's end cue comes.
 - **The page queue and frame skipping** are not modelled; every frame is drawn.
-- **The modern look by eye in the running app.** The motion check above was done by program on
-  rendered pictures, plus looking at samples. The user is the first to watch it move.
+- **The Modern background shown small** is sampled through smaller copies of itself, and the band's
+  crisp top and bottom edges are only guarded at full size, so in a small window the edge rows might
+  be slightly darkened. Not measured.
 
 ## Inside Play Demo
 
-Since 2026-11-25 the scene follows the original part there. The script shows it on the step the music's
+The scene follows the original part there. The script shows it on the step the music's
 start cue is met (section > 10 and row > 46, `U2A.C` 229-240) and keeps it for the animation's 521
 refreshes. The part's loop draws a picture before it reads the animation, so the step the scene appears
 on shows frame 0 (the empty horizon, the same picture the script showed while it waited) and the n-th
@@ -279,53 +290,4 @@ All in the 1993 look, all from the engine (described on [its page](../visu-engin
 - **The big ship greys as it shrinks.** The recording does not only move the big ship away, it
   SCALES it down, steadily, to about a fifth of its size by the end. The engine's light uses the
   scaled surface directions as they come, so the light on the ship weakens with its size and its
-  shades draw together towards the middle grey. Both looks do this (the modern look since the code
-  review below).
-
-## Code review (2026-11-14)
-
-Reviewed with the `/code-review` tool and by hand against `VISU/C/U2A.C` (compared line by line with
-`U2E.C`, from which it differs only in start, end, clearing, pacing and ordering) and the engine's
-`VISU.C`. The engine's own review is on [its page](../visu-engine.md).
-
-**Found and fixed**
-
-- **Modern look: the big ship was lit differently from the 1993 look.** The modern shader ignored
-  the scale that the recording puts on the big ship (see "Kept quirks"), so its light stayed at
-  full strength while the 1993 ship greyed. At animation frame 100 the modern ship was on average
-  4.5 of 255 brighter than the 1993 one over its 127,000 pixels; now 0.7. The fix is in the engine
-  (`VisuModern.swift`); the self-test checks this frame.
-- **A damaged data file crashed the program** instead of giving an error. Fixed in the engine's
-  loader and tested with 2,466 damaged copies of this scene's files (engine page).
-
-**Confirmed, nothing to fix**
-
-- `U2A.C` against this scene, read independently: the whole 320x200 background copied in before
-  every picture; the picture's 64 colours copied to palette entries 192 to 255; the first picture
-  drawn is animation frame 0 with nothing switched on (unlike the city, which skips its first
-  turn); one animation frame per screen refresh; the animation reader and the sort (shared with
-  the city); the test-only ordering rules behind the scene file's flag byte, which is 0, never run.
-- `vid_init(3)`, commented "oversample x 4" in `U2A.C`, sets the same numbers as the plain mode.
-- The timetable: the look-ahead for the glide starts on the last pause step and stops on the last
-  step of the loop, so the modern look never glides across the loop point or towards a frame that
-  does not exist.
-- One engine drawing every frame of this animation in turn gives exactly the pictures a fresh
-  engine gives for each frame alone (self-test, all 521 frames), so the "clip flag that is never
-  cleared" changes no pixel here.
-- **Motion check re-run after the fixes** (`--motion-check ships-flyby modern` and `classic`):
-  the 1993 look's report is identical to before; the modern look still has no jumps, and its count
-  of pictures with one-picture-only pixels went from 460 to 459 of 1,185 (9 over 0.1% of the
-  picture before and after, the fighters' entry).
-
-**Looked at, not demonstrated, left alone**
-
-- The Modern background (the 8x picture, or a replacement `U2ABG-modern.png`; none is shipped) is shown
-  through smaller copies of itself when the window is small, and the band's crisp top and bottom edges
-  are only guarded at full size, so shown small it might have slightly darkened edge rows. Not measured.
-
-**Possible tidy-ups** (none is a bug): `ShipsFlybyModel.animationFrames` (521) is written out
-though the engine can count the frames; the background is copied (64,000 bytes) on every step
-whichever look shows, which is deliberate but could be skipped during the pause.
-
-**Still not verified:** against a running original or a recording; the start and end as the demo
-showed them; the modern look by eye in the running app.
+  shades draw together towards the middle grey. Both looks do this.

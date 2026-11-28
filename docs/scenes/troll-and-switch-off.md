@@ -12,8 +12,8 @@ shrinks to a dot that blinks twice and goes out.
 
 - **Original:** the troll is the last section of `TECHNO/KOE.C` (Psi); the switch-off is
   `PANIC/SHUTDOWN.C` (Wildfire), built as `PANICEND.EXE`. The troll picture is signed by Pixel.
-- **This version:** `Sources/SRMetal/Scenes/Troll/` and `Sources/SRMetal/Scenes/SwitchOff/` (added
-  2026-11-24). Both are in the sidebar.
+- **This version:** `Sources/SRMetal/Scenes/Troll/` and `Sources/SRMetal/Scenes/SwitchOff/`. Both are in
+  the sidebar.
 - **Length:** the troll waits (35 steps on its own, for the music in Play Demo), scrolls 53 steps, shakes
   50, then holds. The switch-off is 191 steps (2.7 seconds); on its own it shows the troll for a second
   first.
@@ -66,8 +66,7 @@ self-test checks the scroll takes 53 refreshes and the shake 50, the same as the
 how far the palette has washed out, which pixels of the line are wiped and the dot's brightness, all
 worked out from what the original told the card (table above). A self-test check holds the numbers: the
 bands, the quarter squash held at refresh 3 and the first band at 4, the line at refresh 14, the dot from
-61, 191 refreshes. (Until the code review of 2026-11-24 the bands came one refresh early: the extra wait
-before the band loop had been missed.)
+61, 191 refreshes (including the extra wait before the band loop).
 
 **1993 look:** both scenes are drawn by whole pixels and the original's colour rules; the self-test compares
 the graphics chip with the same rules worked out on the processor at 35 moments: all identical.
@@ -84,3 +83,9 @@ so the black sides stay crisp), and the dot is a small soft glow.
 - What lay in the left half of the double-width page before the troll scrolled in is taken to be black
   (the techno bars had just slid off).
 - Not compared with the original running.
+- **The troll's flash may be one refresh late.** `waitb` returns just after the vertical retrace starts
+  (`COPPER.ASM` `copper_end`), so a palette set after pass k's wait would show with pass k's position;
+  the model pairs flash 45 with the shake's SECOND refresh. The switch-off model assumes the first rule
+  (its refresh 1), so the two scenes disagree. Settling it rests on how the VGA card latches the start
+  address, not on the source alone. The change, if wanted: flash = 45 - 3k on shake refreshes 0...15.
+  (The self-test's troll check tests the first flash's value, not which refresh it comes on.)

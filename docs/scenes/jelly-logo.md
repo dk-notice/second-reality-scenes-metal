@@ -13,7 +13,7 @@ bouncing a few times before it settles. Part 15 of the demo, just before the 3D 
 - **Original:** `JPLOGO/JP.C` (about 220 lines), `JPLOGO/ASM.ASM` (`linezoom`) and `JPLOGO/ZOOM.INC`
   (53 line-stretching routines, 16,800 lines), by Psi. `ZOOM.INC` was written beforehand by a small
   program, `JPLOGO/DOL.C`. Built into `JPLOGO.EXE`.
-- **This version:** `Sources/SRMetal/Scenes/JellyLogo/` (added 2026-11-25).
+- **This version:** `Sources/SRMetal/Scenes/JellyLogo/`.
 - **Length:** on its own 821 steps (about 11.7 seconds): 86 of slide-in, 700 of jelly, 35 holding the
   last picture, then it starts again (no wait between landing and jelly: there is no music to wait for). In Play Demo it waits for the music as the original did
   ("music plus" ≥ 4) between the slide-in and the jelly, and the 3D city follows the 700 steps.
@@ -80,7 +80,7 @@ steps; no rows stay black.
 | Widths | even, columns rounded | the same | unrounded |
 | Row cache | some rows stay black | the same | none |
 
-## Checks
+## What was checked
 
 - `tools/jelly_reference.py` runs `ZOOM.INC` against `DOL.C`'s formula, checks the sine table, works out
   the bounce, and replays the part from the ORIGINAL picture file (`_PIC.OBK`), printing checksums at 27
@@ -94,10 +94,14 @@ steps; no rows stay black.
   the loop back to black and the landing (step 86 to 87:
   the bounce's first value already has the top 31 rows down, in 1993 too).
 
-## Differences and limits
+## Differences from the original
 
 - Modern: the bounce evenly spread, no black rows, unrounded widths.
 - The white border (overscan) is not drawn, as in every other scene.
+
+Inside Play Demo it hands its last screen and palette to the 3D city, which fades them to white, as
+`U2E.C` did with what `JPLOGO` left (see the city's page).
+
+## What was not checked
+
 - Not compared with the original running.
-- Inside Play Demo it hands its last screen and palette to the 3D city, which fades them to white, as
-  `U2E.C` did with what `JPLOGO` left (2026-11-25; see the city's page).

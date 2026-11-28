@@ -65,7 +65,7 @@ Even so, working out one value per pixel was far too slow. So:
   a second, and the eye sees them **mixed**. The sideways shift also hides the 4-pixel-wide columns.
   (The frame that starts on line 60 is the one with no shift, and line 61 goes with the 2-pixel shift:
   the program picks them the other way round, but the shift reaches the card one frame late. See
-  "Code review" below.)
+  "What was checked" below.)
 - That alternation of lines only happens while the plasma is flowing normally. While the band falls and
   while a new palette fades in, another routine sets the line and both frames use the same one, so for
   those moments K and L are **not** mixed: each pixel shows only one of them, as a fine chessboard.
@@ -126,80 +126,41 @@ It is the same plasma: the same waves, the same motion, the same colours.
   of 8,192 places. At the other two (entries 3072 and 7168) the exact answer is the whole number 24 and the
   original file says 23: the 1993 maths library landed a hair below. Those two entries are set by hand. The
   self-test compares all four tables with checksums of the original files.
-- **The per-pixel formula, against the original's machine code** (code review, below).
-- **The chessboard layout and which shift goes with which line**, from the original source (code review).
-- **The graphics chip matches the processor** pixel for pixel at 14 moments, including mid-fade, mid-fall
-  and each palette (self-test).
+- **The formula, against the original's machine code.** The drawing routine overwrites the addresses
+  inside its own instructions, so the formula depends on exactly which bytes get overwritten.
+  `ASMYT.OBJ`, the assembled original, is in the source release: each of the four instructions per
+  column is 4 bytes, two of instruction and two of address, with nothing in front, and the rewriting
+  routine stores to exactly those two address bytes (its first four targets are 4 bytes apart). So the
+  whole address is replaced, the `ccc*32` and `ccc*64` written in the source never take effect, and the
+  formula at the top of this page is what the processor ran. The table positions it adds (0, 4000h,
+  8000h plus 280h, plus 140h) match too.
+- **The chessboard.** `PLZ.C` switches on planes 1 and 3 (value 0Ah), draws K on even rows and L on odd
+  rows, then planes 0 and 2 (05h) and draws K on odd rows and L on even rows. That is the layout used
+  here.
+- **Which shift goes with which line.** `pompota` chooses "line 60 and a 2-pixel shift" or "line 61 and
+  no shift". It runs in the routine the demo's interrupt server (`DIS/DISINT.ASM`, `MAIN/COPPER.ASM`)
+  calls *during* the retrace (the pause between two screen refreshes), and sends the line number to the
+  card at once, so the line applies to the frame about to be drawn. The shift is only stored; another
+  routine (`copper1`), called *just before the next* retrace, sends it. So every frame is drawn with its
+  own line and the *previous* frame's shift: line 60 with no shift, line 61 with 2 pixels. The
+  self-test checks the pairing.
+- The parameter speeds and wrap-around, the fall table, the order of work in each refresh (palette, then
+  move, then fall or fade), the 31 fade steps and their 16-bit arithmetic including the half that is
+  not cleared between sections, the palettes, the section order and starting numbers.
+- **The graphics chip matches the processor** pixel for pixel at 14 moments (self-test: steps 0, 1, 2,
+  17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300 and 2322). They include the first fade and a
+  fade-in after a fall, but were chosen for earlier fall times and no longer land inside a fall; new
+  moments are planned.
 - **The scene repeats exactly** after 2,588 steps and is black at the point where it repeats (self-test).
 - **The modern look glides without a jump** through the whole loop: the end of every step's glide is where
   the next step starts, for the band's position, the eight plasma numbers and the palette (self-test, and
-  the `--motion-check` option over steps 0 to 2400: no jumps, no one-picture-only pixels).
-- Pictures of both looks were made at several moments and looked at: they show the same shapes and colours.
-
-## Code review (2026-11-14)
-
-The whole scene was read again, line by line, against `PLZ.C`, `ASMYT.ASM`, `COPPER.ASM` and `TWEAK.ASM`,
-and this time also against the demo's interrupt server (the part of the demo that runs a scene's routines
-at fixed points of each screen refresh): `DIS/DISINT.ASM` and `MAIN/COPPER.ASM`. An earlier version of this
-page said that code was missing from the source release. It is there; only the stand-alone test copy
-(`DIS/DIS.ASM`) lacks it.
-
-**Found and fixed**
-
-1. **The sideways shift was paired with the wrong line (1993 look).** `pompota` chooses "line 60 and a
-   2-pixel shift" or "line 61 and no shift". It runs in the routine the interrupt server calls *during*
-   the retrace (the pause between two screen refreshes), and sends the line number to the card at once,
-   so the line applies to the frame about to be drawn. The shift is only stored. It is sent to the card by
-   another routine (`copper1`), which the interrupt server calls *just before the next* retrace
-   (`copper_end` in `MAIN/COPPER.ASM` calls routine 1, waits for the retrace, then calls routine 2). So
-   every frame is drawn with its own line and the *previous* frame's shift: line 60 with no shift, line 61
-   with 2 pixels. This version had it the other way round. Every picture of the flowing plasma changes at
-   pixel level (about a third of the pixels, by up to 32 of 255 in one colour part, in the two pictures
-   compared, steps 400 and 2000); pictures during a fall or a fade do not change, because there both
-   frames use the same line. No stored checksum depended on it. The self-test now checks the pairing.
-2. **A small hop at the start of each fall (modern look).** On the step the fall starts, the original's
-   fall counter goes from 0 straight to 2. The modern look glided from 2 onwards but sat still during the
-   step before, so the band stayed put and then hopped 0.34 of a line (about one screen pixel in a large
-   window) at the step of each fall (then 725, 1493, 1877 and 2261). It now glides into the fall. The new
-   self-test check described above caught exactly those four steps before the fix.
-
-**Confirmed correct**
-
-- **The formula.** The drawing routine overwrites the addresses inside its own instructions, so the
-  formula depends on exactly which bytes get overwritten. `ASMYT.OBJ`, the assembled original, is in the
-  source release: each of the four instructions per column is 4 bytes, two of instruction and two of
-  address, with nothing in front, and the rewriting routine stores to exactly those two address bytes
-  (its first four targets are 4 bytes apart). So the whole address is replaced, the `ccc*32` and `ccc*64`
-  written in the source never take effect, and the formula at the top of this page is what the processor
-  ran. The table positions it adds (0, 4000h, 8000h plus 280h, plus 140h) match too.
-- **The chessboard.** `PLZ.C` switches on planes 1 and 3 (value 0Ah), draws K on even rows and L on odd
-  rows, then planes 0 and 2 (05h) and draws K on odd rows and L on even rows. That is the layout used
-  here. The C++ port copies its two buffers to the screen in the same arrangement.
-- The parameter speeds and wrap-around, the fall table, the order of work in each refresh (palette, then
-  move, then fall or fade), the 31 fade steps and their 16-bit arithmetic including the half that is
-  not cleared between sections, the palettes, the section order and starting numbers (the review read
-  four sections, as `PLZ.C` has; since 2026-11-25 the scene has the released program's three).
-- **Motion in the modern look**: nothing is glided across a jump. The plasma numbers are reset and the
-  palette swapped only while the band is hidden (fall counter 64 and 65), and the loop point is black in
-  both looks.
+  `--motion-check` over steps 0 to 2,588: no jumps, no one-picture-only pixels). On the step a fall
+  starts the original's fall counter goes from 0 straight to 2, and the modern look glides into it.
+  Nothing is glided across a jump: the plasma numbers are reset and the palette swapped only while the
+  band is hidden (fall counter 64 and 65), and the loop point is black in both looks.
 - In the 1993 look, `--motion-check` reports large one-picture-only changes during each fall and a jump
-  at step 33 where a fade ends. Those are the original's behaviour described above (K and L not mixed
-  while falling or fading, so the fine chessboard swaps as the band moves a line), not a fault.
-
-**Still not verified**
-
-See the next section. One finding there was the length of a "music frame"; it has since been settled
-as 1/70 second (the update of 2026-11-24 below), which is what Play Demo uses.
-
-**Possible tidy-ups** (left for a later clean-up pass, nothing wrong with the picture)
-
-- `PlasmaScene.draw` makes a new 256-colour buffer for the graphics chip on every drawn frame, and
-  `PlasmaModel.tick` rebuilds the shown palette with `map`; both could be reused.
-- The formula exists three times (Swift, the shader's table version, the shader's smooth version), and
-  the shader repeats 280, 319 and 399 as plain numbers.
-- `PlasmaModel.value` would read before the start of a table for columns 81 to 83 with small parameters.
-  The original worked those columns out but they are off the screen, and nothing here asks for them.
-- `fields` has a case for fall counter 1, which never occurs (it goes from 0 to 2).
+  where a fade ends. Those are the original's behaviour described above (K and L not mixed while falling
+  or fading, so the fine chessboard swaps as the band moves a line), not a fault.
 
 ## What was not checked
 
@@ -208,39 +169,21 @@ None of this has been compared with the original program running.
 - **Where the band sits.** First plasma row on screen line 61 or 62 of 400. This rests on the documented
   behaviour of the VGA card (the split starts on the line *after* the one it is given), not on a
   measurement. The C++ port puts it one line higher, at 60, and does not alternate lines or shift at all.
-- **How long a "music frame" is: probably not 1/70 second.** The section times (723, 1491, 1875, 2259) are
-  compared with a counter kept by the music player, which this version assumes ticks once per screen
-  refresh. The review found evidence against that: the timetable is written as multiples of `64*6`
-  (64 rows of music at 6 ticks each); the C++ port, which plays the real music, advances that counter
-  once per music tick, not per refresh; and the music file's starting tempo (130) gives 52 ticks a
-  second, not 70. The "-45" in the timetable is also about the length of the 64-frame fall if a tick is
-  1/52 second (0.87 s against 0.91 s), which would land each fall on a bar of the music. If that is
-  right, the original's sections were about a third longer than here (the whole scene about 43 seconds,
-  not 33). It is not proven: the player itself is only in the release as a compiled library, and the
-  tempo may change within the tune. Nothing was changed; the scene still uses 1/70 second.
-  **Update 2026-11-24:** simulating the whole demo against the real music (`docs/demo-timeline.md`)
-  points the other way: with music ticks the later parts overrun song 2, and a recording places the
-  sine landscape where the 1/70-second reading predicts it (within 2 s), not 30 s later. So 1/70
-  second, as built here, is most likely right. Still to confirm: that the recording starts with the music.
-  **Settled 2026-11-25: it is music ticks**, 52 a second, and the review's reading of the "-45" was right:
-  each fall starts on row 56 of a pattern and the new colours arrive on the bar. The later parts do not
-  overrun, because the released program has one section fewer than `PLZ.C`. See "The released program".
-- **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (now twice).
-- The pictures in `docs/images/` were remade after the review was merged, so they show the corrected 1993 look.
+- **The palettes and the fade** were ported from `PLZ.C` and `COPPER.ASM` by reading (twice).
 
-## The released program (found 2026-11-25)
+## The released program
 
 The released `PLZPART.EXE` (in `MAIN/DATA`; packed twice: `deark -m pklite`, then `deark -m lzexe`) was
-read against `PLZ.C`. Three things were found; the user's videos of the original agree with the first
-(three plasmas, the grey one last, the cube right after).
+read against `PLZ.C`. Three things were found; videos of the original agree with the first (three
+plasmas, the grey one last, the cube right after).
 
 - **It ends on the third fall.** The loop leaves when `curpal` is 4 (`cmp word [curpal],4` at 1181Ch of
   the unpacked image); `PLZ.C` as published says 5, and so does the `PLZ.OBJ` in the source folder, which
   is a different build. The timetable (723, 1491, 1875, 2259, 2778) and the palette code are the
   source's. So the fourth section and its palette ("RB-white": red through white to blue) were never
-  shown. This version had them until 2026-11-25.
-- **The counter counts music ticks** (52 a second; see [demo-timeline.md](../demo-timeline.md), "Later
-  found: it counts music ticks"). The timetable is "64 rows x 6 ticks x 2, 4 and 5 patterns, less 45":
+  shown, and are not here.
+- **The counter counts music ticks** (52 a second; see [demo-timeline.md](../demo-timeline.md), "Two
+  questions the source could not answer"). The timetable is "64 rows x 6 ticks x 2, 4 and 5 patterns, less 45":
   song 2 has exactly five patterns between the plasma's "+++" mark and the next, and the three falls
   start on row 56 of the second, fourth and fifth. The band is gone on the first row after the "+++".
 - **The fade's memory starts as zeros.** `fadepal` is declared without a starting value (`db 768*2
@@ -251,7 +194,7 @@ read against `PLZ.C`. Three things were found; the user's videos of the original
 
 ## Inside Play Demo
 
-Since 2026-11-25 the scene follows the released part there (`PLZ.C` 68-95, `COPPER.ASM` `do_drop`):
+The scene follows the released part there (`PLZ.C` 68-95, `COPPER.ASM` `do_drop`):
 
 - **White for 74 steps.** The part waited for "music plus" >= 0 with the screen as the rotozoomer left
   it: every colour set to white. The step that meets the cue is still white (`init_plz` sets its new
@@ -290,6 +233,7 @@ On its own the first palette fades up from black (a deliberate difference, below
 - **Drawing is instant.** The original program drew as fast as the PC could, not once per refresh, while
   the four numbers moved on every refresh regardless. On a slow PC the picture was therefore built from
   slightly different moments. This version draws every frame complete, as an infinitely fast PC would.
-- **Sections 2 to 4 stay at 31/32 of full brightness.** That is not a change: the original's fade stopped
-  one step short, and this version keeps that.
-- A fifth palette the original prepared was only ever shown by the plasma cube, so it is not here.
+- **The second and third palettes stay at 31/32 of full brightness.** That is not a change: the
+  original's fade stopped one step short, and this version keeps that.
+- `PLZ.C` prepares five palettes; the released part shows only the first three (it ends on the third
+  fall), so the fourth and fifth are not here.

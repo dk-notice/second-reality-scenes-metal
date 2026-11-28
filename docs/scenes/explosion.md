@@ -9,8 +9,7 @@ fireball with a ring of debris, which fades back to white. Part 3 of the demo, a
 
 - **Original:** `PAM/OUTTAA.C` (about 70 lines) with `PAM/ASMYT.ASM`, `COPPER.ASM` and `TWEAK.ASM`, by
   Trug and Wildfire. Built as `PAM.EXE`.
-- **This version:** `Sources/SRMetal/Scenes/Explosion/` (added 2026-11-24, the first new part built for
-  Play Demo).
+- **This version:** `Sources/SRMetal/Scenes/Explosion/`.
 - **Length:** 180 steps (about 2.6 seconds), then it starts again. In Play Demo it starts on the music's
   sync value 10, as the original did.
 
@@ -65,10 +64,13 @@ fade-in, middle, fade-out, last step): all identical.
 | Fade | palette copies, changed every 4 refreshes | the same rule, the same colours | smooth, laid on after scaling |
 | Before it starts | waits for sync 10 on the ships' horizon | Play Demo does the same | the same |
 
-## Differences and limits
+## Differences from the original
 
 - The original's white screen before the first frame is the palette at full white over whatever was in
   video memory; this version shows frame 1 faded to full white, which is the same colours (every level
   becomes 62 or 63).
+
+## What was not checked
+
 - Not compared with the original running. The frames' decoding was checked by structure (every frame
   covers exactly the screen) and by eye, not against the Autodesk Animator file.

@@ -10,8 +10,8 @@ that brighten where they overlap. The bars flash on the beat.
 - **Original:** `TECHNO/KOE.C` (`doit1`, `doit2`, `doit3`) in C, with the drawing in `TECHNO/KOEA.ASM` and
   `TECHNO/POLYCLIP.ASM`, by Psi.
 - **This version:** `Sources/SRMetal/Scenes/TechnoBars/`
-- **Length:** about 28 seconds in three sections, then it loops. (Play Demo, as the demo, shows only sections 1 and 2: see
-  "Differences from the original".)
+- **Length:** about 28 seconds in three sections, then it loops. (Play Demo, as the demo, shows all three, the
+  third cut short by the music: see "Differences from the original".)
 
 | Section | Length | What happens |
 |---|---|---|
@@ -111,9 +111,10 @@ frame, and see whether its distance across the bars falls in a bar or a gap.
 - **The modern look never glides across a section change** (self-test, over a whole loop and into the next).
   Within a section the bars only spin forwards, by at most 84/1024 of a turn per step. A glide that goes
   backwards, spins more than 1/8 turn or changes thickness by more than 3 pixels has crossed a section change.
-  With the fix below removed, this check fails at exactly the four expected steps.
+  A section's first step is therefore held still in the modern look (see "Modern look" above); without
+  that, this check fails at exactly the four expected steps.
 - **The modern look shows the current bars whenever the 1993 look shows any** (self-test, same run).
-- **Independent review of the drawing code (2026-11-14).** A code review compared `BarRasteriser` line by
+- **The drawing code, read a second time independently.** `BarRasteriser` was compared line by
   line against the original assembly (`KOEA.ASM` `asmbox` and `drawline`, `POLYCLIP.ASM`
   `clipanypoly`, `cliplinex`, `clipliney`). It found them the same: trimming top/bottom first and then
   left/right, against rows 0...199 and columns 0...319; each line end moved using the other end as already
@@ -124,29 +125,17 @@ frame, and see whether its distance across the bars falls in a bar or a gap.
   extra "left overflow" path in `drawline` is never switched on (`clipleft` is always 0), so leaving it out
   changes nothing.
 
-### Fixed after that review
-
-The same review found four problems elsewhere in the scene, all now fixed:
-
-- **Modern look: the bars whirled at the change from section one to two.** The glide went from the last
-  angle of section one (883/1024) straight to the first of section two (50/1024): about 293° backwards
-  within one step. Then the same happened to each ghost, 8, 16 and 24 steps later. Now a section's first
-  step is held still (see "Modern look" above).
-- **Modern look: one blank step.** With only one step recorded (at the very start and at the start of
-  section three), nothing was drawn. Now that step is shown, held still.
-- **1993 look: the flash was one step early.** In the original, a page drawn in one pass of the loop only
-  appears at the screen refresh inside the next pass, and the flash colours are set just after that refresh.
-  So each page was seen with the next pass's flash. This version had paired it with its own pass's flash.
-- **1993 look: the slide-off lagged one step.** For the same reason, each page was seen with the slide
-  amount worked out at the start of the next pass. Like the original, the last page keeps its slide: the
-  original stops before showing a slide of zero.
+- **Which pass's flash and slide each page shows (1993 look).** In the original, a page drawn in one
+  pass of the loop only appears at the screen refresh inside the next pass, and the flash colours and
+  slide amount are set just after that refresh. So each page is seen with the next pass's flash and
+  slide, as here. Like the original, the last page keeps its slide: the original stops before showing
+  a slide of zero.
 
 ### What was not checked
 
 Unlike the tunnel and the rings, this scene has no data files to compare against. Its 1993 look depends on
-the port of the drawing and trimming assembly being right. That has now been checked twice by reading
-(once when it was written, once in the independent review above), but never against a running copy of the
-original. The self-test cannot catch a mistake there, because the processor does all the work and the
+the port of the drawing and trimming assembly being right. That has been checked twice by reading, but
+never against a running copy of the original. The self-test cannot catch a mistake there, because the processor does all the work and the
 graphics chip only looks up colours.
 
 Also not reproduced: before each section, the original waits for one extra screen refresh, which moves the
@@ -157,22 +146,21 @@ still not counted.
 ## Differences from the original
 
 - **The beat is recreated.** With no music, the flash timing comes from the song file's own settings
-  (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything. **Inside Play Demo** (2026-11-24) the flash
+  (speed 3, tempo 130), which gives a flash about every half second. It is not tied to anything. **Inside Play Demo** the flash
   follows the real music instead: the scene is given the music's row each step and flashes on rows 7,
   15, 23 ... as the original did.
 - **The original's lead-in** (a white flash, then four columns dropping to black on four beats) is not
-  part of this scene: inside Play Demo the interference scene shows it (2026-11-25; see
+  part of this scene: inside Play Demo the interference scene shows it (see
   [Rings and Interference](rings-and-interference.md), "Inside Play Demo"), so the bars start out of its
-  last white as in 1993. On its own this scene starts straight away. The picture that scrolls in afterwards is now a scene of
-  its own, the [Troll](troll-and-switch-off.md) (2026-11-24).
+  last white as in 1993. On its own this scene starts straight away. The picture that scrolls in afterwards is a scene of
+  its own, the [Troll](troll-and-switch-off.md).
 - **Inside Play Demo it is cut by the music**, as the original was. Sections 1 and 2 always run their
   full 420 and 840 refreshes (`doit1`, `doit2` only count refreshes). Only section 3 looks at the music's
   frame counter (`KOE.C` 495-500: past 2520 it sets its slide to zero, and on the next pass it stops).
-  That counter was started with the rings and counts MUSIC TICKS, 52 a second in this song (found
-  2026-11-25 in the player's library; see `docs/demo-timeline.md`). Play Demo shows the scene for
+  That counter was started with the rings and counts MUSIC TICKS, 52 a second in this song (see
+  `docs/demo-timeline.md`). Play Demo shows the scene for
   1,955 steps (measured from the script's silent run): section 3 for 695, so the circling is seen and
-  the slide-off (on its own from step 1908) begins just before the cut. (Until 2026-11-25 the counter
-  was read as screen refreshes, which cut the scene at 1,260 steps and hid section 3.)
+  the slide-off (on its own from step 1908) begins just before the cut.
 - Not reproduced: on its very last pass the original set the slide to zero, a black picture for one
   refresh, before the troll part took over; Play Demo goes straight to the troll's first step.
 - **It loops.** After sliding off, the scene starts again from section 1.

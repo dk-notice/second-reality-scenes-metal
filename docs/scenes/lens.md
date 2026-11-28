@@ -14,7 +14,7 @@ follows. Part 10 of the demo, with the [Rotozoomer](rotozoomer.md).
 - **Original:** `LENS/MAIN.C` (`part1`, `part2`, `drawlens`, about 120 lines) and `dorow`, `dorow2`,
   `dorow3` in `LENS/ASM.ASM`, by Psi. The lens's tables were made beforehand by `LENS/CALC.C` from a
   drawn lens shape (`LENS/LENS.U`). Built into `LNS&ZOOM.EXE` with the rotozoomer.
-- **This version:** `Sources/SRMetal/Scenes/Lens/` (added 2026-11-24).
+- **This version:** `Sources/SRMetal/Scenes/Lens/`.
 - **Length:** on its own 1,090 steps (about 15.6 seconds): 35 black, 300 uncovering and holding, 720 of
   the lens, 35 of the picture again, then it starts again. In Play Demo it waits for the music as the
   original did (black until "music plus" ≥ −6, the picture until "music plus" ≥ −20), then the
@@ -87,7 +87,7 @@ picture's 64 colours.
 | Tints | three palette copies | the same | the same colours, smooth zone edges |
 | Screen | never cleared; ring wipes the trail | the same | drawn afresh |
 
-## Checks
+## What was checked
 
 - `tools/lens_reference.py` reruns `CALC.C` against the original tables, checks the path against
   `LENS.EXP`, and replays the part from the ORIGINAL table files and `LENS.EXB` (the app calculates its
@@ -96,14 +96,16 @@ picture's 64 colours.
 - The self-test compares the app's 1993 pictures with that tool at 28 steps (black, the sweep, the hold,
   the dark glass, the fade-in, bounces, the lens leaving, the loop): all identical. It also checks the
   calculated tables and path against checksums of the original files, and, in a silent Play Demo run,
-  that the scene starts each phase on the same step as the demo script (this check found the scene one
-  step late when the music cue is already met as the part starts; fixed by telling a scene the music on
-  the step it first shows).
+  that the scene starts each phase on the same step as the demo script, including when the music cue is
+  already met as the part starts (a scene is told the music on the step it first shows).
 - `--motion-check lens modern`: one jump, at the loop back to black (intended).
 
-## Differences and limits
+## Differences from the original
 
 - Modern: no wobble, the rim reads the picture's edge, a lens partly off screen is simply cut off.
 - Inside Play Demo the 1993 look starts from a black screen, as the original did (its mode change cleared
   the screen).
+
+## What was not checked
+
 - Not compared with the original running.
