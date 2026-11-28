@@ -267,7 +267,9 @@ enum SceneCatalog {
             credit: "Wildfire",
             // The original ran in a 320x400 screen mode: twice the usual number of lines.
             canvasSize: SIMD2(320, 400),
-            checkpoints: [0, 1, 2, 17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300, 2322],
+            // Fade-in, flowing, and each of the three falls (starting at steps 976, 2009 and 2526): just
+            // before, half-way down, the band gone, and the next palette fading in.
+            checkpoints: [0, 1, 2, 17, 33, 400, 975, 991, 1038, 1051, 1600, 2025, 2084, 2300, 2542, 2570, 2587],
             thumbnailStep: 1000,
             make: { device, format in try PlasmaScene(device: device, pixelFormat: format) }
         ),

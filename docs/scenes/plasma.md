@@ -147,10 +147,10 @@ It is the same plasma: the same waves, the same motion, the same colours.
 - The parameter speeds and wrap-around, the fall table, the order of work in each refresh (palette, then
   move, then fall or fade), the 31 fade steps and their 16-bit arithmetic including the half that is
   not cleared between sections, the palettes, the section order and starting numbers.
-- **The graphics chip matches the processor** pixel for pixel at 14 moments (self-test: steps 0, 1, 2,
-  17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300 and 2322). They include the first fade and a
-  fade-in after a fall, but were chosen for earlier fall times and no longer land inside a fall; new
-  moments are planned.
+- **The graphics chip matches the processor** pixel for pixel at 17 moments (self-test: steps 0, 1, 2,
+  17, 33, 400, 975, 991, 1038, 1051, 1600, 2025, 2084, 2300, 2542, 2570 and 2587): the first fade, the
+  plasma flowing, and each of the three falls (just before, half-way down, the band gone, the next
+  palette fading in). With the band's fall broken in the drawing only, six of them fail.
 - **The scene repeats exactly** after 2,588 steps and is black at the point where it repeats (self-test).
 - **The modern look glides without a jump** through the whole loop: the end of every step's glide is where
   the next step starts, for the band's position, the eight plasma numbers and the palette (self-test, and
