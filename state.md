@@ -21,7 +21,7 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
   end scroller's `%` line. The picture stays black, Play Demo stays chosen, and the scene list opens.
 - On their own, some scenes' lengths differ from the original parts on purpose: Glenz 2,360, Plasma
   2,588, Plasma Cube 2,048, Sine Landscape 2,048, 3D City 3,639, Ships 592.
-- Self-test: 649 checks, all pass. `--demo-timeline`: every part starts on the step
+- Self-test: 652 checks, all pass. `--demo-timeline`: every part starts on the step
   `tools/demo_timeline.py` gives.
 - The video export works. The Modern-look video of the whole demo is on YouTube.
 - main is on GitHub. The repository is PUBLIC.
@@ -34,11 +34,8 @@ complete C++ port is in `../SecondRealityPlusPlus`; the user's copy of the relea
      stays in git history.
    - The dated work logs and code-review sections were removed from the docs.
    - Every page was checked against the code.
-2. TO FIX NEXT: the plasma's self-test pictures. The checkpoints in `Core/DemoScene.swift` (plasma
-   entry: 0, 1, 2, 17, 33, 400, 724, 740, 787, 800, 1600, 2000, 2300, 2322) were chosen for the old
-   falls at 725, 1,493 and 1,877. None now falls inside a fall (976-1040, 2009-2073, 2526-2590). Choose
-   new steps, prove the checks fail with a fall broken, and update `SelfTest.expectedChecks` if the
-   count changes.
+2. DONE 2026-11-27: the plasma's self-test pictures now land in each of its three falls (17
+   checkpoints in `Core/DemoScene.swift`); with the fall broken in the drawing only, six fail.
 3. SIGNED RELEASE, when the user asks. The app is to be shared outside the App Store without a warning,
    so it is signed with a Developer ID certificate and notarised. The user has an Apple Developer
    account.

@@ -232,7 +232,7 @@ second) and every part must start on the step the research simulation gives; sta
 scene and part, every later part must still start on the same step; and each scene that waits for the
 music must react on the very step the script gets past that cue.
 
-There are 649 checks in all; the test's last lines give the number run. The full self-test fails if
+There are 652 checks in all; the test's last lines give the number run. The full self-test fails if
 that number is not `SelfTest.expectedChecks`, so a block of checks that silently stops running is
 noticed. Each new check is first shown to fail with the thing it guards broken on purpose.
 

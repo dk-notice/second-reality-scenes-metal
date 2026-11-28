@@ -24,7 +24,7 @@ enum SelfTest {
     /// How many checks the full self-test runs. A check that silently stops running (its set-up failed, a
     /// name it looked up is gone) makes the count wrong, and the run fails. Change it with each check
     /// added or removed.
-    static let expectedChecks = 649
+    static let expectedChecks = 652
 
     static func run() -> Bool {
         var ok = true
